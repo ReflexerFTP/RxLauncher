@@ -101,7 +101,10 @@ const STAGES = [
 
 app.whenReady().then(async () => {
     ejs.listen();
-    const window = new BrowserWindow({width, height, show: false, frame: false, webPreferences: {nodeIntegration: true, contextIsolation: false}});
+    // Окно за пределами экрана и без кликов — не мешает пользователю
+    const window = new BrowserWindow({width, height, x: -6000, y: -6000, show: false, frame: false, focusable: false, skipTaskbar: true,
+        webPreferences: {nodeIntegration: true, contextIsolation: false, backgroundThrottling: false}});
+    window.setIgnoreMouseEvents(true);
     const errors = [];
     window.webContents.on("console-message", (event) => {
         if (["warning", "error"].includes(event.level) && !/Autofill|DevTools|THREE\.WebGLProgram/i.test(event.message)) errors.push(event.message);
@@ -109,6 +112,7 @@ app.whenReady().then(async () => {
     await window.loadURL(`file://${path.join(__dirname, "..", "web", "index.ejs").replace(/\\/g, "/")}`);
     await Promise.race([ready, delay(15000)]);
     window.showInactive();
+    window.setPosition(-6000, -6000);
     await delay(1500);
     await window.webContents.executeJavaScript(`(() => {
         RxConfig.write("activeVersion", "fabric-1.21.4");

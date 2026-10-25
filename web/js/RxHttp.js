@@ -3,7 +3,7 @@
 class RxHttp {
     static MAX_REDIRECTS = 5;
 
-    static userAgent = () => `MaxRx/RxLauncher/${typeof LAUNCHER_VERSION === "string" ? LAUNCHER_VERSION : "3"} (${typeof SITE_URL === "string" ? SITE_URL : "https://rxlauncher.ru"})`;
+    static userAgent = () => `MaxRx/RxLauncher/${typeof LAUNCHER_VERSION === "string" ? LAUNCHER_VERSION : "3"} (${typeof SITE_URL === "string" ? SITE_URL : "https://rxlauncher.xyz"})`;
 
     // Открыть ответ (следуя редиректам). Возвращает {status, headers, url, stream}
     static open = (url, options = {}) => new Promise((resolve, reject) => {

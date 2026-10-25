@@ -37,7 +37,7 @@ lazyGlobal("NBT", () => require("mcnbt"));
 global.LAUNCHER_VERSION = packageJson.version;
 
 // Ссылки на сайт
-global.SITE_URL = "https://rxlauncher.ru";
+global.SITE_URL = "https://rxlauncher.xyz";
 global.CDN_URL = "https://cdn.rxlauncher.ru";
 global.SKINS_API_URL = "https://skins.rxlauncher.ru";
 global.STATS_URL = "https://statscol.rxlauncher.ru/save_fl?savedata=";

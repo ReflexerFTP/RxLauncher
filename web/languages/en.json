@@ -619,7 +619,13 @@
         "lessDataCollection": {
           "title": "Paranoia Mode",
           "description": "The launcher sends no statistics and never reads the machine ID, skips third-party skin-head services, hides your nickname and server in Discord, and masks your Windows user name in logs and debug archives."
-        }
+        },
+        "communityTitle": "RxLauncher community",
+        "communityText": "News, help and chatting with other players",
+        "discordText": "Chat, help and modpacks",
+        "telegramText": "News and updates",
+        "githubText": "Source code and issues",
+        "siteText": "Launcher website"
       }
     },
     "flymenu": {

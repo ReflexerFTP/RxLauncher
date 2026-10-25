@@ -33,7 +33,7 @@ const initialLauncherAvatarId = launcherBranding.readSelectedAvatarId(launcherCo
 launcherBranding.applyAppUserModelId();
 const minecraftSkinService = createMinecraftSkinService({
     cacheRoot: path.join(userDataPath, "skins", "cache"),
-    userAgent: `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.ru)`
+    userAgent: `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.xyz)`
 });
 const minecraftSkinProfiles = new Map();
 let minecraftSkinApplyQueue = Promise.resolve();
@@ -181,7 +181,7 @@ const checkOfficialNetworkConnectivity = async (timeoutMs = NETWORK_COMPATIBILIT
                 method: "GET",
                 headers: {
                     "Accept": "application/json",
-                    "User-Agent": `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.ru)`
+                    "User-Agent": `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.xyz)`
                 },
                 signal: AbortSignal.timeout(safeTimeout)
             });
@@ -239,7 +239,7 @@ const fetchServerStatusResponse = async (url, accept = "application/json", timeo
     const response = await fetch(url, {
         headers: {
             "Accept": accept,
-            "User-Agent": `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.ru)`
+            "User-Agent": `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.xyz)`
         },
         signal: AbortSignal.timeout(timeoutMs)
     });
@@ -294,7 +294,7 @@ const checkServerCatalogConnectivity = async (timeoutMs = SERVER_CATALOG_CONNECT
                 method: "GET",
                 headers: {
                     "Accept": "application/json",
-                    "User-Agent": `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.ru)`
+                    "User-Agent": `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.xyz)`
                 },
                 signal: AbortSignal.timeout(safeTimeout)
             });
@@ -561,7 +561,7 @@ const curseForgeApiRequest = async (apiKey, endpoint, query = {}, method = "GET"
                 "Accept": "application/json",
                 "Content-Type": "application/json",
                 "x-api-key": apiKey,
-                "User-Agent": `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.ru)`
+                "User-Agent": `MaxRx/RxLauncher/${pjson.version} (https://rxlauncher.xyz)`
             },
             body: method === "POST" ? JSON.stringify(body || {}) : undefined,
             signal: AbortSignal.timeout(20000)
@@ -657,7 +657,8 @@ const DEFAULT_USER_AGENT = "RxLauncher/v" + pjson.version;
 const DISCORD_RPC_CLIENT_ID = process.env.RX_DISCORD_CLIENT_ID || "1531981667160555530";
 const DISCORD_RPC_LARGE_IMAGE_KEY = process.env.RX_DISCORD_RPC_LARGE_IMAGE_KEY
     || "https://i.postimg.cc/8Pgp7Lzb/Rx-Launch-RPC-3D-v2.gif";
-const DISCORD_RPC_TELEGRAM_URL = "https://t.me/maxxsrc";
+const DISCORD_RPC_TELEGRAM_URL = "https://t.me/rxlauncher";
+const DISCORD_RPC_DISCORD_URL = "https://discord.gg/bpRwXsXeuj";
 const DISCORD_RPC_RETRY_DELAY = 15000;
 const DISCORD_RPC_MIN_UPDATE_INTERVAL = 4200;
 const DISCORD_RPC_SMALL_IMAGE_KEYS = {
@@ -680,7 +681,8 @@ const DISCORD_RPC_TEXTS = {
         inGame: "В игре",
         server: "Сервер {server}",
         imageText: "RxLaunch — лаунчер Minecraft",
-        button: "Telegram RxLaunch"
+        button: "Telegram RxLaunch",
+        discordButton: "Discord RxLaunch"
     },
     en: {
         menuDetails: "In the launcher",
@@ -691,7 +693,8 @@ const DISCORD_RPC_TEXTS = {
         inGame: "In game",
         server: "Server {server}",
         imageText: "RxLaunch — Minecraft launcher",
-        button: "RxLaunch on Telegram"
+        button: "RxLaunch on Telegram",
+        discordButton: "RxLaunch on Discord"
     }
 };
 
@@ -786,7 +789,10 @@ const buildDiscordPresence = () => {
         state: discordText("menuState"),
         largeImageKey: DISCORD_RPC_LARGE_IMAGE_KEY,
         largeImageText: `${discordText("imageText")} · v${pjson.version}`,
-        buttons: [{label: discordText("button"), url: DISCORD_RPC_TELEGRAM_URL}],
+        buttons: [
+            {label: discordText("discordButton"), url: DISCORD_RPC_DISCORD_URL},
+            {label: discordText("button"), url: DISCORD_RPC_TELEGRAM_URL}
+        ],
         instance: false
     };
 

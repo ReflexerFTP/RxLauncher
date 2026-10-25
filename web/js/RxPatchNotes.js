@@ -1,6 +1,36 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.2.0-community",
+            version: "3.2.0",
+            date: "2026-10-28T12:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "СООБЩЕСТВО", en: "COMMUNITY"},
+            title: {ru: "Новые Discord, Telegram и сайт", en: "New Discord, Telegram and website"},
+            summary: {
+                ru: "У RxLauncher новый Discord-сервер, Telegram-канал и сайт rxlauncher.xyz. Все ссылки собраны в разделе «О лаунчере».",
+                en: "RxLauncher has a new Discord server, Telegram channel and the rxlauncher.xyz website. All links are in the About section."
+            },
+            changes: {
+                ru: [
+                    "Настройки → «О лаунчере»: новый блок «Сообщество» с Discord, Telegram, GitHub и сайтом.",
+                    "Новый Discord: discord.gg/bpRwXsXeuj, новый Telegram: t.me/rxlauncher.",
+                    "Исходный код лаунчера теперь на GitHub: Maksimrrrsrc/RxLauncher.",
+                    "Сайт лаунчера: rxlauncher.xyz.",
+                    "В статусе Discord две кнопки — Discord и Telegram RxLaunch.",
+                    "Ссылки на главном экране RxClient в игре тоже обновлены."
+                ],
+                en: [
+                    "Settings → About: a new Community block with Discord, Telegram, GitHub and the website.",
+                    "New Discord: discord.gg/bpRwXsXeuj, new Telegram: t.me/rxlauncher.",
+                    "The launcher source code now lives on GitHub: Maksimrrrsrc/RxLauncher.",
+                    "Launcher website: rxlauncher.xyz.",
+                    "Discord status shows two buttons — RxLaunch Discord and Telegram.",
+                    "Links on the in-game RxClient title screen are updated too."
+                ]
+            }
+        },
+        {
             id: "3.1.0-pale-garden",
             version: "3.1.0",
             date: "2026-10-27T18:00:00+03:00",

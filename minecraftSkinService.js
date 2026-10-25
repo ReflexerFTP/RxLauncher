@@ -341,7 +341,7 @@ const createMinecraftSkinService = (options = {}) => {
     const now = typeof options.now === "function" ? options.now : Date.now;
     const userAgent = typeof options.userAgent === "string" && options.userAgent.trim()
         ? options.userAgent.trim().slice(0, 256)
-        : "MaxRx/RxLauncher (https://rxlauncher.ru)";
+        : "MaxRx/RxLauncher (https://rxlauncher.xyz)";
 
     const texturePath = (textureHash) => path.join(textureDirectory, `${normalizeTextureHash(textureHash)}.png`);
     const profilePath = (nickname) => {

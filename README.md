@@ -7,7 +7,8 @@
 ## Ссылки
 
 - [Последний релиз (установщик для Windows)](https://github.com/Maksimrrrsrc/RxLauncher/releases/latest)
-- [Сайт лаунчера](https://rxlauncher.ru)
+- [Сайт лаунчера](https://rxlauncher.xyz)
+- [Discord](https://discord.gg/bpRwXsXeuj) · [Telegram](https://t.me/rxlauncher)
 - [Плагин на сервер для поддержки системы скинов лаунчера](https://github.com/MaxRx/RxLauncher-Skins-Plugin)
 
 ## Возможности
