@@ -45,13 +45,13 @@ function loadSettingsUI() {
 
     // Загрузка настроек обоев и режима
     $(`#modal-settings .placeholder.${currentThemeData.mode}`).addClass("active");
-    let currentWp = RxConfig.read("currentWallpaper", "1");
+    let currentWp = RxConfig.read("currentWallpaper", RxThemes.DEFAULT_WALLPAPER);
     $(`#modal-settings .wp-item[data-wp='${currentWp}']`).addClass("active");
 
     if (currentWp === "custom") {
         let customWpPath = RxConfig.read("customWallpaperPath", "");
         if (customWpPath === "" || !fs.existsSync(customWpPath)) {
-            RxThemes.changeWallpaper(1);
+            RxThemes.changeWallpaper(RxThemes.DEFAULT_WALLPAPER);
         } else {
             $("#modal-settings .wp-item.placeholder").css("background-image", `url(${customWpPath.replaceAll("\\", "/")})`);
         }

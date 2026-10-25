@@ -121,6 +121,9 @@ class RxThemes {
         return RxConfig.write("theme", currentThemeData);
     }
 
+    // Обои по умолчанию — Скрипун в Бледном саду (8), они же фон сайта
+    static DEFAULT_WALLPAPER = "8";
+
     // Сменить встроенные или пользовательские обои
     static changeWallpaper = (wpId) => {
         let $bgImage = $(".background.img");

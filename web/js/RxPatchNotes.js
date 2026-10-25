@@ -1,6 +1,30 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.1.0-pale-garden",
+            version: "3.1.0",
+            date: "2026-10-27T18:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "ДИЗАЙН", en: "DESIGN"},
+            title: {ru: "Скрипун — новый фон по умолчанию", en: "The Creaking is the new default wallpaper"},
+            summary: {
+                ru: "Лаунчер встречает новых игроков тёмным Бледным садом — тем же фоном, что на сайте RxLauncher.",
+                en: "The launcher greets new players with the dark Pale Garden — the same background as on the RxLauncher website."
+            },
+            changes: {
+                ru: [
+                    "Обои по умолчанию — Скрипун в Бледном саду.",
+                    "Если вы уже выбрали обои, они не меняются.",
+                    "Если свои обои удалили с диска, лаунчер вернёт обои по умолчанию вместо пустого фона."
+                ],
+                en: [
+                    "The default wallpaper is now the Creaking in the Pale Garden.",
+                    "Wallpaper you already picked stays as it is.",
+                    "If your custom wallpaper was deleted from disk, the launcher falls back to the default instead of an empty background."
+                ]
+            }
+        },
+        {
             id: "3.0.0-catalog-together",
             version: "3.0.0",
             date: "2026-10-27T12:00:00+03:00",

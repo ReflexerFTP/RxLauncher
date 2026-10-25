@@ -166,7 +166,8 @@
         }
         loadedThemeData = {};
         RxThemes.changeTheme(false, false);
-        RxThemes.changeWallpaper(RxConfig.read("currentWallpaper", "1"));
+        // Своих обоев больше нет на диске — возвращаем обои по умолчанию
+        RxThemes.changeWallpaper(RxConfig.read("currentWallpaper", RxThemes.DEFAULT_WALLPAPER)) || RxThemes.changeWallpaper(RxThemes.DEFAULT_WALLPAPER);
         RxThemes.applyWallpaperAppearance();
         await RxBranding.init();
         RxCollector.writeLog("Theme initialized");
