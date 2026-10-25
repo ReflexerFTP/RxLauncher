@@ -88,6 +88,22 @@ class RxInstancesUI {
                 </div>
             </article>`;
         }).join(""));
+        RxInstancesUI.checkUpdates(instances);
+    };
+
+    // Сборки из каталога Modrinth: в фоне ищем новую версию и показываем кнопку обновления
+    static checkUpdates = (instances) => {
+        instances.filter(instance => instance.source?.provider === "modrinth").forEach(async (instance) => {
+            const update = await RxCatalog.checkPackUpdate(instance);
+            if (!update) return;
+            const $card = $(`#modal-instances .inst-card[data-instance="${CSS.escape(instance.id)}"]`);
+            if (!$card.length || $card.find(".inst-update").length) return;
+            const text = MESSAGES.instances.updateAvailable.replace("{0}", update.version_number);
+            $card.find(".inst-stats").append($("<span>").addClass("inst-update-note")
+                .append($("<span>").addClass("material-symbols-outlined").text("new_releases"), document.createTextNode(text)));
+            $card.find(".inst-play").after($("<button>").addClass("transparent inst-update").attr({"data-instance-action": "update", title: text})
+                .append($("<span>").addClass("material-symbols-outlined").text("upgrade")));
+        });
     };
 
     // ---------- диалог создания/настройки ----------
@@ -198,6 +214,9 @@ class RxInstancesUI {
                 return openExternal(RxInstancesUI.dirFor(id));
             case "edit":
                 return RxInstancesUI.openDialog(id);
+            case "update":
+                $button.prop("disabled", true);
+                return RxCatalog.updatePack(id);
             case "duplicate": {
                 const name = `${instance.displayName} (${MESSAGES.instances.copySuffix})`.slice(0, 48);
                 const newId = RxInstancesUI.uniqueId(name);
@@ -253,10 +272,15 @@ class RxInstancesUI {
     static init = () => {
         const $modal = $("#modal-instances");
         $(document).on("showModalEvent", (event) => {
-            if (event.originalEvent?.detail?.modal === "instances") RxInstancesUI.render();
+            if (event.originalEvent?.detail?.modal === "instances" && RxWorldsUI.view === "instances") RxInstancesUI.render();
         });
         $modal.on("click", "[data-instances-create]", () => RxInstancesUI.openDialog());
         $modal.on("click", "[data-instances-import]", () => RxInstancesUI.importMrpack());
+        $modal.on("click", "[data-instances-catalog]", async () => {
+            RxCatalog.state.type = "modpack";
+            RxCatalog.state.category = "";
+            await RxModals.switchModal("catalog");
+        });
         $modal.on("click", "[data-instance-action]", function () {
             RxInstancesUI.action($(this).closest("[data-instance]").attr("data-instance"), $(this).attr("data-instance-action"), $(this));
         });

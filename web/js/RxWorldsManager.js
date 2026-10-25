@@ -108,14 +108,17 @@ class RxWorldsManager {
                     console.log(err);
                     return resolve(false);
                 }
+                // В старых и серверных мирах части полей нет — не роняем весь список
+                const data = nbtData.root?.[""]?.value?.Data?.value;
+                if (!data) return resolve(false);
                 return resolve({
                     icon: iconPath,
-                    name: nbtData.root[""].value.Data.value.LevelName.value,
-                    dataPacks: nbtData.root[""].value.Data.value.DataPacks.value,
-                    dataVersion: nbtData.root[""].value.Data.value.DataVersion.value,
-                    difficulty: nbtData.root[""].value.Data.value.Difficulty.value,
-                    version: nbtData.root[""].value.Data.value.Version.value.Name.value,
-                    gamemode: nbtData.root[""].value.Data.value.Player.value.playerGameType.value
+                    name: data.LevelName?.value || path.basename(worldPath),
+                    dataPacks: data.DataPacks?.value,
+                    dataVersion: data.DataVersion?.value,
+                    difficulty: data.Difficulty?.value,
+                    version: data.Version?.value?.Name?.value || "",
+                    gamemode: data.Player?.value?.playerGameType?.value ?? data.GameType?.value
                 });
             });
         })

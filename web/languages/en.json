@@ -455,7 +455,9 @@
         "serverPrivacyMode": {
           "title": "Server privacy mode (experimental)",
           "description": "Disables background server pings and launcher stats. Direct play from the server tab is blocked; manual server joins still reveal your IP without a VPN/proxy."
-        }
+        },
+        "checkModsBeforeLaunch": "Check mods before launching the game",
+        "autoBackupWorlds": "Back up worlds after playing"
       },
       "java": {
         "auto": {
@@ -538,7 +540,9 @@
             "servers": "Servers",
             "statistics": "Statistics",
             "screenshots": "Screenshots",
-            "console": "Console"
+            "console": "Console",
+            "catalog": "Catalog",
+            "together": "Together"
           }
         }
       },
@@ -621,7 +625,9 @@
       "console": "Console",
       "folder": "Game folder",
       "screenshots": "Screenshots",
-      "instances": "Instances"
+      "instances": "Instances",
+      "catalog": "Catalog",
+      "together": "Play together"
     },
     "screenshots": {
       "title": "Screenshots",
@@ -981,7 +987,131 @@
       "saved": "Instance saved",
       "created": "Instance created and selected",
       "needName": "Enter an instance name",
-      "needVersion": "Choose a game version"
+      "needVersion": "Choose a game version",
+      "findModpack": "Find a modpack",
+      "updateAvailable": "Update {0}"
+    },
+    "dialog": {
+      "ok": "Done",
+      "cancel": "Cancel"
+    },
+    "catalog": {
+      "title": "Catalog",
+      "subtitle": "Modpacks, mods, resource packs, shaders and data packs from Modrinth",
+      "installTo": "Install into",
+      "changeVersion": "Choose another version or instance",
+      "typeModpack": "Modpacks",
+      "typeMod": "Mods",
+      "typeResourcepack": "Resource packs",
+      "typeShader": "Shaders",
+      "typeDatapack": "Data packs",
+      "search_modpack": "Find a modpack",
+      "search_mod": "Find a mod",
+      "search_resourcepack": "Find a resource pack",
+      "search_shader": "Find shaders",
+      "search_datapack": "Find a data pack",
+      "anyVersion": "Any version",
+      "loading": "Loading the catalog…",
+      "noVersion": "Choose a game version first",
+      "noVersionText": "Content is installed into the selected version or instance. Press ⇄ in the top right corner.",
+      "installAgain": "Again",
+      "inInstances": "In instances",
+      "details": "Details",
+      "modpackHint": "A modpack installs with one button: the launcher creates it, downloads the mods and prepares the game version, loader and Java on the first launch.",
+      "shaderNeedsLoader": "Shaders work on Fabric, Quilt and NeoForge (with Iris) or on Forge + OptiFine. Choose a suitable version.",
+      "shaderNeedsIris": "Shaders need the Iris mod — the game won't show them without it.",
+      "installIris": "Install Iris",
+      "datapackHint": "A data pack goes into a world: after pressing Install, choose the world.",
+      "resourcepackHint": "Turn the resource pack on in game: Options → Resource Packs.",
+      "noCompatible": "No version fits the selected game version",
+      "installed_resourcepack": "Resource pack installed",
+      "installed_shader": "Shaders installed",
+      "installed_datapack": "Data pack added to the world",
+      "noWorlds": "No worlds yet",
+      "noWorldsText": "Create a world in game, then add the data pack to it.",
+      "chooseWorld": "Which world gets the data pack?",
+      "chooseWorldText": "The data pack starts working the next time you enter the world.",
+      "modpackReady": "Modpack installed — ready to play",
+      "modpackPartly": "Modpack created, but some files failed to download — they will be retried at launch",
+      "packUpToDate": "The modpack is up to date",
+      "packUpdateTitle": "Update the modpack?",
+      "packUpdateText": "“{0}” will be updated to {1}. Mods that are no longer in the pack move to the rx-mod-backups folder. Worlds and mods you added stay.",
+      "packUpdateConfirm": "Update",
+      "packUpdated": "Modpack updated",
+      "packUpdateFailed": "Could not update the modpack",
+      "link_source": "Source",
+      "link_issues": "Issues",
+      "link_wiki": "Wiki",
+      "link_discord": "Discord",
+      "versions": "Versions",
+      "type_release": "Release",
+      "type_beta": "Beta",
+      "type_alpha": "Alpha",
+      "categories": {
+        "optimization": "Optimization",
+        "adventure": "Adventure",
+        "lightweight": "Lightweight",
+        "multiplayer": "Multiplayer",
+        "technology": "Technology",
+        "magic": "Magic",
+        "quests": "Quests",
+        "combat": "Combat",
+        "kitchen-sink": "Kitchen sink",
+        "challenging": "Challenging",
+        "utility": "Utility",
+        "decoration": "Decoration",
+        "storage": "Storage",
+        "mobs": "Mobs",
+        "worldgen": "World generation",
+        "equipment": "Equipment",
+        "food": "Food",
+        "library": "Libraries",
+        "vanilla-like": "Vanilla-like",
+        "simplistic": "Simplistic",
+        "realistic": "Realistic",
+        "themed": "Themed",
+        "tweaks": "Tweaks",
+        "modded": "Modded",
+        "semi-realistic": "Semi-realistic",
+        "fantasy": "Fantasy",
+        "cartoon": "Cartoon",
+        "game-mechanics": "Game mechanics"
+      }
+    },
+    "launchCheck": {
+      "title": "Some mods have problems",
+      "text": "Problem mods: {0}. The game will most likely crash while loading.",
+      "more": "And {0} more",
+      "openMods": "Open mods",
+      "playAnyway": "Play anyway"
+    },
+    "worlds": {
+      "tab": "Worlds & backups",
+      "hint": "After playing, the launcher backs up the worlds you entered (the last 5 per world). Manual backups are never deleted.",
+      "emptyTitle": "No worlds yet",
+      "emptyText": "Create a world in game — it will appear here together with its backups.",
+      "openBackups": "Backups folder",
+      "mainFolder": "Main folder",
+      "backupsCount": "Backups: {0}, last {1}",
+      "noBackups": "No backups",
+      "saving": "Saving…",
+      "backup": "Back up",
+      "restore": "Restore",
+      "saved": "World backup saved",
+      "saveFailed": "Could not back up the world",
+      "chooseBackup": "Restore from which backup?",
+      "reasons": {
+        "auto": "Auto backup after playing",
+        "manual": "Manual backup",
+        "restore": "Before restoring"
+      },
+      "restoreTitle": "Restore the world from a backup?",
+      "restoreText": "The world returns to the state from the backup. Its current state is saved as a separate backup, so you can go back.",
+      "restored": "World restored",
+      "restoreFailed": "Could not restore the world",
+      "closeGame": "Close the game first",
+      "autoSaved": "Worlds backed up",
+      "autoSavedText": "Worlds: {0}"
     }
   }
 }

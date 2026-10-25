@@ -1,0 +1,216 @@
+/* Каталог: шапка, вкладки, поиск и карточки — те же, что в окне «Моды» (mods.css) */
+#modal-catalog {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px;
+    min-height: 0;
+}
+
+#modal-catalog .mods-version-card[hidden],
+#modal-catalog .mods-sort[hidden] { display: none; }
+
+#modal-catalog .cat-target { min-width: 250px; max-width: 330px; }
+#modal-catalog .cat-target > div { flex: 1 1 auto; }
+
+#modal-catalog .cat-target button {
+    width: 34px;
+    height: 34px !important;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+    border-radius: 10px !important;
+}
+
+#modal-catalog .cat-target button .material-symbols-outlined { font-size: 19px; color: inherit; }
+
+/* Подсказка над списком */
+.cat-notice {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px 9px 13px;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--theme-primary) 8%, var(--theme-primaryBgLight));
+    color: var(--text-sub);
+    font-size: 9pt;
+}
+
+.cat-notice[hidden] { display: none; }
+.cat-notice > .material-symbols-outlined { font-size: 19px; color: var(--theme-primaryLighter); }
+.cat-notice.warn { background: color-mix(in srgb, var(--warning) 10%, var(--theme-primaryBgLight)); }
+.cat-notice.warn > .material-symbols-outlined { color: var(--warning); }
+.cat-notice [data-notice-text] { flex: 1 1 auto; }
+
+.cat-notice button {
+    flex: 0 0 auto;
+    height: 32px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px !important;
+    border-radius: 10px !important;
+    font-size: 9pt;
+}
+
+.cat-notice button[hidden] { display: none; }
+.cat-notice button .material-symbols-outlined { font-size: 17px; color: inherit; }
+
+/* Карточка открывает подробности */
+.cat-card { cursor: pointer; }
+
+.cat-badge {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: var(--success) !important;
+    background: color-mix(in srgb, var(--success) 13%, transparent);
+    font-size: 8pt !important;
+    font-weight: 700;
+}
+
+.cat-badge .material-symbols-outlined { font-size: 13px; }
+
+/* ===== Подробности ===== */
+.cat-details-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    justify-content: flex-end;
+    border-radius: inherit;
+    background: rgba(0, 0, 0, .5);
+    backdrop-filter: blur(3px);
+}
+
+.cat-details-backdrop[hidden] { display: none; }
+
+.cat-details {
+    position: relative;
+    width: min(560px, 92%);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--rx-stroke-strong, rgba(255, 255, 255, .14));
+    border-radius: 0 18px 18px 0;
+    background: var(--theme-primaryBg);
+    box-shadow: -24px 0 60px rgba(0, 0, 0, .4);
+    animation: cat-slide .2s cubic-bezier(.22, 1, .36, 1);
+}
+
+@keyframes cat-slide { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.cat-details-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+    width: 36px;
+    height: 36px !important;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+    border-radius: 10px !important;
+}
+
+.cat-details-close .material-symbols-outlined { font-size: 19px; color: inherit; }
+
+.cat-details-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px 18px 20px 20px;
+}
+
+.cat-details-body > * { flex: 0 0 auto; }
+.cat-details-head { display: flex; align-items: center; gap: 13px; padding-right: 44px; }
+.cat-details-head .mc-icon { width: 64px; height: 64px; border-radius: 16px; }
+.cat-details-title { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cat-details-title h2 { margin: 0; font-size: 15pt; }
+.cat-details-title span { color: var(--text-sub); font-size: 9pt; }
+.cat-details-meta { flex-wrap: wrap; }
+
+.cat-details-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.cat-details-actions button {
+    height: 38px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 13px !important;
+    border-radius: 11px !important;
+    font-size: 9.5pt;
+}
+
+.cat-details-actions .material-symbols-outlined { font-size: 18px; color: inherit; }
+
+.cat-gallery {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scroll-snap-type: x mandatory;
+}
+
+.cat-gallery img {
+    flex: 0 0 auto;
+    height: 150px;
+    border-radius: 12px;
+    object-fit: cover;
+    scroll-snap-align: start;
+    background: var(--theme-primaryBgLight);
+}
+
+.cat-details-text { display: flex; flex-direction: column; gap: 8px; }
+.cat-details-text p { margin: 0; color: var(--text-sub); font-size: 9.5pt; line-height: 1.55; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+.cat-details-subtitle { margin: 4px 0 0; font-size: 11pt; }
+.cat-versions { display: flex; flex-direction: column; gap: 5px; }
+.cat-muted { margin: 0; color: var(--text-sub); font-size: 9pt; }
+
+.cat-version {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 7px 7px 12px;
+    border-radius: 12px;
+    background: var(--theme-primaryBgLight);
+}
+
+.cat-version-copy { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cat-version-copy strong { font-size: 9.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-version-copy span { color: var(--text-sub); font-size: 8pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.cat-version-type {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: var(--success);
+    background: color-mix(in srgb, var(--success) 13%, transparent);
+    font-size: 8pt;
+    font-weight: 700;
+}
+
+.cat-version-type.beta { color: var(--warning); background: color-mix(in srgb, var(--warning) 13%, transparent); }
+.cat-version-type.alpha { color: var(--error); background: color-mix(in srgb, var(--error) 13%, transparent); }
+
+.cat-version button {
+    width: 34px;
+    height: 34px !important;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+    border-radius: 10px !important;
+}
+
+.cat-version button .material-symbols-outlined { font-size: 18px; color: inherit; }

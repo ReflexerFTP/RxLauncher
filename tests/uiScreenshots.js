@@ -39,8 +39,14 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 // [имя файла, код для показа раздела]
 const STAGES = [
     ["home", `RxModals.switchModal("content")`],
-    ["catalog", `RxModals.switchModal("catalog")`],
+    ["catalog", `RxModals.switchModal("catalog").then(() => new Promise(resolve => setTimeout(resolve, 2500)))`],
+    ["catalog-details", `RxCatalog.openDetails($("#modal-catalog .cat-card").first().attr("data-project")).then(() => new Promise(resolve => setTimeout(resolve, 1500)))`],
+    ["catalog-mods", `(RxCatalog.closeDetails(), RxCatalog.switchType("mod"), new Promise(resolve => setTimeout(resolve, 2500)))`],
+    ["catalog-shaders", `(RxCatalog.switchType("shader"), new Promise(resolve => setTimeout(resolve, 2500)))`],
     ["instances", `RxModals.switchModal("instances")`],
+    ["instances-worlds", `RxWorldsUI.setView("worlds")`],
+    ["dialog", `RxDialog.confirm({icon: "report", title: "Проверка", text: "Пример диалога", items: [{icon: "error", level: "error", title: "Sodium", text: "Нужен Minecraft 1.21"}], extraButton: {text: "Открыть моды", icon: "extension"}}) && new Promise(resolve => setTimeout(resolve, 300))`],
+    ["dialog-closed", `(RxDialog.close(), RxWorldsUI.setView("instances"), new Promise(resolve => setTimeout(resolve, 300)))`],
     ["mods", `RxModals.switchModal("mods")`],
     ["mods-catalog", `RxModals.switchModal("mods").then(() => $('#modal-mods [data-mods-view="catalog"]').click())`],
     ["skins", `RxModals.switchModal("skins")`],
@@ -65,9 +71,8 @@ app.whenReady().then(async () => {
     ejs.listen();
     const window = new BrowserWindow({width, height, show: false, frame: false, webPreferences: {nodeIntegration: true, contextIsolation: false}});
     const errors = [];
-    window.webContents.on("console-message", (event, details) => {
-        const {level, message} = details && typeof details === "object" ? details : event;
-        if (["warning", "error"].includes(level) && !/Autofill|DevTools|THREE\.WebGLProgram/i.test(message)) errors.push(message);
+    window.webContents.on("console-message", (event) => {
+        if (["warning", "error"].includes(event.level) && !/Autofill|DevTools|THREE\.WebGLProgram/i.test(event.message)) errors.push(event.message);
     });
     await window.loadURL(`file://${path.join(__dirname, "..", "web", "index.ejs").replace(/\\/g, "/")}`);
     await Promise.race([ready, delay(15000)]);

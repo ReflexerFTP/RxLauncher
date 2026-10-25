@@ -11,6 +11,28 @@
 
 <div class="flex flex-center flex-gap-8 settings-item">
     <div class="icon">
+        <span class="material-symbols-outlined">fact_check</span>
+    </div>
+    <span class="name flex-grow">{{settings.game.checkModsBeforeLaunch}}</span>
+    <label class="switch" data-setting="checkModsBeforeLaunch" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">backup</span>
+    </div>
+    <span class="name flex-grow">{{settings.game.autoBackupWorlds}}</span>
+    <label class="switch" data-setting="autoBackupWorlds" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
         <span class="material-symbols-outlined">terminal</span>
     </div>
     <span class="name flex-grow">{{settings.game.consoleOnStart}}</span>

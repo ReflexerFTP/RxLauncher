@@ -1,0 +1,82 @@
+<link rel="stylesheet" href="modals/catalog.css"/>
+
+<div class="modal" id="modal-catalog" style="display: none;">
+    <header class="mods-header">
+        <div class="mods-heading-icon"><span class="material-symbols-outlined">travel_explore</span></div>
+        <div class="mods-heading-copy">
+            <h1>{{catalog.title}}</h1>
+            <span>{{catalog.subtitle}}</span>
+        </div>
+        <div class="mods-version-card cat-target" data-catalog-target-card>
+            <span class="material-symbols-outlined">deployed_code</span>
+            <div>
+                <small>{{catalog.installTo}}</small>
+                <b data-catalog-version>{{commons.notSelected}}</b>
+            </div>
+            <button class="transparent" data-catalog-change-version title="{{catalog.changeVersion}}">
+                <span class="material-symbols-outlined">swap_horiz</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Тип контента -->
+    <nav class="mods-tabs" data-catalog-tabs>
+        <button type="button" class="mods-tab" data-catalog-type="modpack"><span class="material-symbols-outlined">stacks</span><span>{{catalog.typeModpack}}</span></button>
+        <button type="button" class="mods-tab" data-catalog-type="mod"><span class="material-symbols-outlined">extension</span><span>{{catalog.typeMod}}</span></button>
+        <button type="button" class="mods-tab" data-catalog-type="resourcepack"><span class="material-symbols-outlined">texture</span><span>{{catalog.typeResourcepack}}</span></button>
+        <button type="button" class="mods-tab" data-catalog-type="shader"><span class="material-symbols-outlined">wb_sunny</span><span>{{catalog.typeShader}}</span></button>
+        <button type="button" class="mods-tab" data-catalog-type="datapack"><span class="material-symbols-outlined">data_object</span><span>{{catalog.typeDatapack}}</span></button>
+    </nav>
+
+    <section class="mods-toolbar">
+        <div class="mods-search">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" data-catalog-search placeholder="{{catalog.search_modpack}}"/>
+        </div>
+        <label class="mods-sort" data-catalog-game-wrap>
+            <span class="material-symbols-outlined">deployed_code</span>
+            <select data-catalog-game>
+                <option value="">{{catalog.anyVersion}}</option>
+            </select>
+        </label>
+        <label class="mods-sort">
+            <span class="material-symbols-outlined">sort</span>
+            <select data-catalog-sort>
+                <option value="relevance">{{mods.catalogRelevance}}</option>
+                <option value="downloads">{{mods.catalogDownloads}}</option>
+                <option value="follows">{{mods.catalogFollows}}</option>
+                <option value="updated">{{mods.catalogUpdated}}</option>
+                <option value="newest">{{mods.catalogNewest}}</option>
+            </select>
+        </label>
+    </section>
+
+    <div class="mc-categories" data-catalog-categories></div>
+
+    <div class="cat-notice" data-catalog-notice hidden>
+        <span class="material-symbols-outlined">info</span>
+        <span data-notice-text></span>
+        <button data-notice-action hidden><span class="material-symbols-outlined">download</span><span></span></button>
+    </div>
+
+    <div class="mc-scroll" data-catalog-scroll>
+        <div class="mc-list" data-catalog-list></div>
+        <div class="mc-status" data-catalog-status hidden>
+            <span class="material-symbols-outlined"></span>
+            <strong></strong>
+            <span></span>
+        </div>
+        <div class="mc-more" data-catalog-more hidden>
+            <span class="material-symbols-outlined">progress_activity</span>
+            <span>{{mods.catalogLoadingMore}}</span>
+        </div>
+    </div>
+
+    <!-- Подробности о проекте -->
+    <div class="cat-details-backdrop" data-catalog-details hidden>
+        <aside class="cat-details">
+            <button class="transparent cat-details-close" data-details-close title="{{commons.close}}"><span class="material-symbols-outlined">close</span></button>
+            <div class="cat-details-body" data-details-body></div>
+        </aside>
+    </div>
+</div>

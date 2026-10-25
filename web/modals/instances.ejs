@@ -7,25 +7,52 @@
             <h1>{{instances.title}}</h1>
             <span data-instances-count>{{instances.subtitle}}</span>
         </div>
-        <button class="transparent" data-instances-import>
+        <button class="transparent" data-instances-catalog data-inst-only="instances">
+            <span class="material-symbols-outlined">travel_explore</span>
+            <span>{{instances.findModpack}}</span>
+        </button>
+        <button class="transparent" data-instances-import data-inst-only="instances">
             <span class="material-symbols-outlined">upload_file</span>
             <span>{{instances.importMrpack}}</span>
         </button>
-        <button data-instances-create>
+        <button data-instances-create data-inst-only="instances">
             <span class="material-symbols-outlined">add</span>
             <span>{{instances.create}}</span>
         </button>
+        <button class="transparent" data-worlds-folder data-inst-only="worlds" hidden>
+            <span class="material-symbols-outlined">folder_open</span>
+            <span>{{worlds.openBackups}}</span>
+        </button>
     </header>
 
-    <p class="inst-hint">{{instances.hint}}</p>
+    <nav class="mods-tabs">
+        <button type="button" class="mods-tab active" data-inst-view-tab="instances"><span class="material-symbols-outlined">stacks</span><span>{{instances.title}}</span></button>
+        <button type="button" class="mods-tab" data-inst-view-tab="worlds"><span class="material-symbols-outlined">public</span><span>{{worlds.tab}}</span></button>
+    </nav>
 
-    <div class="inst-scroll">
+    <!-- Миры всех сборок и их резервные копии -->
+    <div class="inst-scroll" data-inst-view="worlds" hidden>
+        <p class="inst-hint">{{worlds.hint}}</p>
+        <div class="worlds-list" data-worlds-list></div>
+        <div class="inst-empty" data-worlds-empty hidden>
+            <span class="material-symbols-outlined">public</span>
+            <h2>{{worlds.emptyTitle}}</h2>
+            <p>{{worlds.emptyText}}</p>
+        </div>
+    </div>
+
+    <p class="inst-hint" data-inst-view="instances">{{instances.hint}}</p>
+
+    <div class="inst-scroll" data-inst-view="instances">
         <div class="inst-grid" data-instances-grid></div>
         <div class="inst-empty" data-instances-empty hidden>
             <span class="material-symbols-outlined">stacks</span>
             <h2>{{instances.emptyTitle}}</h2>
             <p>{{instances.emptyText}}</p>
-            <button data-instances-create><span class="material-symbols-outlined">add</span><span>{{instances.create}}</span></button>
+            <div class="inst-empty-actions">
+                <button data-instances-catalog><span class="material-symbols-outlined">travel_explore</span><span>{{instances.findModpack}}</span></button>
+                <button class="transparent" data-instances-create><span class="material-symbols-outlined">add</span><span>{{instances.create}}</span></button>
+            </div>
         </div>
     </div>
 

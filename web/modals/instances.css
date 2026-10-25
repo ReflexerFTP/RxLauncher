@@ -36,6 +36,46 @@
 }
 
 .inst-header > button .material-symbols-outlined { font-size: 19px; }
+.inst-header > button[hidden],
+#modal-instances [data-inst-view][hidden] { display: none; }
+
+/* ===== Миры и копии ===== */
+.worlds-list { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; overflow: visible; }
+
+.world-row {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 15px;
+    border: 1px solid var(--rx-stroke);
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 82%, transparent);
+}
+
+.world-row:hover { border-color: var(--rx-stroke-strong, rgba(255, 255, 255, .16)); }
+.world-icon { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 11px; object-fit: cover; image-rendering: pixelated; background: var(--theme-primaryBgLighter); }
+.world-copy { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.world-copy strong { font-size: 10.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.world-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--text-sub); font-size: 8.5pt; }
+.world-meta > span { display: flex; align-items: center; gap: 4px; }
+.world-meta .material-symbols-outlined { font-size: 15px; }
+.world-meta .world-has-backup { color: var(--success); }
+.world-actions { flex: 0 0 auto; display: flex; gap: 5px; }
+
+.world-actions button {
+    height: 36px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px !important;
+    border-radius: 10px !important;
+    font-size: 9pt;
+}
+
+.world-actions button.icon-only { width: 36px; padding: 0 !important; justify-content: center; }
+.world-actions .material-symbols-outlined { font-size: 18px; color: inherit; }
+.world-actions .spin { animation: mc-spin 1s linear infinite; }
 .inst-hint { flex: 0 0 auto; margin: 0; color: var(--text-sub); font-size: 9pt; }
 
 /* ===== Карточки ===== */
@@ -97,6 +137,8 @@
 .inst-actions button .material-symbols-outlined { font-size: 18px; color: inherit; }
 .inst-actions .inst-play { flex: 1 1 auto; width: auto; padding: 0 12px !important; font-weight: 700; }
 .inst-actions .inst-delete:hover { color: var(--error) !important; }
+.inst-actions .inst-update { color: var(--success) !important; border-color: color-mix(in srgb, var(--success) 45%, transparent) !important; }
+.inst-stats .inst-update-note { color: var(--success); font-weight: 700; }
 .inst-actions .inst-delete.confirm { background: var(--error) !important; color: #fff !important; }
 
 .inst-empty {
@@ -115,6 +157,7 @@
 .inst-empty > .material-symbols-outlined { font-size: 42px; color: var(--theme-primaryLighter); }
 .inst-empty h2 { margin: 2px 0 0; font-size: 15pt; }
 .inst-empty p { max-width: 480px; margin: 0 0 6px; color: var(--text-sub); font-size: 9.5pt; }
+.inst-empty-actions { display: flex; gap: 8px; }
 .inst-empty button { height: 42px !important; display: flex; align-items: center; gap: 6px; padding: 0 16px !important; border-radius: 12px !important; font-size: 10pt !important; }
 .inst-empty button .material-symbols-outlined { font-size: 19px; }
 

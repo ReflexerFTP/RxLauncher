@@ -208,87 +208,120 @@ class RxPacks {
         return fullDownloadPath;
     }
 
-    // Импортировать пак с Modrinth (.mrpack)
-    static importModrinthPack = async (archivePath, iconUrl = false) => {
+    // Распаковать .mrpack во временную папку и прочитать modrinth.index.json
+    static unpackModrinthPack = async (archivePath) => {
+        const decompPath = path.join(GAME_DATA, "modpacks", `.rx-modrinth-${crypto.randomUUID()}`);
+        fs.mkdirSync(decompPath, {recursive: true});
+        await RxUtils.unpackArchive(archivePath, decompPath);
+        const indexPath = path.join(decompPath, "modrinth.index.json");
+        if (!fs.existsSync(indexPath)) {
+            throw Object.assign(new Error("modrinth.index.json is missing"), {decompPath});
+        }
+        const index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
+        return {decompPath, indexPath, index, ...RxPacks.parseModrinthIndex(index)};
+    }
+
+    // Базовая версия игры и список клиентских файлов из modrinth.index.json
+    static parseModrinthIndex = (modrinthIndex) => {
+        if (!modrinthIndex.name || !modrinthIndex.versionId || !modrinthIndex.dependencies?.minecraft || !Array.isArray(modrinthIndex.files)) {
+            throw new Error("Invalid Modrinth pack index");
+        }
+
+        const dependencyKeys = Object.keys(modrinthIndex.dependencies || {});
+        let baseVersionType = "vanilla";
+        if (dependencyKeys.includes("fabric-loader") || dependencyKeys.includes("fabric-api")) baseVersionType = "fabric";
+        if (dependencyKeys.includes("forge")) baseVersionType = "forge";
+        if (dependencyKeys.includes("neoforge")) baseVersionType = "neoforge";
+        if (dependencyKeys.includes("quilt") || dependencyKeys.includes("quilt-loader")) baseVersionType = "quilt";
+
+        const files = [];
+        modrinthIndex.files.forEach((item) => {
+            if (item?.env?.client && item.env.client !== "required") return;
+            const normalizedPath = path.normalize(item.path || "");
+            if (!normalizedPath || path.isAbsolute(normalizedPath) || normalizedPath === ".." || normalizedPath.startsWith(`..${path.sep}`)) {
+                throw new Error("Modrinth pack contains an unsafe file path");
+            }
+            if (!Array.isArray(item.downloads) || !item.downloads[0] || new URL(item.downloads[0]).protocol !== "https:") {
+                throw new Error("Modrinth pack contains an invalid download URL");
+            }
+            files.push({
+                hashes: item.hashes || {},
+                path: normalizedPath,
+                name: path.basename(normalizedPath),
+                url: item.downloads[0],
+                size: item.fileSize,
+                displayName: path.parse(normalizedPath).name
+            });
+        });
+
+        return {
+            files,
+            baseVersion: {
+                full: `${baseVersionType}-${modrinthIndex.dependencies.minecraft}`,
+                type: baseVersionType,
+                number: modrinthIndex.dependencies.minecraft
+            }
+        };
+    }
+
+    static copyModrinthOverrides = async (decompPath, modpackPath) => {
+        for (const overridesDirectory of ["overrides", "client-overrides"]) {
+            const sourcePath = path.join(decompPath, overridesDirectory);
+            if (fs.existsSync(sourcePath)) {
+                await fsExtra.copy(sourcePath, modpackPath, {overwrite: true});
+            }
+        }
+    }
+
+    // Импортировать пак с Modrinth (.mrpack). extra — дополнительные поля манифеста (например, source из каталога).
+    // Возвращает ID созданной сборки или false
+    static importModrinthPack = async (archivePath, iconUrl = false, extra = {}) => {
         RxToasts.create(MESSAGES.packs.importing, "publish", path.parse(archivePath).name, 2500);
 
         const modpacksPath = path.join(GAME_DATA, "modpacks");
-        const decompPath = path.join(modpacksPath, `.rx-modrinth-${crypto.randomUUID()}`);
+        let decompPath = false;
         let createdModpackPath = false;
 
         try {
-            fs.mkdirSync(decompPath, {recursive: true});
-            await RxUtils.unpackArchive(archivePath, decompPath);
+            const unpacked = await RxPacks.unpackModrinthPack(archivePath).catch(error => {
+                decompPath = error.decompPath || false;
+                throw error;
+            });
+            decompPath = unpacked.decompPath;
+            const modrinthIndex = unpacked.index;
 
-            const indexPath = path.join(decompPath, "modrinth.index.json");
-            if (!fs.existsSync(indexPath)) {
-                throw new Error("modrinth.index.json is missing");
-            }
-            const modrinthIndex = JSON.parse(fs.readFileSync(indexPath, "utf8"));
-            if (!modrinthIndex.name || !modrinthIndex.versionId || !modrinthIndex.dependencies?.minecraft || !Array.isArray(modrinthIndex.files)) {
-                throw new Error("Invalid Modrinth pack index");
-            }
-
-            const displayName = `${modrinthIndex.name} ${modrinthIndex.versionId}`;
-            const modpackId = RxPacks.modpackCleanID(displayName) || `modrinth_${Date.now()}`;
+            // Из каталога приходит название со страницы Modrinth: в самом .mrpack оно бывает техническим
+            const displayName = extra.displayName || `${modrinthIndex.name} ${modrinthIndex.versionId}`;
+            const modpackId = RxPacks.modpackCleanID(RxUtils.translit(displayName)) || `modrinth_${Date.now()}`;
             const modpackPath = path.join(modpacksPath, modpackId);
             if (fs.existsSync(modpackPath)) {
                 RxToasts.create(MESSAGES.packs.importFailed, "error", MESSAGES.packs.alreadyExists);
                 return false;
             }
 
-            const dependencyKeys = Object.keys(modrinthIndex.dependencies || {});
-            let baseVersionType = "vanilla";
-            if (dependencyKeys.includes("fabric-loader") || dependencyKeys.includes("fabric-api")) baseVersionType = "fabric";
-            if (dependencyKeys.includes("forge")) baseVersionType = "forge";
-            if (dependencyKeys.includes("neoforge")) baseVersionType = "neoforge";
-            if (dependencyKeys.includes("quilt") || dependencyKeys.includes("quilt-loader")) baseVersionType = "quilt";
-
-            const preparedFilesList = [];
-            modrinthIndex.files.forEach((item) => {
-                if (item?.env?.client && item.env.client !== "required") return;
-                const normalizedPath = path.normalize(item.path || "");
-                if (!normalizedPath || path.isAbsolute(normalizedPath) || normalizedPath === ".." || normalizedPath.startsWith(`..${path.sep}`)) {
-                    throw new Error("Modrinth pack contains an unsafe file path");
-                }
-                if (!Array.isArray(item.downloads) || !item.downloads[0] || new URL(item.downloads[0]).protocol !== "https:") {
-                    throw new Error("Modrinth pack contains an invalid download URL");
-                }
-                preparedFilesList.push({
-                    hashes: item.hashes || {},
-                    path: normalizedPath,
-                    name: path.basename(normalizedPath),
-                    url: item.downloads[0],
-                    size: item.fileSize,
-                    displayName: path.parse(normalizedPath).name
-                });
-            });
-
             fs.mkdirSync(modpackPath, {recursive: true});
             createdModpackPath = modpackPath;
-            for (const overridesDirectory of ["overrides", "client-overrides"]) {
-                const sourcePath = path.join(decompPath, overridesDirectory);
-                if (fs.existsSync(sourcePath)) {
-                    await fsExtra.copy(sourcePath, modpackPath, {overwrite: true});
-                }
-            }
+            await RxPacks.copyModrinthOverrides(decompPath, modpackPath);
 
+            const {displayName: _customName, ...extraFields} = extra;
             const manifestJson = {
                 id: modpackId,
                 uuid: crypto.randomUUID(),
                 displayName,
-                baseVersion: {
-                    full: `${baseVersionType}-${modrinthIndex.dependencies.minecraft}`,
-                    type: baseVersionType,
-                    number: modrinthIndex.dependencies.minecraft
-                },
-                files: preparedFilesList,
-                icon: iconUrl
+                baseVersion: unpacked.baseVersion,
+                files: unpacked.files,
+                icon: iconUrl,
+                created: Date.now(),
+                ...extraFields
             };
+            // Откуда сборка: по этим данным потом ищутся её обновления
+            if (manifestJson.source) {
+                manifestJson.source = {...manifestJson.source, packName: modrinthIndex.name, packVersion: modrinthIndex.versionId, defaultName: displayName};
+            }
             RxPacks.writeModpackManifest(modpackId, manifestJson);
-            await fsPromises.copyFile(indexPath, path.join(modpackPath, "modrinth.index.json"));
+            await fsPromises.copyFile(unpacked.indexPath, path.join(modpackPath, "modrinth.index.json"));
             RxToasts.create(MESSAGES.packs.imported, "check", displayName);
-            return true;
+            return modpackId;
         } catch (error) {
             console.error(error);
             RxCollector.writeLog(`Modrinth pack import failed [archive=${archivePath}] [error=${error}]`);
@@ -298,7 +331,62 @@ class RxPacks {
             RxToasts.create(MESSAGES.packs.importFailed, "error", error.message);
             return false;
         } finally {
-            await fsPromises.rm(decompPath, {recursive: true, force: true});
+            if (decompPath) await fsPromises.rm(decompPath, {recursive: true, force: true});
+        }
+    }
+
+    // Обновить сборку из нового .mrpack: файлы, которых больше нет в сборке, уходят в rx-mod-backups,
+    // моды, добавленные вручную, и миры не трогаются. Название меняется, только если пользователь его не переименовывал
+    static updateModrinthPack = async (modpackId, archivePath, source = {}) => {
+        const manifest = RxPacks.getModpackManifest(modpackId);
+        if (!manifest) return false;
+        const modpackPath = path.resolve(GAME_DATA, "modpacks", modpackId);
+        let decompPath = false;
+        try {
+            const unpacked = await RxPacks.unpackModrinthPack(archivePath).catch(error => {
+                decompPath = error.decompPath || false;
+                throw error;
+            });
+            decompPath = unpacked.decompPath;
+
+            const keep = new Set(unpacked.files.map(file => path.normalize(file.path).toLowerCase()));
+            const backupDir = path.join(modpackPath, "rx-mod-backups", new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-"));
+            let removed = 0;
+            for (const oldFile of manifest.files || []) {
+                const relative = path.normalize(oldFile.path || "");
+                if (!relative || relative === "." || keep.has(relative.toLowerCase())) continue;
+                const fullPath = path.resolve(modpackPath, relative);
+                if (!fullPath.startsWith(modpackPath + path.sep)) continue;
+                for (const candidate of [fullPath, `${fullPath}.disabled`]) {
+                    if (!fs.existsSync(candidate)) continue;
+                    const target = path.join(backupDir, path.relative(modpackPath, candidate));
+                    fs.mkdirSync(path.dirname(target), {recursive: true});
+                    fs.renameSync(candidate, target);
+                    removed++;
+                }
+            }
+            await RxPacks.copyModrinthOverrides(decompPath, modpackPath);
+
+            const oldSource = manifest.source || {};
+            const newSource = {...oldSource, ...source, packName: unpacked.index.name, packVersion: unpacked.index.versionId};
+            const renamed = manifest.displayName !== (oldSource.defaultName || `${oldSource.packName} ${oldSource.packVersion}`);
+            const displayName = renamed ? manifest.displayName
+                : (newSource.title ? `${newSource.title} ${newSource.versionNumber || unpacked.index.versionId}` : `${unpacked.index.name} ${unpacked.index.versionId}`);
+            RxPacks.writeModpackManifest(modpackId, {
+                ...manifest,
+                displayName,
+                baseVersion: unpacked.baseVersion,
+                files: unpacked.files,
+                source: {...newSource, defaultName: renamed ? oldSource.defaultName : displayName}
+            });
+            await fsPromises.copyFile(unpacked.indexPath, path.join(modpackPath, "modrinth.index.json"));
+            RxCollector.writeLog(`Packs: Updated ${modpackId} to ${unpacked.index.versionId} [movedToBackup=${removed}]`);
+            return true;
+        } catch (error) {
+            RxCollector.writeLog(`Packs: Update failed [pack=${modpackId}] [error=${error}]`);
+            return false;
+        } finally {
+            if (decompPath) await fsPromises.rm(decompPath, {recursive: true, force: true});
         }
     }
 

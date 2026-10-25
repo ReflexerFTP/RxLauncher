@@ -2,9 +2,13 @@
 // По умолчанию включены Главная, Настройки, Статистика и Консоль; остальное пользователь включает сам
 // (в настройках или прямо в установщике — тот оставляет installer-tabs.json рядом с config.json).
 class RxTabs {
-    static ALL = ["content", "settings", "instances", "mods", "skins", "servers", "statistics", "screenshots", "console"];
+    static ALL = ["content", "settings", "catalog", "instances", "mods", "skins", "servers", "statistics", "together", "screenshots", "console"];
     static LOCKED = ["content", "settings"];
-    static DEFAULT = ["content", "settings", "statistics", "console"];
+    static DEFAULT = ["content", "settings", "catalog", "statistics", "together", "console"];
+    // Вкладки, о которых установщик не знает: его выбор их не выключает
+    static INSTALLER_TABS = ["content", "settings", "instances", "mods", "skins", "servers", "statistics", "screenshots", "console"];
+    // Новые разделы 3.0 один раз включаются и у тех, кто настроил меню раньше
+    static ADDED_IN_3 = ["catalog", "together"];
     static CONFIG_KEY = "enabledTabs";
 
     static normalize = (list) => {
@@ -31,7 +35,10 @@ class RxTabs {
         try {
             if (!fs.existsSync(file)) return false;
             const choice = JSON.parse(fs.readFileSync(file, "utf8").replace(/^﻿/, ""));
-            if (Array.isArray(choice?.enabledTabs)) RxConfig.write(RxTabs.CONFIG_KEY, RxTabs.normalize(choice.enabledTabs));
+            if (Array.isArray(choice?.enabledTabs)) {
+                const keep = RxTabs.getEnabled().filter(tab => !RxTabs.INSTALLER_TABS.includes(tab));
+                RxConfig.write(RxTabs.CONFIG_KEY, RxTabs.normalize([...choice.enabledTabs, ...keep]));
+            }
             return true;
         } catch (_) {
             return false;
@@ -60,8 +67,8 @@ class RxTabs {
         if (!$grid.length) return;
         const enabled = RxTabs.getEnabled();
         const icons = {
-            content: "home", settings: "settings", instances: "stacks", mods: "extension", skins: "accessibility_new",
-            servers: "dns", statistics: "monitoring", screenshots: "photo_library", console: "terminal"
+            content: "home", settings: "settings", catalog: "travel_explore", instances: "stacks", mods: "extension", skins: "accessibility_new",
+            servers: "dns", statistics: "monitoring", together: "group", screenshots: "photo_library", console: "terminal"
         };
         $grid.html(RxTabs.ALL.map(tab => {
             const locked = RxTabs.LOCKED.includes(tab);
@@ -75,7 +82,16 @@ class RxTabs {
         }).join(""));
     };
 
+    static migrate = () => {
+        if (RxConfig.read("tabsMigrated3", false) === true) return;
+        if (RxConfig.isKeyExists(RxTabs.CONFIG_KEY)) {
+            RxConfig.write(RxTabs.CONFIG_KEY, RxTabs.normalize([...RxTabs.getEnabled(), ...RxTabs.ADDED_IN_3]));
+        }
+        RxConfig.write("tabsMigrated3", true);
+    };
+
     static init = () => {
+        RxTabs.migrate();
         RxTabs.applyInstallerChoice();
         $(document).on("click", "[data-tab-toggle]", function () {
             const tab = $(this).attr("data-tab-toggle");

@@ -54,12 +54,24 @@ assert.strictEqual(versions.installFolderFor("fabric", "1.21.4"), "fabric-1.21.4
 const config = {};
 const tabsModule = load("RxTabs.js", "RxTabs", {
     $: Object.assign(() => ({length: 0, on: () => {}}), {}),
-    RxConfig: {read: (key, fallback) => (key in config ? config[key] : fallback), write: (key, value) => { config[key] = value; }},
+    RxConfig: {
+        read: (key, fallback) => (key in config ? config[key] : fallback),
+        write: (key, value) => { config[key] = value; },
+        isKeyExists: key => key in config
+    },
     document: {querySelectorAll: () => []},
     Array, Set
 });
-// По умолчанию — только Главная, Настройки, Статистика, Консоль
-assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "statistics", "console"]);
+// По умолчанию — Главная, Настройки, Каталог, Статистика, Вместе, Консоль
+assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "statistics", "together", "console"]);
+// Обновление до 3.0 один раз добавляет новые разделы к уже настроенному меню
+config.enabledTabs = ["content", "settings", "mods"];
+tabsModule.migrate();
+assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "mods", "together"]);
+config.enabledTabs = ["content", "settings"];
+tabsModule.migrate();
+assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings"], "migration must run only once");
+delete config.enabledTabs;
 // Главную и Настройки выключить нельзя, мусорные значения отбрасываются, порядок как в меню
 assert.deepStrictEqual([...tabsModule.normalize(["mods", "junk", "console"])], ["content", "settings", "mods", "console"]);
 config.enabledTabs = ["mods"];

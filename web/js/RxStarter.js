@@ -265,6 +265,10 @@ class RxStarter {
             if(this.versionType === "forgeOptiFine"){
                 RxAssets.removeOptiFine(this.versionNumber, this.gameRoot);
             }
+            // Копии миров, в которых играли, — в фоне, игра уже закрыта и файлы не заняты
+            RxWorldBackups.afterGame(gameDirectory, RxCrashAnalyzer.session?.startedAt || Date.now()).catch(error => {
+                RxCollector.writeLog(`WorldBackups: After-game backup failed [error=${error}]`);
+            });
 
             gamePid = false;
             this.gamePid = 0;

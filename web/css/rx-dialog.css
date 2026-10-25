@@ -1,0 +1,133 @@
+/* ===== Диалоги RxDialog — в стиле окна настроек сборки ===== */
+.rx-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000000;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, .55);
+    backdrop-filter: blur(4px);
+    animation: rx-dialog-fade .16s ease-out;
+}
+
+.rx-dialog-backdrop.leaving { animation: rx-dialog-fade .16s ease-in reverse forwards; }
+
+.rx-dialog {
+    width: min(520px, calc(100% - 40px));
+    max-height: calc(100% - 60px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    border-radius: 18px;
+    border: 1px solid var(--rx-stroke-strong, rgba(255, 255, 255, .14));
+    background: var(--theme-primaryBg);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+    animation: rx-dialog-pop .18s cubic-bezier(.22, 1, .36, 1);
+}
+
+.rx-dialog-head { display: flex; gap: 12px; align-items: flex-start; flex: 0 0 auto; }
+
+.rx-dialog-icon {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    font-size: 23px;
+    color: var(--theme-primaryLighter);
+    background: color-mix(in srgb, var(--theme-primary) 18%, var(--theme-primaryBgLight));
+}
+
+.rx-dialog-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rx-dialog-copy h2 { margin: 0; font-size: 14pt; }
+.rx-dialog-copy p { margin: 0; color: var(--text-sub); font-size: 9.5pt; line-height: 1.45; white-space: pre-line; }
+
+.rx-dialog-items,
+.rx-dialog-choices {
+    min-height: 0;
+    flex: 0 1 auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0 4px 0 0;
+    list-style: none;
+}
+
+.rx-dialog-item {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 10px;
+    padding: 9px 11px;
+    border-radius: 12px;
+    background: var(--theme-primaryBgLight);
+}
+
+.rx-dialog-item > .material-symbols-outlined { font-size: 19px; color: var(--theme-primaryLighter); }
+.rx-dialog-item.error > .material-symbols-outlined { color: var(--error); }
+.rx-dialog-item.warn > .material-symbols-outlined { color: var(--warning); }
+.rx-dialog-item.ok > .material-symbols-outlined { color: var(--success); }
+.rx-dialog-item div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rx-dialog-item b { font-size: 9.5pt; }
+.rx-dialog-item span { color: var(--text-sub); font-size: 8.5pt; line-height: 1.4; overflow-wrap: anywhere; }
+
+.rx-dialog-choice {
+    flex: 0 0 auto;
+    min-height: 52px;
+    height: auto !important;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--rx-stroke) !important;
+    background: var(--theme-primaryBgLight) !important;
+    color: var(--text-color) !important;
+    text-align: left;
+}
+
+.rx-dialog-choice:hover { border-color: color-mix(in srgb, var(--theme-primary) 55%, transparent) !important; }
+.rx-dialog-choice img { width: 36px; height: 36px; border-radius: 9px; object-fit: cover; image-rendering: pixelated; }
+.rx-dialog-choice > .material-symbols-outlined { width: 36px; font-size: 22px; color: var(--theme-primaryLighter); text-align: center; }
+.rx-dialog-choice div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rx-dialog-choice b { font-size: 10pt; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.rx-dialog-choice span { color: var(--text-sub); font-size: 8.5pt; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+
+.rx-dialog-input {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border-radius: 11px;
+    border: 1px solid var(--rx-stroke);
+    background: var(--theme-primaryBgLight);
+    color: var(--text-color);
+    font: 9.5pt "Fira Code", monospace;
+    resize: none;
+    -webkit-user-select: text;
+    user-select: text;
+    outline: none;
+}
+
+.rx-dialog-input:focus { border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent); }
+
+.rx-dialog-actions { flex: 0 0 auto; display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+
+.rx-dialog-actions button {
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 15px !important;
+    border-radius: 11px !important;
+    font-size: 9.5pt;
+}
+
+.rx-dialog-actions .material-symbols-outlined { font-size: 18px; color: inherit; }
+.rx-dialog-actions .rx-dialog-danger { background: var(--error) !important; color: #fff !important; }
+
+@keyframes rx-dialog-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rx-dialog-pop { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }

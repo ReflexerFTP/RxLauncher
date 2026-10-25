@@ -133,6 +133,10 @@ class RxFlyout {
             return false;
         }
 
+        if (!(await RxLaunchCheck.run())) {
+            return false;
+        }
+
         return RxStarter.simpleStart(activeVersion);
     }
 }
