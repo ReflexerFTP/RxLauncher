@@ -6,6 +6,8 @@ const path = require("path");
 const ejs = require("ejs-electron");
 
 const outDir = path.resolve(process.argv.slice(2).find(arg => !arg.startsWith("--")) || path.join(os.tmpdir(), "rxlaunch-site-shots"));
+// Двойная плотность пикселей — скриншоты чёткие на экранах с высоким разрешением
+const SCALE = Number(process.env.RX_SHOT_SCALE || 2);
 fs.mkdirSync(outDir, {recursive: true});
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "rxlaunch-site-shots-"));
 process.env.USERPROFILE = tempRoot;
@@ -43,10 +45,24 @@ const STAGES = [
 
 app.whenReady().then(async () => {
     ejs.listen();
-    const window = new BrowserWindow({width: 1400, height: 900, show: false, frame: false, webPreferences: {nodeIntegration: true, contextIsolation: false}});
+    // Рисуем вне экрана (пользователь окно не видит), а размер и плотность задаём через протокол отладки Chromium:
+    // так снимок получается 1400×900 при любом размере монитора
+    // Окно показано, но стоит за пределами экрана и не принимает клики — пользователь его не видит и не заденет
+    const window = new BrowserWindow({
+        width: 1400, height: 900, x: -6000, y: -6000, show: false, frame: false, focusable: false, skipTaskbar: true,
+        webPreferences: {nodeIntegration: true, contextIsolation: false, backgroundThrottling: false}
+    });
+    window.setIgnoreMouseEvents(true);
+    window.showInactive();
+    window.setPosition(-6000, -6000);
+    const cdp = window.webContents.debugger;
+    const capture = async () => Buffer.from((await cdp.sendCommand("Page.captureScreenshot", {format: "png", fromSurface: true})).data, "base64");
     await window.loadURL(`file://${path.join(__dirname, "..", "web", "index.ejs").replace(/\\/g, "/")}`);
     await Promise.race([ready, delay(15000)]);
-    window.showInactive();
+    console.log("loaded");
+    cdp.attach("1.3");
+    await cdp.sendCommand("Emulation.setDeviceMetricsOverride", {width: 1400, height: 900, deviceScaleFactor: SCALE, mobile: false});
+    console.log("emulated");
     await delay(1500);
     await window.webContents.executeJavaScript(`(() => {
         RxConfig.write("activeVersion", "fabric-1.21.4");
@@ -113,8 +129,7 @@ app.whenReady().then(async () => {
             await window.webContents.executeJavaScript(`(async () => { await (${code}); RxToasts.removeAll(); })()`);
             await delay(wait);
             await window.webContents.executeJavaScript(`RxToasts.removeAll()`);
-            const image = await window.webContents.capturePage();
-            fs.writeFileSync(path.join(outDir, `${name}.png`), image.toPNG());
+            fs.writeFileSync(path.join(outDir, `${name}.png`), await capture());
             console.log(`shot ${name}`);
         } catch (error) {
             console.error(`${name}: ${error.message}`);
