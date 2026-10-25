@@ -1,0 +1,189 @@
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">work_update</span>
+    </div>
+    <span class="name flex-grow">{{settings.game.autoInstallDeps}}</span>
+    <label class="switch" data-setting="autoInstallDeps" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">terminal</span>
+    </div>
+    <span class="name flex-grow">{{settings.game.consoleOnStart}}</span>
+    <label class="switch" data-setting="consoleOnStart">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">bug_report</span>
+    </div>
+    <span class="name flex-grow">{{settings.game.consoleOnCrash}}</span>
+    <label class="switch" data-setting="consoleOnCrash">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">hide</span>
+    </div>
+    <span class="name flex-grow">{{settings.game.hideOnStart}}</span>
+    <label class="switch" data-setting="hideLauncherOnStart" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item discord-rpc-master-setting">
+    <div class="icon">
+        <span class="material-symbols-outlined">online_prediction</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.game.discordRpc.title}}</span>
+        <div class="description">{{settings.game.discordRpc.description}}</div>
+    </div>
+    <label class="switch" data-setting="discordRpcEnabled" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="discord-rpc-options">
+    <div class="flex flex-center flex-gap-8 settings-item discord-rpc-option">
+        <div class="icon">
+            <span class="material-symbols-outlined">badge</span>
+        </div>
+        <div class="flex flex-grow flex-col flex-justify-center">
+            <span class="name">{{settings.game.discordRpc.showNickname.title}}</span>
+            <div class="description">{{settings.game.discordRpc.showNickname.description}}</div>
+        </div>
+        <label class="switch" data-setting="discordRpcShowNickname" data-checked>
+            <input type="checkbox">
+            <span class="inner"></span>
+        </label>
+    </div>
+
+    <div class="flex flex-center flex-gap-8 settings-item discord-rpc-option">
+        <div class="icon">
+            <span class="material-symbols-outlined">dns</span>
+        </div>
+        <div class="flex flex-grow flex-col flex-justify-center">
+            <span class="name">{{settings.game.discordRpc.showServer.title}}</span>
+            <div class="description">{{settings.game.discordRpc.showServer.description}}</div>
+        </div>
+        <label class="switch" data-setting="discordRpcShowServer" data-checked>
+            <input type="checkbox">
+            <span class="inner"></span>
+        </label>
+    </div>
+
+    <div class="flex flex-center flex-gap-8 settings-item discord-rpc-option">
+        <div class="icon">
+            <span class="material-symbols-outlined">timer</span>
+        </div>
+        <div class="flex flex-grow flex-col flex-justify-center">
+            <span class="name">{{settings.game.discordRpc.showTime.title}}</span>
+            <div class="description">{{settings.game.discordRpc.showTime.description}}</div>
+        </div>
+        <label class="switch" data-setting="discordRpcShowTime" data-checked>
+            <input type="checkbox">
+            <span class="inner"></span>
+        </label>
+    </div>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">shield_lock</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.game.serverPrivacyMode.title}}</span>
+        <div class="description">{{settings.game.serverPrivacyMode.description}}</div>
+    </div>
+    <label class="switch" data-setting="serverPrivacyMode">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item network-compatibility-setting">
+    <div class="icon">
+        <span class="material-symbols-outlined">lan</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.startup.multiplayerFix.title}}</span>
+        <div class="description">{{settings.startup.multiplayerFix.description}}<br/>{{settings.startup.multiplayerFix.dependenciesNote}}</div>
+        <button class="button pill small network-help" type="button"
+                onclick="openExternal('https://account.xbox.com/settings')">
+            <span class="material-symbols-outlined">open_in_new</span>
+            <span>{{settings.startup.multiplayerFix.openSettings}}</span>
+        </button>
+        <div class="flex flex-center flex-gap-8 network-check-row">
+            <button class="button pill small network-check" type="button" onclick="checkNetworkCompatibility()">
+                <span class="material-symbols-outlined">network_check</span>
+                <span>{{settings.startup.multiplayerFix.checkConnection}}</span>
+            </button>
+            <span class="network-check-status" aria-live="polite"></span>
+        </div>
+    </div>
+    <label class="switch" data-setting="networkCompatibilityMode">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<style>
+    #modal-settings .discord-rpc-options {
+        display: grid;
+        gap: 8px;
+        padding-left: 38px;
+        transition: opacity 160ms ease;
+    }
+
+    #modal-settings .discord-rpc-options.disabled {
+        opacity: .48;
+    }
+
+    #modal-settings .network-compatibility-setting .network-help {
+        width: max-content;
+        margin-top: 8px;
+        padding: 6px 10px;
+        font-size: 10pt;
+    }
+
+    #modal-settings .network-compatibility-setting .network-check-row {
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+
+    #modal-settings .network-compatibility-setting .network-check {
+        width: max-content;
+        padding: 6px 10px;
+        font-size: 10pt;
+    }
+
+    #modal-settings .network-compatibility-setting .network-check-status {
+        color: var(--color-text-secondary, #aaa);
+        font-size: 10pt;
+    }
+
+    #modal-settings .network-compatibility-setting .network-check-status.ok {
+        color: #68d391;
+    }
+
+    #modal-settings .network-compatibility-setting .network-check-status.error {
+        color: #ff8a80;
+    }
+
+    #modal-settings .network-compatibility-setting .network-help .material-symbols-outlined {
+        font-size: 16px;
+    }
+</style>

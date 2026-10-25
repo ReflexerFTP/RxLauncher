@@ -1,0 +1,103 @@
+/* ===== RxSelect: выпадающий список вместо системного <select> ===== */
+.rx-select-native { display: none !important; }
+
+.rx-select {
+    position: relative;
+    display: inline-flex;
+    min-width: 0;
+    overflow: visible;
+}
+
+.rx-select-trigger {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px 0 2px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text-color);
+    font: inherit;
+    font-size: 9.5pt;
+    text-align: left;
+    cursor: pointer;
+    transform: none !important;
+}
+
+.rx-select-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rx-select-chevron {
+    flex: 0 0 auto;
+    color: var(--text-sub);
+    font-size: 18px !important;
+    transition: transform .15s ease;
+}
+
+.rx-select.open .rx-select-chevron { transform: rotate(180deg); }
+.rx-select-trigger:disabled { opacity: .5; cursor: default; }
+
+/* Меню рисуется в body и не обрезается прокруткой окон */
+.rx-select-menu {
+    position: fixed;
+    z-index: 9600;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 5px;
+    overflow-y: auto;
+    border-radius: 12px;
+    border: 1px solid var(--rx-stroke-strong, rgba(255, 255, 255, .14));
+    background-color: var(--theme-primaryBg);
+    background-image: linear-gradient(var(--theme-primaryBg), var(--theme-primaryBg));
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+    animation: rx-select-in .12s ease-out;
+}
+
+@keyframes rx-select-in { from { opacity: 0; transform: translateY(-4px); } }
+
+.rx-select-option {
+    flex: 0 0 auto;
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 9.5pt;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.rx-select-option > span:first-child { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.rx-select-option:hover,
+.rx-select-option.focused { background: var(--theme-primaryBgLight); }
+.rx-select-option.selected { color: var(--theme-primaryLighter); font-weight: 700; }
+.rx-select-option.disabled { opacity: .45; cursor: default; }
+
+.rx-select-option .material-symbols-outlined {
+    flex: 0 0 auto;
+    font-size: 17px;
+    visibility: hidden;
+    font-variation-settings: "FILL" 1;
+}
+
+.rx-select-option.selected .material-symbols-outlined { visibility: visible; }
+
+.rx-select-group {
+    padding: 8px 10px 3px;
+    color: var(--text-sub);
+    font-size: 8pt;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}

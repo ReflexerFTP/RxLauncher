@@ -1,0 +1,68 @@
+#modal-packs .wrapper .grid {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 256px));
+    gap: 12px;
+    justify-content: center;
+}
+
+#modal-packs > div:nth-child(1) {
+    margin-bottom: 0;
+}
+
+#modal-packs .wrapper {
+    padding: 16px 0;
+}
+
+#modal-packs .wrapper .grid .item {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--theme-primaryBgLight);
+    padding: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+#modal-packs .wrapper .grid .item.add {
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+}
+
+#modal-packs .wrapper .grid .item.add button {
+    width: 100%;
+}
+
+#modal-packs .wrapper .grid .item .version {
+    font-size: 12pt;
+    color: var(--text-sub);
+}
+
+#modal-packs .wrapper .grid .item:not(.add):hover {
+    filter: brightness(113%);
+}
+
+#modal-packs .wrapper .grid .item .img-wrap img {
+    width: 96px;
+    height: 96px;
+    border-radius: 18px;
+}
+
+#modal-packs .wrapper .grid .item .img-wrap {
+    width: 100%;
+    height: 145px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--theme-primaryBgLighter);
+    border-radius: 16px;
+}
+
+#modal-packs .wrapper {
+    height: 98%;
+    overflow-y: auto;
+}

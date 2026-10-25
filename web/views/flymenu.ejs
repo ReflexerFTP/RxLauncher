@@ -1,0 +1,58 @@
+<link rel="stylesheet" href="views/flymenu.css"/>
+
+<div class="flymenu animate__animated animate__fadeInLeft animate__faster">
+    <div class="menu-wrapped">
+        <div class="item active" data-modal="content" data-text="{{flymenu.home}}">
+            <span class="material-symbols-outlined">home</span>
+        </div>
+        <div class="item" data-modal="settings" data-text="{{flymenu.settings}}">
+            <span class="material-symbols-outlined">settings</span>
+        </div>
+        <div class="item" data-modal="instances" data-text="{{flymenu.instances}}">
+            <span class="material-symbols-outlined">stacks</span>
+        </div>
+        <div class="item" data-modal="mods" data-text="{{flymenu.mods}}">
+            <span class="material-symbols-outlined">extension</span>
+        </div>
+        <div class="item" data-modal="skins" data-text="{{flymenu.skins}}">
+            <span class="material-symbols-outlined">accessibility_new</span>
+        </div>
+        <div class="item" data-modal="servers" data-text="{{flymenu.servers}}">
+            <span class="material-symbols-outlined">dns</span>
+        </div>
+        <div class="item" data-modal="statistics" data-text="{{flymenu.statistics}}">
+            <span class="material-symbols-outlined">monitoring</span>
+        </div>
+        <div class="item" data-modal="screenshots" data-text="{{flymenu.screenshots}}">
+            <span class="material-symbols-outlined">photo_library</span>
+        </div>
+        <div class="item" data-modal="console" data-text="{{console.title}}">
+            <span class="material-symbols-outlined">terminal</span>
+        </div>
+    </div>
+    <div class="item" data-text="{{flymenu.folder}}" onclick="openExternal(GAME_DATA)">
+        <span class="material-symbols-outlined">folder</span>
+    </div>
+</div>
+
+<script>
+    $(".flymenu .item").click(async function () {
+        if ($(this).hasClass("active") || typeof $(this).data("modal") === "undefined") {
+            return;
+        }
+
+        let modalName = $(this).data("modal");
+        await RxModals.switchModal(modalName);
+    })
+
+    $(".flymenu .item").mouseenter(function () {
+        if ($(this).hasClass("active")) {
+            return;
+        }
+        RxFlyout.showTooltip(this, $(this).data("text"));
+    });
+
+    $(".flymenu .item").mouseleave(function () {
+        RxFlyout.hideTooltip();
+    });
+</script>

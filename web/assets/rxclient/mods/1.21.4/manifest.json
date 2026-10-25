@@ -1,0 +1,31 @@
+{
+  "gameVersion": "1.21.4",
+  "generatedAt": "2026-05-22T15:28:13.657Z",
+  "loaders": {
+    "fabric": {
+      "path": "mods/1.21.4/fabric",
+      "files": [
+        "fancymenu_fabric_3.7.1_MC_1.21.4.jar",
+        "melody_fabric_1.0.10_MC_1.21.jar",
+        "fabric-api-0.119.4+1.21.4.jar",
+        "konkrete_fabric_1.9.9_MC_1.21.4.jar"
+      ]
+    },
+    "forge": {
+      "path": "mods/1.21.4/forge",
+      "files": [
+        "fancymenu_forge_3.7.1_MC_1.21.4.jar",
+        "melody_forge_1.0.10_MC_1.21.jar",
+        "konkrete_forge_1.9.10_MC_1.21.4.jar"
+      ]
+    },
+    "neoforge": {
+      "path": "mods/1.21.4/neoforge",
+      "files": [
+        "fancymenu_neoforge_3.7.1_MC_1.21.4.jar",
+        "konkrete_neoforge_1.9.9_MC_1.21.4.jar",
+        "melody_neoforge_1.0.10_MC_1.21.jar"
+      ]
+    }
+  }
+}

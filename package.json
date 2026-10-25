@@ -1,0 +1,151 @@
+{
+  "name": "rxclient",
+  "version": "2.12.0",
+  "description": "Minecraft-лаунчер. Быстрый. Индивидуальный. Твой",
+  "main": "app.js",
+  "scripts": {
+    "start": "electron .",
+    "verify": "node ./verifyTranslations.js",
+    "verify-stats": "node ./tests/playStats.test.js",
+    "verify-forge-optifine": "node ./tests/forgeOptiFine.test.js",
+    "verify-servers": "node ./tests/serverCatalog.test.js && node ./tests/minecraftServers.test.js",
+    "verify-installer": "node ./tests/installerAssets.test.js",
+    "build-installer": "node ./resources/installer/build-installer.cjs dist",
+    "build-uninstaller": "node ./resources/installer/build-installer.cjs --uninstaller",
+    "render-installer-art": "electron ./resources/installer/art/render-art.cjs",
+    "verify-update-security": "node ./tests/updateSecurity.test.js",
+    "verify-network": "node ./tests/networkCompatibility.test.js",
+    "verify-signatures": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./scripts/verify-windows-signatures.ps1",
+    "verify-ui": "node ./tests/uiLocale.test.js",
+    "verify-skins": "node ./tests/minecraftSkins.test.js",
+    "verify-mods": "node ./tests/modsManager.test.js && node ./tests/modMeta.test.js",
+    "verify-crash": "node ./tests/crashAnalyzer.test.js",
+    "verify-branding": "node ./tests/launcherBranding.test.js",
+    "smoke-ui": "electron ./tests/electronUiSmoke.js",
+    "dev": "cross-env LAUNCHER_IN_DEV=yes electron .",
+    "build-win": "node ./scripts/build-signed-win.js",
+    "build-linux": "electron-builder build --linux --publish never",
+    "test": "cross-env LAUNCHER_IN_DEV=yes LAUNCHER_IN_TEST=yes electron ."
+  },
+  "author": "MaxRx",
+  "license": "GPL-3.0",
+  "homepage": "https://rxlauncher.ru",
+  "bugs": "https://github.com/MaxRx/RxLauncher2/issues",
+  "repository": "https://github.com/MaxRx/RxLauncher2",
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8",
+    "electron-reloader": "^1.2.3"
+  },
+  "dependencies": {
+    "colors": "^1.4.0",
+    "compressing": "^1.10.1",
+    "console-stamp": "^3.1.2",
+    "discord-rpc": "^4.0.1",
+    "ejs-electron": "^3.0.0",
+    "electron-updater": "^6.3.9",
+    "fs-extra": "^11.3.0",
+    "gamedig": "^5.2.0",
+    "jimp": "^0.22.12",
+    "jquery": "^3.7.1",
+    "machine-uuid": "^1.2.0",
+    "mcnbt": "^2.0.3",
+    "minecraft-launcher-core": "^3.18.2",
+    "msmc": "^5.0.5",
+    "open": "^8.4.2",
+    "request": "^2.88.2",
+    "tomate-loaders": "^2.0.2",
+    "toml": "^3.0.0",
+    "tree-kill": "^1.2.2",
+    "yauzl": "^2.10.0"
+  },
+  "build": {
+    "productName": "RxLauncher",
+    "appId": "ru.maxrx.rxlauncher",
+    "copyright": "© 2024 MaxRx",
+    "directories": {
+      "buildResources": "resources"
+    },
+    "extraResources": [
+      {
+        "from": "resources/icon.ico",
+        "to": "icon.ico"
+      }
+    ],
+    "linux": {
+      "target": [
+        "deb",
+        "rpm",
+        "tar.gz"
+      ],
+      "maintainer": "MaxRx",
+      "vendor": "MaxRx",
+      "icon": "web/assets/icon.png"
+    },
+    "win": {
+      "asar": true,
+      "target": "nsis",
+      "icon": "resources/icon.ico",
+      "forceCodeSigning": true,
+      "verifyUpdateCodeSignature": true,
+      "signtoolOptions": {
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+      }
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://cdn.rxlauncher.ru/updates"
+    },
+    "nsis": {
+      "installerIcon": "resources/icon.ico",
+      "uninstallerIcon": "resources/icon.ico",
+      "installerHeader": "resources/installerHeaderRx.bmp",
+      "installerSidebar": "resources/installerSidebarRx.bmp",
+      "uninstallerSidebar": "resources/uninstallerSidebarRx.bmp",
+      "include": "resources/installer.nsh",
+      "artifactName": "RxLauncher-Core-${version}.${ext}",
+      "unicode": true,
+      "installerLanguages": [
+        "ru_RU",
+        "en_US"
+      ],
+      "language": "1049",
+      "displayLanguageSelector": false,
+      "deleteAppDataOnUninstall": false,
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "selectPerMachineByDefault": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "RxLauncher",
+      "uninstallDisplayName": "RxLauncher ${version}"
+    },
+    "files": [
+      "**/*",
+      "node_modules/**/*",
+      "!dist{,/**/*}",
+      "!dist-*{,/**/*}",
+      "!logs{/*}",
+      "!logs/",
+      "!logs",
+      "!cache{/*}",
+      "!tests/**/*",
+      "!tests/",
+      "!config.json",
+      "!rx_accounts.json",
+      "!web/assets/**/*.source.png",
+      "!resources/installer{,/**/*}",
+      "!LICENSE",
+      "!README.md",
+      "!.gitignore",
+      "!.git{/*}"
+    ]
+  }
+}

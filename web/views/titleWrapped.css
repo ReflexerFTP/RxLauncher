@@ -1,0 +1,206 @@
+/* ===== Верхняя панель ===== */
+.title-wrapper {
+    width: 100%;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 2px;
+}
+
+/* Бренд (лого + название) */
+.title-wrapper .brand {
+    padding: 5px 12px 5px 8px;
+    border-radius: 12px;
+    cursor: default;
+}
+
+.title-wrapper .brand img {
+    border-radius: 8px;
+}
+
+.title-wrapper .brand span:not(.brand-caret) {
+    font-size: 15pt;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+.title-wrapper .brand .brand-caret {
+    font-size: 18px;
+    color: var(--text-sub);
+    opacity: 0.7;
+}
+
+/* Правый кластер */
+.title-wrapper .topbar-right {
+    margin-left: auto;
+    -webkit-app-region: no-drag;
+}
+
+/* ===== Аккаунт-чип ===== */
+/* Ник в чипе имеет класс .title, а layout.css делает .title-wrapper .title зоной
+   перетаскивания окна — клики по нику терялись. Весь чип кликабелен целиком. */
+.title-wrapper .account-chip,
+.title-wrapper .account-chip * {
+    -webkit-app-region: no-drag !important;
+}
+
+.title-wrapper .account-chip {
+    -webkit-app-region: no-drag;
+    display: flex;
+    align-items: center;
+    background: var(--theme-primaryBgLight);
+    border: 1px solid var(--theme-primaryBgLighter);
+    border-radius: 11px;
+    padding: 5px 12px 5px 8px;
+    height: 38px;
+    cursor: pointer;
+    transition: 0.18s;
+}
+
+.title-wrapper .account-chip:hover {
+    filter: brightness(112%);
+}
+
+html.light .title-wrapper .account-chip:hover {
+    filter: brightness(94%);
+}
+
+.title-wrapper #accountSelectPlaceholder {
+    min-width: 110px;
+    height: 26px;
+    border-radius: 8px;
+    background: transparent;
+}
+
+.title-wrapper #accountSelect {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: transparent !important;
+    height: auto;
+    padding: 0;
+    border-radius: 0;
+    grid-template-columns: none;
+    grid-template-areas: none;
+}
+
+.title-wrapper #accountSelect .icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--theme-primaryBgLighter);
+}
+
+.title-wrapper #accountSelect .icon img,
+.title-wrapper #accountSelect img.icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    object-fit: cover;
+}
+
+.title-wrapper #accountSelect .icon .type {
+    display: none !important;
+}
+
+.title-wrapper #accountSelect .title {
+    font-size: 12pt;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.title-wrapper #accountSelect .description,
+.title-wrapper #accountSelect .button,
+.title-wrapper #accountSelect .check,
+.title-wrapper #accountSelect .buttons {
+    display: none !important;
+}
+
+/* Зелёная точка онлайна */
+.title-wrapper #accountSelect::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--theme-primaryLighter);
+    box-shadow: 0 0 7px var(--theme-primaryLighter);
+    flex: 0 0 auto;
+    margin-left: 3px;
+}
+
+.title-wrapper .account-chip.no-account #accountSelect::after {
+    display: none;
+}
+
+/* ===== Переключатель языка ===== */
+.title-wrapper .lang-toggle {
+    -webkit-app-region: no-drag;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--theme-primaryBgLight);
+    border: 1px solid var(--theme-primaryBgLighter);
+    border-radius: 11px;
+    padding: 3px;
+    height: 38px;
+}
+
+.title-wrapper .lang-toggle .lang-opt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 100%;
+    padding: 0 6px;
+    border-radius: 8px;
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: 0.18s;
+}
+
+.title-wrapper .lang-toggle .lang-opt:hover:not(.active) {
+    background: var(--theme-primaryBgLighter);
+    color: var(--text-color);
+}
+
+.title-wrapper .lang-toggle .lang-opt.active {
+    background: var(--theme-primary);
+    color: var(--theme-text);
+}
+
+/* ===== Кнопки окна ===== */
+.title-wrapper .windowButtons {
+    -webkit-app-region: no-drag;
+    margin-left: 2px;
+}
+
+.title-wrapper .win-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--theme-primaryBgLight);
+    border: 1px solid var(--theme-primaryBgLighter);
+}
+
+.title-wrapper .win-btn .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.title-wrapper .win-btn:hover {
+    background: var(--theme-primaryBgLighter);
+}
+
+.title-wrapper .win-close:hover {
+    background: var(--error) !important;
+}
+
+.title-wrapper .win-close:hover .material-symbols-outlined {
+    color: white;
+}

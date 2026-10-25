@@ -1,0 +1,35 @@
+{
+  "loader": "fabric",
+  "gameVersion": "1.21.4",
+  "generatedAt": "2026-05-22T15:28:15.802Z",
+  "files": [
+    {
+      "projectId": "Wq5SjeWM",
+      "versionId": "rRtRRSD0",
+      "filename": "fancymenu_fabric_3.7.1_MC_1.21.4.jar",
+      "sha1": "b41d6e1fea365c48fe6d1786b07c910d6583c1d9",
+      "size": 3890365
+    },
+    {
+      "projectId": "CVT4pFB2",
+      "versionId": "OqxSeb4n",
+      "filename": "melody_fabric_1.0.10_MC_1.21.jar",
+      "sha1": "5624eea73f251c70a9489192d326f9b4aab3b13c",
+      "size": 188035
+    },
+    {
+      "projectId": "P7dR8mSH",
+      "versionId": "p96k10UR",
+      "filename": "fabric-api-0.119.4+1.21.4.jar",
+      "sha1": "1c7871b6af04edc8b8f0dbad12606d67f6118a11",
+      "size": 2149128
+    },
+    {
+      "projectId": "J81TRJWm",
+      "versionId": "9I475ADm",
+      "filename": "konkrete_fabric_1.9.9_MC_1.21.4.jar",
+      "sha1": "af8d52b03ba5af9a6e10dcfed67ab862e2445d1b",
+      "size": 787890
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru" style="display: none">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: file: https:; media-src 'self' data: blob: file:; font-src 'self' data: file:; connect-src 'self' https: http:; worker-src blob:;"/>
+
+    <!-- Скрпиты -->
+    <script src="./js/renderer.js"></script>
+    <script src="./js/howler.min.js"></script>
+    <script src="./js/colors.js"></script>
+    <script src="./js/RxPatchNotes.js"></script>
+    <script src="./js/RxPatchFeed.js"></script>
+    <script src="./js/RxVersionArtwork.js"></script>
+
+    <script src="./js/RxConfig.js"></script>
+    <script src="./js/RxPrivacy.js"></script>
+    <script src="./js/RxBranding.js"></script>
+    <script src="./js/RxDiscordRpc.js"></script>
+
+    <!-- Cтили -->
+    <link href="./css/globals.css" rel="stylesheet">
+    <link href="./css/animate.min.css" rel="stylesheet">
+
+    <script src="./js/RxConsoleUI.js"></script>
+    <script src="./js/RxCollector.js"></script>
+    <script src="./js/RxTranslator.js"></script>
+    <script>RxTranslator.loadCurrentLanguageToGlobalVariable()</script>
+
+    <script src="./js/RxOptimizer.js"></script>
+    <script src="./js/RxAccountsManager.js"></script>
+    <script src="./js/RxAccountsUI.js"></script>
+    <script src="./js/RxAlerts.js"></script>
+    <script src="./js/RxAssets.js"></script>
+    <script src="./js/RxAssetsParsers.js"></script>
+    <script src="./js/RxDownloader.js"></script>
+    <script src="./js/RxCrashAnalyzer.js"></script>
+    <script src="./js/RxCrashUI.js"></script>
+    <script src="./js/RxElybyManager.js"></script>
+    <script src="./js/RxFlyout.js"></script>
+    <script src="./js/RxJavaManager.js"></script>
+    <script src="./js/RxLaunchConfigurator.js"></script>
+    <script src="./js/RxModals.js"></script>
+    <script src="./js/RxModMeta.js"></script>
+    <script src="./js/RxModsManager.js"></script>
+    <script src="./js/RxPackManagerUI.js"></script>
+    <script src="./js/RxModsUpdater.js"></script>
+    <script src="./js/RxPacks.js"></script>
+    <script src="./js/RxCurseForge.js"></script>
+    <script src="./js/RxPacksUI.js"></script>
+    <script src="./js/RxPlayStats.js"></script>
+    <script src="./js/RxStatisticsUI.js"></script>
+    <script src="./js/RxRequests.js"></script>
+    <script src="./js/RxMinecraftServers.js"></script>
+    <script src="./js/RxServersUI.js"></script>
+    <script src="./js/RxSkinBrowserUI.js"></script>
+    <script src="./js/RxStarter.js"></script>
+    <script src="./js/RxTests.js"></script>
+    <script src="./js/RxThemes.js"></script>
+    <script src="./js/RxToasts.js"></script>
+    <script src="./js/RxUtils.js"></script>
+    <script src="./js/RxUI.js"></script>
+    <script src="./js/RxUpdater.js"></script>
+    <script src="./js/RxVersionsManager.js"></script>
+    <script src="./js/RxCustomVersions.js"></script>
+    <script src="./js/RxSelect.js"></script>
+    <script src="./js/RxMemoryAdvisor.js"></script>
+    <script src="./js/RxScreenshotsUI.js"></script>
+    <script src="./js/RxModrinthCatalog.js"></script>
+    <script src="./js/RxInstancesUI.js"></script>
+    <script src="./js/RxTabs.js"></script>
+    <script src="./js/RxVersionsUI.js"></script>
+    <script src="./js/RxWorldsManager.js"></script>
+
+    <title>RxLauncher</title>
+</head>
+
+<body class="global-wrapper">
+<!-- Фон -->
+<div class="background img"></div>
+
+<!-- Анимация запуска -->
+<%- include('views/startAnimation'); %>
+
+<!-- Главный контент -->
+<div class="layout hide-on-loading">
+    <!-- Заголовок окна -->
+    <%- include('views/titleWrapped'); %>
+
+    <!-- Flymenu (sidebar) -->
+    <%- include('views/flymenu'); %>
+
+    <!-- Основной контент лаунчера -->
+    <div class="content">
+        <!-- Модальные окна НАЧАЛО-->
+        <%- include('modals/settings'); %>
+        <%- include('modals/changelog'); %>
+        <%- include('modals/installMods'); %>
+        <%- include('modals/mods'); %>
+        <%- include('modals/servers'); %>
+        <%- include('modals/skins'); %>
+        <%- include('modals/statistics'); %>
+        <%- include('modals/screenshots'); %>
+        <%- include('modals/instances'); %>
+        <%- include('modals/console'); %>
+        <%- include('modals/content'); %>
+        <!-- Модальные окна КОНЕЦ-->
+    </div>
+</div>
+
+<!-- Оверлей для фона модальных окон -->
+<div class="modal-overlay"></div>
+
+<!-- Пул для уведомлений -->
+<div id="toasts-pool"></div>
+
+<!-- Внешние модальные окна поверх всех -->
+<%- include('modals/accounts'); %>
+<%- include('modals/versions'); %>
+<%- include('modals/elybyLogin'); %>
+<%- include('modals/crash'); %>
+<%- include('modals/selectWorld'); %>
+<%- include('modals/packManager'); %>
+<%- include('modals/createPack'); %>
+</body>
+</html>
+<script>
+    let currentThemeData, loadedThemeData;
+    let selectedServerFromList = false;
+    $(async function () {
+        // Создание директорию для игры
+        RxUtils.createMissingDirectories(DOT_MC_PATH);
+        global.GAME_DATA = RxConfig.read("gameDirectory", DOT_MC_PATH);
+
+        // Начинаем запуск
+        RxOptimizer.init();
+        RxPlayStats.getAllStats();
+        RxCollector.setupLogHijacking();
+        RxCollector.writeLog("Launcher started at", Date.now());
+
+        // Обновления и сбор статистики
+        if (!IS_APP_IN_DEV) {
+            RxUpdater.bindUpdate();
+            await RxCollector.collectAndSendStats();
+        } else {
+            RxCollector.writeLog("DEVMODE: No updated and stats");
+        }
+
+        // Инициализация темы
+        currentThemeData = RxConfig.read("theme");
+        // Миграция: старый синий дефолт -> новый красный (выбранный вручную цвет не трогаем)
+        if (currentThemeData && currentThemeData.color === "rgb(10, 115, 255)") {
+            currentThemeData.color = "rgb(229, 57, 53)";
+            RxConfig.write("theme", currentThemeData);
+        }
+        loadedThemeData = {};
+        RxThemes.changeTheme(false, false);
+        RxThemes.changeWallpaper(RxConfig.read("currentWallpaper", "1"));
+        RxThemes.applyWallpaperAppearance();
+        await RxBranding.init();
+        RxCollector.writeLog("Theme initialized");
+
+        // Инициализация менеджера Java
+        RxJavaManager.init();
+        RxCollector.writeLog("JavaManager initialized");
+
+        // Настраиваем кнопку для сбора debug data
+        $(document).keyup((e) => {
+            if (e.originalEvent.code === "F12") {
+                RxCollector.collectDebugData();
+            }
+        })
+        if (RxConfig.read("disableAnimations", false) === true) {
+            $("html").addClass("noAnimations");
+        }
+
+        if (RxConfig.read("disableCssEffects", false) === true) {
+            $("html").addClass("noEffects");
+        }
+
+        if (!IS_APP_IN_DEV && RxConfig.read("disableStartupAnimation", false) !== true) {
+            // Запустить загрузочную анимацию
+            RxUI.startLoadScreenAnimation();
+            // Показываем окно
+            $("html").addClass("animate__animated animate__fadeIn animate__fast");
+            RxCollector.writeLog("Started animation");
+        } else {
+            // Отключить все эффекты для максимально быстрого запуска
+            $(".hide-on-loading").removeClass("hide-on-loading");
+            $(".loading-screen").hide();
+            RxCollector.writeLog("DEVMODE: No start animation");
+        }
+
+        // Брошенный мимо зоны файл не должен открываться вместо лаунчера
+        $(document).on("dragover drop", (event) => event.preventDefault());
+
+        // Скрытие модалок по Esc
+        $(document).keydown(e => {
+            if (e.originalEvent.key === "Escape") {
+                RxModals.hideCurrentOverlay();
+            }
+        })
+
+        // Ожидание для загрузки всех нод
+        setTimeout(() => {
+            // Переводим все ноды в DOM
+            RxTranslator.translateAllNodes();
+            RxTranslator.loadLanguagesList();
+
+            // Блокировка драга картинок
+            $('img').on('dragstart', function (event) {
+                event.preventDefault();
+            });
+
+            // Закрытие overlay modal по клику за пределы
+            $(".modal-overlay").click(function () {
+                RxModals.hideCurrentOverlay();
+            })
+        }, 500);
+
+        // Показываем HTML
+        $("html").show();
+
+        // Показываем главный экран до асинхронной загрузки аккаунтов и
+        // версий. Иначе поздний showModal("content") может раскрыть главную
+        // поверх раздела, который пользователь уже успел открыть.
+        RxModals.showModal("content");
+
+        // Загружаем список аккаунтов
+        await RxAccountsManager.refreshElybyProfiles();
+        RxAccountsUI.reloadAccountsManager();
+        RxAccountsUI.reloadAccountSelect();
+
+        // Загружаем список версий
+        RxVersionsUI.loadVersions();
+
+        // Отправляем ipc о готовности лаунчера
+        ipcRenderer.send("launcher-ready", RxDiscordRpc.getSettings());
+        RxCollector.writeLog("IPC: Launcher ready");
+
+        // Очищаем старый кэш ассетов
+        RxAssetsParsers.clearAssetsCache();
+
+        loadSettingsUI();
+
+        // Начинаем тестирование
+        if (IS_APP_IN_TEST) {
+            RxCollector.writeLog("TESTMODE: Starting tests");
+            RxFlyout.setUIStartMode(true);
+            await RxFlyout.changeMode("spinner");
+            RxFlyout.setText("Начинается тестирование");
+            RxTests.startTest(0);
+        }
+    })
+</script>

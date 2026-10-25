@@ -1,0 +1,87 @@
+<link rel="stylesheet" href="modals/instances.css"/>
+
+<div class="modal" id="modal-instances" style="display: none;">
+    <header class="inst-header">
+        <div class="inst-heading-icon"><span class="material-symbols-outlined">stacks</span></div>
+        <div class="inst-heading-copy">
+            <h1>{{instances.title}}</h1>
+            <span data-instances-count>{{instances.subtitle}}</span>
+        </div>
+        <button class="transparent" data-instances-import>
+            <span class="material-symbols-outlined">upload_file</span>
+            <span>{{instances.importMrpack}}</span>
+        </button>
+        <button data-instances-create>
+            <span class="material-symbols-outlined">add</span>
+            <span>{{instances.create}}</span>
+        </button>
+    </header>
+
+    <p class="inst-hint">{{instances.hint}}</p>
+
+    <div class="inst-scroll">
+        <div class="inst-grid" data-instances-grid></div>
+        <div class="inst-empty" data-instances-empty hidden>
+            <span class="material-symbols-outlined">stacks</span>
+            <h2>{{instances.emptyTitle}}</h2>
+            <p>{{instances.emptyText}}</p>
+            <button data-instances-create><span class="material-symbols-outlined">add</span><span>{{instances.create}}</span></button>
+        </div>
+    </div>
+
+    <!-- Создание / настройки сборки -->
+    <div class="inst-dialog-backdrop" data-instance-dialog hidden>
+        <div class="inst-dialog" role="dialog">
+            <h2 data-dialog-title>{{instances.createTitle}}</h2>
+
+            <label class="inst-field">
+                <span>{{instances.name}}</span>
+                <input type="text" maxlength="48" data-instance-name placeholder="{{instances.namePlaceholder}}"/>
+            </label>
+
+            <label class="inst-field">
+                <span>{{instances.version}}</span>
+                <select data-instance-version></select>
+            </label>
+
+            <div class="inst-field-row">
+                <label class="inst-field">
+                    <span>{{instances.memory}}</span>
+                    <select data-instance-memory-mode>
+                        <option value="global">{{instances.memoryGlobal}}</option>
+                        <option value="auto">{{instances.memoryAuto}}</option>
+                        <option value="manual">{{instances.memoryManual}}</option>
+                    </select>
+                </label>
+                <label class="inst-field" data-instance-memory-row>
+                    <span>{{instances.memoryMb}}</span>
+                    <input type="number" min="1024" max="65536" step="256" data-instance-memory/>
+                </label>
+            </div>
+
+            <label class="inst-field">
+                <span>{{instances.javaArgs}}</span>
+                <input type="text" data-instance-java placeholder="-XX:+UseZGC"/>
+            </label>
+
+            <div class="inst-dialog-icon">
+                <button type="button" class="transparent" data-instance-icon>
+                    <span class="material-symbols-outlined">image</span>
+                    <span>{{instances.changeIcon}}</span>
+                </button>
+                <button type="button" class="transparent" data-instance-icon-reset hidden>
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    <span>{{instances.resetIcon}}</span>
+                </button>
+            </div>
+
+            <div class="inst-dialog-actions">
+                <button type="button" class="transparent" data-instance-cancel>{{instances.cancel}}</button>
+                <button type="button" data-instance-save>
+                    <span class="material-symbols-outlined">check</span>
+                    <span>{{instances.create}}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

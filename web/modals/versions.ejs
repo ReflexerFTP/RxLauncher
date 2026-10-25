@@ -1,0 +1,102 @@
+<link rel="stylesheet" href="modals/versions.css"/>
+
+<div class="modal overlay top" id="modal-versions" style="display: none;">
+    <!-- Поиск, сортировка, своя версия -->
+    <div class="vp-toolbar">
+        <label class="vp-search">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" placeholder="{{commons.search}}" class="search" spellcheck="false"/>
+        </label>
+        <label class="vp-sort">
+            <span class="material-symbols-outlined">swap_vert</span>
+            <select data-versions-sort>
+                <option value="newest">{{versions.sortNewest}}</option>
+                <option value="oldest">{{versions.sortOldest}}</option>
+                <option value="name">{{versions.sortName}}</option>
+                <option value="installed">{{versions.sortInstalled}}</option>
+                <option value="favorites">{{versions.sortFavorites}}</option>
+            </select>
+        </label>
+        <div class="vp-add">
+            <button type="button" class="vp-add-button" data-versions-add>
+                <span class="material-symbols-outlined">add</span>
+                <span>{{versions.addCustom}}</span>
+            </button>
+            <div class="vp-add-menu" hidden>
+                <button type="button" data-versions-import="folder">
+                    <span class="material-symbols-outlined">folder_open</span>
+                    <span>{{versions.addFolder}}</span>
+                </button>
+                <button type="button" data-versions-import="file">
+                    <span class="material-symbols-outlined">description</span>
+                    <span>{{versions.addFile}}</span>
+                </button>
+            </div>
+        </div>
+        <button type="button" class="vp-close" data-versions-close title="{{commons.close}}" aria-label="{{commons.close}}">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+
+    <!-- Загрузчики -->
+    <div class="vp-tabs" data-versions-tabs></div>
+
+    <!-- Типы и быстрые фильтры -->
+    <div class="vp-chips" id="versionTypeSelect">
+        <div class="chip active" data-type="release"><span>{{versions.releases}}</span></div>
+        <div class="chip" data-type="snapshot"><span>{{versions.snapshots}}</span></div>
+        <div class="chip" data-type="old_beta"><span>Beta</span></div>
+        <div class="chip" data-type="old_alpha"><span>Alpha</span></div>
+        <span class="vp-chips-divider"></span>
+        <div class="chip" data-type="favorite">
+            <span class="material-symbols-outlined">star</span>
+            <span>{{versions.favourites}}</span>
+        </div>
+        <div class="chip" data-type="installed">
+            <span class="material-symbols-outlined">download_done</span>
+            <span>{{versions.installed}}</span>
+        </div>
+    </div>
+
+    <div class="ver-list-wrapper">
+        <div class="versions-list" style="display: none;"></div>
+        <div class="vp-empty" hidden>
+            <span class="material-symbols-outlined">search_off</span>
+            <strong>{{versions.empty}}</strong>
+            <span>{{versions.emptyHint}}</span>
+        </div>
+        <div class="preloader">
+            <div class="spinner"></div>
+            <span class="title">{{loading.progress}}</span>
+        </div>
+    </div>
+
+    <div class="vp-footer">
+        <span data-versions-count></span>
+        <span class="vp-footer-hint">
+            <span class="material-symbols-outlined">drag_pan</span>
+            <span>{{versions.dropFooter}}</span>
+        </span>
+    </div>
+
+    <div class="vp-drop" hidden>
+        <span class="material-symbols-outlined">create_new_folder</span>
+        <strong>{{versions.dropTitle}}</strong>
+        <span>{{versions.dropHint}}</span>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $(".flymenu *, .title-wrapper *, #playButton *, #versionSelect *, .layout .content .content-inner, .layout .content .content-inner *").click(function (e) {
+            if (RxModals.isModalShown("versions")) {
+                e.stopPropagation();
+                if (this !== e.target) {
+                    return;
+                }
+                RxModals.hideModal("versions");
+            }
+        })
+        RxVersionsUI.init();
+    })
+</script>

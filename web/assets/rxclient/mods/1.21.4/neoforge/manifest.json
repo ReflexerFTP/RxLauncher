@@ -1,0 +1,28 @@
+{
+  "loader": "neoforge",
+  "gameVersion": "1.21.4",
+  "generatedAt": "2026-05-22T15:28:19.645Z",
+  "files": [
+    {
+      "projectId": "Wq5SjeWM",
+      "versionId": "C84Hz0YM",
+      "filename": "fancymenu_neoforge_3.7.1_MC_1.21.4.jar",
+      "sha1": "aa0d8f6b44a1a49fb14285f3266e31980821d8f8",
+      "size": 3437861
+    },
+    {
+      "projectId": "J81TRJWm",
+      "versionId": "1ZCnjysV",
+      "filename": "konkrete_neoforge_1.9.9_MC_1.21.4.jar",
+      "sha1": "b27734af021674bad3533784d0c6346bdacc9c69",
+      "size": 620095
+    },
+    {
+      "projectId": "CVT4pFB2",
+      "versionId": "efcdRVZP",
+      "filename": "melody_neoforge_1.0.10_MC_1.21.jar",
+      "sha1": "e83052a92c4ca0016bcfe7f0207273983dc84698",
+      "size": 36096
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+<link rel="stylesheet" href="modals/installMods.css"/>
+
+<div class="modal" id="modal-installMods" style="display: none;">
+    <div class="modal-layout">
+        <div class="catalog-head">
+            <div class="catalog-head__icon">
+                <span class="material-symbols-outlined">deployed_code</span>
+            </div>
+            <div class="flex flex-col flex-grow">
+                <h1>{{packs.catalog.title}}</h1>
+                <span class="catalog-head__subtitle">{{packs.catalog.subtitle}}</span>
+            </div>
+            <div class="catalog-provider-tabs">
+                <button class="catalog-provider active" type="button" data-provider="modrinth">Modrinth</button>
+                <button class="catalog-provider" type="button" data-provider="curseforge">CurseForge</button>
+            </div>
+            <button class="button pill small catalog-external" type="button">
+                <span class="material-symbols-outlined">open_in_new</span>
+                <span>Modrinth</span>
+            </button>
+        </div>
+
+        <div class="curseforge-auth" style="display: none;">
+            <div class="curseforge-auth__setup">
+                <span class="material-symbols-outlined">key</span>
+                <div class="flex flex-col flex-grow">
+                    <strong>{{packs.curseforge.apiKeyTitle}}</strong>
+                    <span>{{packs.curseforge.apiKeyDescription}}</span>
+                    <span class="curseforge-auth__error" style="display: none;"></span>
+                </div>
+                <input class="curseforge-api-key" type="password" autocomplete="off"
+                       placeholder="{{packs.curseforge.apiKeyPlaceholder}}"/>
+                <button class="button pill small curseforge-auth__save" type="button">{{packs.curseforge.saveKey}}</button>
+                <button class="button pill small transparent" type="button"
+                        onclick="openExternal('https://console.curseforge.com')">{{packs.curseforge.getKey}}</button>
+            </div>
+            <div class="curseforge-auth__ready" style="display: none;">
+                <span class="material-symbols-outlined">verified_user</span>
+                <span class="flex-grow">{{packs.curseforge.keyConfigured}}</span>
+                <button class="button pill small transparent curseforge-auth__clear" type="button">{{packs.curseforge.deleteKey}}</button>
+            </div>
+        </div>
+
+        <div class="installTo">
+            <span>{{packs.installTo}} </span>
+
+            <select class="custom-select" id="packs_dirList">
+                <option value="default" selected>{{packs.defaultDir}}</option>
+            </select>
+        </div>
+
+        <!-- Фильтры -->
+        <%- include('../sections/packsAndMods/filters.ejs'); %>
+
+        <div class="catalog-tools">
+            <div class="catalog-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="{{packs.catalog.searchPlaceholder}}" class="search"/>
+            </div>
+            <select class="custom-select catalog-sort" aria-label="{{packs.catalog.sort}}">
+                <option value="downloads">{{packs.catalog.sortDownloads}}</option>
+                <option value="follows">{{packs.catalog.sortFollows}}</option>
+                <option value="updated">{{packs.catalog.sortUpdated}}</option>
+                <option value="newest">{{packs.catalog.sortNewest}}</option>
+                <option value="relevance">{{packs.catalog.sortRelevance}}</option>
+            </select>
+        </div>
+
+        <!-- Враппер списка сборок (для скролла) -->
+        <%- include('../sections/packsAndMods/wrappedModsList.ejs'); %>
+
+        <!-- Список установленных -->
+        <div class="installedList">
+            <div class="installedList__title">
+                <span class="material-symbols-outlined">inventory_2</span>
+                <span>{{packs.catalog.installedTitle}}</span>
+            </div>
+            <div class="scroll-wrap"></div>
+        </div>
+    </div>
+</div>
+
+<script src="modals/installMods.js"></script>

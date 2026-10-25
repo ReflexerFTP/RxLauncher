@@ -1,0 +1,227 @@
+<link rel="stylesheet" href="sections/settings/startup.css"/>
+
+<div class="flex fex-centler flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">folder</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center flex-gap-4">
+        <span class="name">{{settings.startup.gameDirectory.title}}</span>
+        <div class="description">{{settings.startup.gameDirectory.description}}</div>
+        <div class="flex flex-center flex-gap-8">
+            <input type="text" class="lighter flex-grow" readonly id="gameDirectoryInput">
+            <button class="square small" onclick='changeGameDirectory()'>
+                <span class="material-symbols-outlined">folder</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">memory_alt</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center flex-gap-4">
+        <span class="name">{{settings.startup.memory.title}}</span>
+        <div class="description">{{settings.startup.memory.description}}</div>
+        <!-- Авто-подбор памяти -->
+        <div class="memory-auto">
+            <label class="switch" id="autoMemorySwitch">
+                <input type="checkbox">
+                <span class="inner"></span>
+            </label>
+            <div class="memory-auto-copy">
+                <strong>{{settings.startup.memory.auto}}</strong>
+                <span data-memory-advice></span>
+            </div>
+        </div>
+        <div class="flex flex-center flex-gap-8 memory-manual">
+            <input class="flex-grow" type="range" min="0" max="100" step="512" value="20" id="xmxSlider"
+                   style="width: 50%">
+            <input type="number" class="lighter" id="xmxText" style="width: 160px;"/>
+            <h3 id="xmxText">{{units.mb}}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">manufacturing</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center flex-gap-4">
+        <span class="name">{{settings.startup.gameStartParams.title}}</span>
+        <input type="text" class="lighter flex-grow" placeholder="{{settings.startup.gameStartParams.description}}" id="gameStartParams">
+    </div>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">manufacturing</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center flex-gap-4">
+        <span class="name">{{settings.startup.javaStartParams.title}}</span>
+        <input type="text" class="lighter flex-grow" placeholder="{{settings.startup.javaStartParams.description}}" id="javaStartParams">
+    </div>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">fullscreen</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.startup.fullscreen.title}}</span>
+        <div class="description">{{settings.startup.fullscreen.description}}</div>
+    </div>
+    <label class="switch" data-setting="gameInFullscreen">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">topic</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.startup.partialSplit.title}}</span>
+        <div class="description">{{settings.startup.partialSplit.description}}</div>
+    </div>
+    <label class="switch" data-setting="separatedStorage">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">arrow_split</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.startup.fullSplit.title}}</span>
+        <div class="description">{{settings.startup.fullSplit.description}}<br/><b>{{settings.startup.fullSplit.description2}}<br/>{{settings.startup.fullSplit.description3}}</b>
+        </div>
+    </div>
+    <label class="switch" data-setting="fullySeparatedStorage">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">bolt</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.startup.rxPerformanceMode.title}}</span>
+        <div class="description">{{settings.startup.rxPerformanceMode.description}}</div>
+    </div>
+    <label class="switch" data-setting="rxPerformanceMode">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<script>
+    // Подсчёт данных
+    let startup_maxMemory = RxUtils.round512(os.totalmem() / 1024 / 1024);
+    let startup_minMemory = 512;
+    let startup_defaultMemory = RxUtils.round512(startup_maxMemory / 2) - 512;
+    let startup_currentMemory = RxConfig.read("xmxMemory", startup_defaultMemory);
+    let $xmxSlider = $("#xmxSlider");
+    let $xmxText = $("#xmxText");
+    let $javaArgs = $("#javaStartParams");
+    let $gameArgs = $("#gameStartParams");
+
+    $(function () {
+        // Настройка слайдера
+        $xmxSlider.attr("min", startup_minMemory);
+        $xmxSlider.attr("max", startup_maxMemory);
+        $xmxSlider.attr("value", startup_currentMemory);
+        $xmxText.val(startup_currentMemory);
+        $javaArgs.val(RxConfig.read("javaStartParams", ""));
+        $gameArgs.val(RxConfig.read("gameStartParams", ""));
+        // refreshMemoryAdvice() — при открытии настроек: на старте GAME_DATA ещё не задан
+    })
+
+    // Авто-подбор: показываем рекомендацию и блокируем ручной ползунок
+    const $autoMemory = $("#autoMemorySwitch input");
+    function refreshMemoryAdvice() {
+        const auto = RxMemoryAdvisor.isEnabled();
+        const advice = RxMemoryAdvisor.forActiveVersion();
+        const gb = (mb) => `${(mb / 1024).toFixed(mb % 1024 === 0 ? 0 : 1)} ${MESSAGES.units.gb}`;
+        const text = MESSAGES.settings.startup.memory.advice
+            .replace("{memory}", gb(advice.mb))
+            .replace("{mods}", advice.modsCount)
+            .replace("{total}", gb(Math.round(advice.totalMb / 1024) * 1024));
+        $("[data-memory-advice]").text(text);
+        $autoMemory.prop("checked", auto);
+        $(".memory-manual").toggleClass("disabled", auto).find("input").prop("disabled", auto);
+        if (auto) {
+            $xmxSlider.val(advice.mb);
+            $xmxText.val(advice.mb);
+        } else {
+            $xmxSlider.val(startup_currentMemory);
+            $xmxText.val(startup_currentMemory);
+        }
+    }
+    $autoMemory.on("change", function () {
+        RxConfig.write("autoMemory", $(this).prop("checked"));
+        refreshMemoryAdvice();
+    });
+    // Количество модов могло измениться — пересчитываем при каждом открытии настроек
+    $(document).on("showModalEvent", (event) => {
+        if (event.originalEvent?.detail?.modal === "settings") refreshMemoryAdvice();
+    });
+
+    // Изменение текста
+    $javaArgs.on("keyup", () => {
+        RxConfig.write("javaStartParams", $javaArgs.val());
+    })
+    $gameArgs.on("keyup", () => {
+        RxConfig.write("gameStartParams", $gameArgs.val());
+    })
+
+    function changeGameDirectory() {
+        ipcRenderer.invoke("open-dialog", {
+            properties: ["openDirectory", "dontAddToRecent"]
+        }).then(result => {
+            let pathResult = path.normalize(result[0]);
+            GAME_DATA = pathResult;
+            RxConfig.write("gameDirectory", pathResult);
+            RxVersionsUI.loadVersions();
+            RxAccountsUI.reloadAccountSelect();
+            RxAccountsUI.reloadAccountsManager();
+            $("#gameDirectoryInput").val(pathResult);
+        })
+    }
+
+    // Изменение слайдера
+    $xmxSlider.on("input", () => {
+        startup_currentMemory = $xmxSlider.val();
+        $xmxText.val(startup_currentMemory);
+    })
+
+    // Сохранение изменений слайдера
+    $xmxSlider.on("change", () => {
+        startup_currentMemory = $xmxSlider.val();
+        $xmxText.val(startup_currentMemory);
+        RxConfig.write("xmxMemory", startup_currentMemory);
+    })
+
+    // Изменение в поле ввода
+    $xmxText.on("change", () => {
+        let inputVal = $xmxText.val();
+        if (inputVal > startup_maxMemory || inputVal < startup_minMemory) {
+            if (inputVal < startup_minMemory) {
+                startup_currentMemory = startup_minMemory;
+            }
+            if (inputVal > startup_maxMemory) {
+                startup_currentMemory = startup_maxMemory;
+            }
+        } else {
+            startup_currentMemory = inputVal;
+        }
+        $xmxText.val(startup_currentMemory);
+        $xmxSlider.val(startup_currentMemory);
+        return RxConfig.write("xmxMemory", startup_currentMemory);
+    })
+</script>

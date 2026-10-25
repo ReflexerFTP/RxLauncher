@@ -1,0 +1,477 @@
+/* =====================================================================
+   RxLauncher · Minimal
+   Финальный слой поверх redesign-2026: нейтральные поверхности,
+   волосяные грани вместо рамок, без свечений и декоративных анимаций.
+   Акцент темы — только на активных и главных элементах.
+   ===================================================================== */
+
+:root {
+    --rx-glow: transparent;
+    --rx-glow-soft: transparent;
+    --rx-stroke: rgba(255, 255, 255, .055);
+    --rx-stroke-strong: rgba(255, 255, 255, .09);
+    --rx-shadow-soft: none;
+
+    --rx2-line: rgba(255, 255, 255, .055);
+    --rx2-line-strong: rgba(255, 255, 255, .08);
+    --rx2-shadow: none;
+    --rx2-radius: 18px;
+
+    --rxm-hover: rgba(255, 255, 255, .055);
+    --rxm-active: rgba(255, 255, 255, .085);
+    --rxm-accent-soft: color-mix(in srgb, var(--theme-primary) 20%, transparent);
+    --rxm-accent-text: color-mix(in srgb, var(--theme-primaryLighter) 80%, white);
+    --rxm-panel: color-mix(in srgb, var(--theme-primaryBg) 94%, transparent);
+    --rxm-card: color-mix(in srgb, var(--theme-primaryBgLight) 70%, transparent);
+}
+
+html.light {
+    --rx-stroke: rgba(0, 0, 0, .06);
+    --rx-stroke-strong: rgba(0, 0, 0, .1);
+    --rx2-line: rgba(0, 0, 0, .06);
+    --rx2-line-strong: rgba(0, 0, 0, .09);
+    --rxm-hover: rgba(0, 0, 0, .045);
+    --rxm-active: rgba(0, 0, 0, .07);
+    --rxm-accent-text: var(--theme-primaryDarker);
+}
+
+/* ---------- Окно и фон ---------- */
+.global-wrapper {
+    border: 1px solid var(--rx2-line-strong) !important;
+    background: #0b0b0d;
+    box-shadow: none !important;
+}
+
+html.light .global-wrapper { background: #f4f4f5; }
+
+.background::after { background: rgba(6, 6, 8, .42) !important; }
+html.light .background::after { background: rgba(255, 255, 255, .35) !important; }
+.background::before { display: none !important; }
+
+/* ---------- Типографика ---------- */
+h1, h2, h3, .modal h1, .modal h2 {
+    font-weight: 700;
+    letter-spacing: -.015em;
+}
+
+/* ---------- Верхняя панель ---------- */
+.title-wrapper {
+    background: transparent !important;
+    padding: 0 2px !important;
+}
+
+.title-wrapper .brand { gap: 10px !important; padding: 4px 8px 4px 4px !important; }
+
+.title-wrapper .brand img {
+    width: 30px;
+    height: 30px;
+    border: 0 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.title-wrapper .brand span:not(.brand-caret) {
+    font-size: 12.5pt !important;
+    font-weight: 700 !important;
+    letter-spacing: -.01em !important;
+}
+
+.title-wrapper .account-chip,
+.title-wrapper .lang-toggle,
+.title-wrapper .win-btn {
+    min-height: 36px !important;
+    height: 36px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.title-wrapper .account-chip:hover,
+.title-wrapper .win-btn:hover {
+    background: var(--rxm-hover) !important;
+    filter: none !important;
+}
+
+.title-wrapper .win-btn { width: 36px !important; }
+.title-wrapper .win-btn .material-symbols-outlined { font-size: 18px !important; color: var(--text-sub); }
+.title-wrapper .win-btn:hover .material-symbols-outlined { color: var(--text-color); }
+.title-wrapper .win-close:hover .material-symbols-outlined { color: white; }
+.title-wrapper .win-close:hover { background: var(--error) !important; }
+
+.title-wrapper #accountSelect .title { font-size: 10.5pt !important; font-weight: 600; }
+.title-wrapper #accountSelect .icon,
+.title-wrapper #accountSelect img.icon { width: 26px !important; height: 26px !important; border-radius: 7px !important; }
+
+.title-wrapper #accountSelect::after {
+    width: 6px !important;
+    height: 6px !important;
+    background: var(--success) !important;
+    box-shadow: none !important;
+    animation: none !important;
+}
+
+.title-wrapper .lang-toggle { padding: 3px !important; gap: 0 !important; }
+
+.title-wrapper .lang-toggle .lang-opt {
+    min-width: 32px !important;
+    border-radius: 7px !important;
+    font-size: 9pt !important;
+    font-weight: 600 !important;
+}
+
+.title-wrapper .lang-toggle .lang-opt:hover:not(.active) { background: var(--rxm-hover) !important; }
+
+.title-wrapper .lang-toggle .lang-opt.active {
+    background: var(--rxm-active) !important;
+    color: var(--text-color) !important;
+}
+
+/* В светлой теме панель лежит прямо на обоях — нужна лёгкая подложка */
+html.light .title-wrapper .account-chip,
+html.light .title-wrapper .lang-toggle,
+html.light .title-wrapper .win-btn {
+    background: rgba(255, 255, 255, .7) !important;
+}
+
+html.light .title-wrapper .account-chip:hover,
+html.light .title-wrapper .win-btn:not(.win-close):hover { background: rgba(255, 255, 255, .9) !important; }
+
+html.light .title-wrapper .lang-toggle .lang-opt,
+html.light .title-wrapper .win-btn .material-symbols-outlined,
+html.light .title-wrapper #accountSelect .title { color: var(--text-color) !important; }
+
+html.light .title-wrapper .win-close:hover .material-symbols-outlined { color: white !important; }
+
+/* ---------- Боковой рейл ---------- */
+.flymenu {
+    padding: 8px !important;
+    border: 1px solid var(--rx2-line) !important;
+    background: var(--rxm-panel) !important;
+    box-shadow: none !important;
+    border-radius: 18px !important;
+}
+
+.flymenu .item {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+.flymenu .item .material-symbols-outlined { font-size: 21px !important; }
+
+.flymenu .item:not(.active):hover {
+    background: var(--rxm-hover) !important;
+    color: var(--text-color);
+}
+
+.flymenu .item.active {
+    background: var(--rxm-accent-soft) !important;
+    box-shadow: none !important;
+}
+
+.flymenu .item.active,
+.flymenu .item.active * {
+    color: var(--rxm-accent-text) !important;
+}
+
+.flymenu .item.active::before { display: none !important; }
+
+/* ---------- Модальные окна / разделы ---------- */
+.modal {
+    border: 1px solid var(--rx2-line) !important;
+    background: var(--rxm-panel) !important;
+    box-shadow: none !important;
+}
+
+.modal:not(.home-modal) {
+    border-radius: var(--rx2-radius) !important;
+    background: var(--rxm-panel) !important;
+}
+
+.modal.centered { animation: rxmFadeIn .2s ease-out; }
+
+@keyframes rxmFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.modal:not(.home-modal) .content > * { animation: rxmFadeIn .2s ease-out both; }
+
+.modal-overlay { backdrop-filter: brightness(60%) !important; }
+
+/* Иконки-заголовки разделов: без плашек и градиентов */
+.modal > div:nth-child(1) > .material-symbols-outlined,
+.mods-heading-icon,
+.server-catalog-logo,
+#modal-statistics .stats-heading-icon,
+#modal-skins .skin-browser-heading-icon,
+.console-header-icon,
+#modal-changelog .changelog-header-icon,
+.news-head-icon {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: var(--rxm-accent-soft) !important;
+    color: var(--rxm-accent-text) !important;
+}
+
+.modal > div:nth-child(1) > .material-symbols-outlined *,
+.mods-heading-icon *,
+.server-catalog-logo *,
+#modal-statistics .stats-heading-icon *,
+#modal-skins .skin-browser-heading-icon *,
+.news-head-icon * {
+    color: var(--rxm-accent-text) !important;
+}
+
+.modal .title-chip {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: var(--rxm-card) !important;
+}
+
+/* ---------- Кнопки ---------- */
+button {
+    border-radius: 10px;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+button:hover { filter: brightness(1.08); }
+button:active { filter: brightness(.94); }
+
+button.transparent {
+    border: 1px solid var(--rx2-line) !important;
+    background: transparent !important;
+}
+
+button.transparent:hover {
+    border-color: var(--rx2-line-strong) !important;
+    background: var(--rxm-hover) !important;
+    filter: none;
+}
+
+/* ---------- Нижняя панель запуска ---------- */
+.flyout {
+    padding: 8px !important;
+    border: 1px solid var(--rx2-line-strong) !important;
+    border-radius: 16px !important;
+    background: rgba(10, 10, 12, .86) !important;
+    box-shadow: none !important;
+}
+
+.flyout > div, .flyout button { height: 52px !important; }
+
+.flyout #playButton,
+.flyout #stopGameButton {
+    border-radius: 11px !important;
+    font-size: 13pt !important;
+    font-weight: 700 !important;
+    letter-spacing: .01em;
+}
+
+.flyout #playButton {
+    background: var(--theme-primary) !important;
+    box-shadow: none !important;
+}
+
+.flyout #playButton::after { display: none !important; }
+.flyout #playButton:hover { filter: brightness(1.1); }
+.flyout #playButton .material-symbols-outlined { font-size: 21px !important; }
+
+.flyout #versionSelect .title { font-size: 13pt !important; font-weight: 700 !important; }
+
+.flyout #versionSelect .button {
+    background: var(--rxm-hover) !important;
+}
+
+.flyout .progress-pill,
+.flyout .spinner-wrapper {
+    border: 0 !important;
+    background: rgba(255, 255, 255, .05) !important;
+    box-shadow: none !important;
+}
+
+/* ---------- Главная: hero и новости ---------- */
+#modal-content .hero {
+    border: 1px solid var(--rx2-line) !important;
+    border-radius: 18px !important;
+    box-shadow: none !important;
+}
+
+#modal-content .hero::after { display: none !important; }
+
+#modal-content .hero-story h1 {
+    font-weight: 700 !important;
+    letter-spacing: -.03em !important;
+    text-shadow: none !important;
+}
+
+.hero-release-row { font-weight: 700 !important; letter-spacing: .09em !important; }
+.hero-release-dot { box-shadow: none !important; }
+
+.hero-facts > span {
+    border: 0 !important;
+    background: rgba(255, 255, 255, .08) !important;
+    backdrop-filter: none !important;
+}
+
+#modal-content .news-panel {
+    border: 1px solid var(--rx2-line) !important;
+    border-radius: 18px !important;
+    background: var(--rxm-panel) !important;
+    box-shadow: none !important;
+}
+
+.news-item {
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: var(--rxm-card) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.news-item:hover { background: color-mix(in srgb, var(--theme-primaryBgLighter) 80%, transparent) !important; }
+
+.news-cover-version { border: 0 !important; background: rgba(0, 0, 0, .5) !important; }
+
+/* ---------- Вкладки ---------- */
+.tabs .tab {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
+}
+
+.tabs .tab:not(.active):hover { background: var(--rxm-hover) !important; }
+
+.tabs .tab.active { background: var(--rxm-accent-soft) !important; }
+
+.tabs .tab.active,
+.tabs .tab.active * { color: var(--text-color) !important; }
+
+.tabs .tab .icon { background: transparent !important; }
+.tabs .tab .icon * { color: var(--text-sub) !important; }
+.tabs .tab.active .icon * { color: var(--rxm-accent-text) !important; }
+
+/* ---------- Поля и списки ---------- */
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus {
+    border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent) !important;
+    box-shadow: none !important;
+}
+
+.custom-select { transform: none !important; }
+
+/* ---------- Карточки разделов: без рамок, лёгкая заливка ---------- */
+.mods-row,
+.mods-overview > div,
+.mods-version-card,
+.mods-search,
+.server-card,
+.server-catalog-toolbar,
+#modal-statistics .stats-kpi,
+#modal-statistics .stats-card,
+#modal-statistics .stats-session-row {
+    border-color: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.mods-row,
+.server-card { background: var(--rxm-card) !important; }
+
+.mods-row:hover,
+.server-card:hover { background: color-mix(in srgb, var(--theme-primaryBgLighter) 75%, transparent) !important; }
+
+.server-card.expanded { border-color: color-mix(in srgb, var(--theme-primary) 35%, transparent) !important; }
+
+.mods-row-icon {
+    background: transparent !important;
+    color: var(--text-sub) !important;
+}
+
+/* Статистика: без декоративных пятен и колец, плоские столбцы */
+#modal-statistics .stats-kpi::before,
+#modal-statistics .stats-kpi-orbit,
+#modal-statistics .stats-favorite-card::after { display: none !important; }
+
+#modal-statistics .stats-favorite-card { background: var(--rxm-card) !important; }
+
+#modal-statistics .stats-chart-bar {
+    background: var(--theme-primary) !important;
+    box-shadow: none !important;
+}
+
+#modal-statistics .stats-period-btn.active { box-shadow: none !important; }
+
+#modal-servers {
+    --server-border: var(--rx2-line);
+    --server-border-strong: var(--rx2-line-strong);
+    --server-shadow: none;
+}
+
+.server-primary-button { box-shadow: none !important; }
+.server-category-tabs button.active { box-shadow: none !important; }
+
+/* Скины: тонкие грани, без «ауры» за моделью */
+#modal-skins {
+    --skin-border: var(--rx2-line) !important;
+    --skin-border-strong: var(--rx2-line-strong) !important;
+    --skin-accent-soft: transparent !important;
+}
+
+#modal-skins .skin-preview-aurora { display: none !important; }
+
+#modal-skins .skin-primary-button {
+    background: var(--theme-primary) !important;
+    box-shadow: none !important;
+}
+
+/* ---------- Настройки: список занимает всю высоту окна, без пустой полосы снизу ---------- */
+#modal-settings {
+    display: flex;
+    flex-direction: column;
+}
+
+#modal-settings > .content {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+#modal-settings .settings-layout {
+    height: auto !important;
+    min-height: 0;
+    padding-bottom: 4px;
+}
+
+#modal-settings .wallpaper-appearance-reset {
+    height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 9.5pt !important;
+    border-radius: 9px !important;
+}
+
+#modal-settings .wallpaper-appearance-reset .material-symbols-outlined { font-size: 17px !important; }
+
+/* ---------- Скроллбар ---------- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+
+*:not(.slider)::-webkit-scrollbar-thumb {
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, .12) !important;
+}
+
+*:not(.slider)::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .22) !important; }
+*:not(.slider)::-webkit-scrollbar-track { background: transparent !important; }
+
+html.light *:not(.slider)::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, .15) !important; }
+html.light *:not(.slider)::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, .25) !important; }

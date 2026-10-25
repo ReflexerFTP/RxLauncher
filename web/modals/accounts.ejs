@@ -1,0 +1,53 @@
+<link rel="stylesheet" href="modals/accounts.css"/>
+
+<!-- Поповер профилей: открывается под чипом аккаунта в шапке -->
+<div class="modal overlay" id="modal-accounts" style="display: none;">
+    <div class="accounts-heading">
+        <span class="accounts-title">{{accounts.title}}</span>
+        <span class="accounts-count"></span>
+    </div>
+
+    <div class="acc-list-wrapper">
+        <div class="accounts-list"></div>
+        <div class="accounts-empty" style="display: none;">
+            <span class="material-symbols-outlined">person_off</span>
+            <span>{{accounts.empty}}</span>
+        </div>
+    </div>
+
+    <div class="add-local">
+        <span class="material-symbols-outlined add-local-icon">person_add</span>
+        <input type="text" maxlength="16" spellcheck="false" placeholder="{{accounts.input}}"/>
+        <button class="add-local-button" onclick="RxAccountsUI.addLocalAccount()" title="{{accounts.add}}">
+            <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+    </div>
+
+    <div class="acc-footer">
+        <span class="accounts-hint">{{accounts.offlineHint}}</span>
+        <button class="transparent acc-elyby" onclick="RxModals.hideCurrentOverlay(); RxModals.showModal('elybyLogin')">
+            <img src="assets/elyby.webp" alt=""/>
+            Ely.by
+        </button>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $("#modal-accounts .add-local input").keydown(function (event) {
+            if (event.key === "Enter") {
+                RxAccountsUI.addLocalAccount();
+            }
+        });
+
+        $(".flymenu *, #playButton *, #versionSelect *, .layout .content .content-inner, .layout .content .content-inner *").click(function (e) {
+            if (RxModals.isModalShown("accounts")) {
+                e.stopPropagation();
+                if (this !== e.target) {
+                    return;
+                }
+                RxModals.hideModal("accounts");
+            }
+        })
+    })
+</script>

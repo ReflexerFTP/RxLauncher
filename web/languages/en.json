@@ -1,0 +1,968 @@
+{
+  "info": {
+    "code": "en",
+    "id": "en",
+    "displayName": "English",
+    "displayNameEnglish": "English"
+  },
+  "translations": {
+    "errors": {
+      "title": "Something went wrong!",
+      "exitCode": "Game ended with exit code",
+      "list": [
+        "This version of the game or your mods are not compatible with the version of Java you are using",
+        "Looks like the Java version and the Forge version are not compatible!",
+        "Failed to allocate required amount of memory for Java",
+        "The game's executable JAR file could not be launched",
+        "The launcher cannot find the Java executable file!",
+        "The game configuration or files may be corrupted or created by a newer version of the game",
+        "Try restarting the game again, if that doesn’t help, a complete reinstallation of the game is recommended",
+        "When starting the game, some Java classes could not be found",
+        "Failed to fetch metadata from skin system. Try launching the game later or temporarily change your account to another one"
+      ]
+    },
+    "accounts": {
+      "title": "Player profiles",
+      "input": "Enter a nickname",
+      "offline": "Local profile",
+      "offlineHint": "A local profile is for single-player and servers that allow it. It does not grant access to licensed servers.",
+      "invalidNickname": "Nickname must contain 2–16 Latin letters, digits, or _",
+      "local": "Local account",
+      "microsoft": "Microsoft Account",
+      "elyby": "Ely.by account",
+      "frog": "RxClient account",
+      "unknown": "Unknown account",
+      "addingMs": "Adding a Microsoft Account",
+      "alreadyExists": "This account has already been added",
+      "added": "New account added",
+      "edit": "Edit nickname",
+      "editTitle": "Edit local profile",
+      "cancel": "Cancel",
+      "save": "Save",
+      "renamed": "Profile nickname changed",
+      "editOnlyLocal": "Only a local profile can be renamed",
+      "reorderHint": "Drag to reorder",
+      "empty": "No profiles yet — add your first nickname below",
+      "deleteConfirm": "Click again to delete",
+      "add": "Add"
+    },
+    "home": {
+      "heroAria": "Artwork for the selected Minecraft version",
+      "defaultReleaseTitle": "Tricky Trials",
+      "defaultReleaseDescription": "The cinematic scene changes together with the selected Minecraft version.",
+      "offlineReady": "Available offline"
+    },
+    "changelog": {
+      "title": "Update history",
+      "latest": "Latest patches",
+      "offline": "Available offline",
+      "subtitle": "Every RxLaunch change in one place",
+      "availableOffline": "Always available",
+      "open": "Open patch",
+      "openAll": "Open full history",
+      "historyShort": "All history",
+      "previous": "Back",
+      "next": "Next",
+      "current": "Current",
+      "whatsNew": "What changed",
+      "newer": "Newer",
+      "older": "Older"
+    },
+    "statistics": {
+      "title": "Player statistics",
+      "subtitle": "Everything played through RxLaunch — stored only on this PC",
+      "live": "Game active",
+      "profile": "Profile",
+      "allProfiles": "All nicknames",
+      "period": { "all": "All time", "month": "30 days", "week": "7 days", "today": "Today" },
+      "migrationNote": "Your previous playtime is already included in the total. Nicknames, servers, worlds and combat details are collected from this update onward.",
+      "playtime": "Playtime",
+      "sessions": "game sessions",
+      "kills": "Kills",
+      "deaths": "Deaths",
+      "localTracking": "stored locally",
+      "bestStreak": "Best streak",
+      "withoutDeath": "kills without a death",
+      "activity": "14-day activity",
+      "activityHint": "Taller bars mean more time in game",
+      "favoriteWorld": "Most played world",
+      "noData": "No data",
+      "topServers": "Top 3 servers",
+      "topNicknames": "Top 3 nicknames",
+      "topWorlds": "Top 3 worlds",
+      "byPlaytime": "By playtime",
+      "recentSessions": "Recent game sessions",
+      "sessionsHint": "Nickname, version, location, duration and result for every game",
+      "previous": "Previous page",
+      "next": "Next page",
+      "storageTitle": "Statistics are protected by local storage",
+      "refresh": "Refresh",
+      "openFolder": "Open folder",
+      "export": "Export",
+      "exported": "Statistics exported",
+      "exportFailed": "Could not export statistics",
+      "noDataYet": "Data will appear after the first game",
+      "noSessions": "There are no game sessions for this period yet",
+      "server": "Server",
+      "world": "World",
+      "mainMenu": "Main menu",
+      "session": "Session",
+      "interrupted": "Recovered after interruption",
+      "running": "In game now",
+      "completed": "Completed",
+      "units": { "hours": "h", "minutes": "min", "seconds": "sec", "hoursShort": "h", "minutesShort": "m" }
+    },
+    "mods": {
+      "title": "Mods",
+      "subtitle": "Every JAR mod for the selected version in one safe place",
+      "selectedVersion": "Selected version",
+      "search": "Search by name or file",
+      "add": "Add mods",
+      "backup": "Save ZIP",
+      "openFolder": "Open folder",
+      "deleteAll": "Delete all",
+      "total": "mods total",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "file": "Mod and file",
+      "details": "Size and date",
+      "status": "Status",
+      "actions": "Actions",
+      "emptyTitle": "No mods here yet",
+      "emptyText": "Add JAR files and the launcher will validate and place them in the selected version folder.",
+      "addFirst": "Add first mod",
+      "noVersionTitle": "Select a version first",
+      "noVersionText": "The mods folder depends on the selected version and separated-storage setting.",
+      "selectVersion": "Select version",
+      "delete": "Delete",
+      "added": "Mods added",
+      "skipped": "skipped",
+      "deleted": "Mod deleted",
+      "duplicate": "A file with this name already exists",
+      "invalidFile": "Invalid JAR",
+      "confirmDeleteAll": "Delete all mods for the selected version? This cannot be undone.",
+      "allDeleted": "All mods deleted",
+      "backupReady": "Mods backup saved",
+      "sortEnabled": "Enabled first",
+      "sortName": "By name",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "sortSize": "By size",
+      "sortProblems": "Problems first",
+      "info": "More info",
+      "dropTitle": "Drop to add mods",
+      "dropHint": ".jar files go straight into the selected version's folder",
+      "notJar": "These are not JAR mods",
+      "checking": "Checking…",
+      "compatOk": "Compatible",
+      "compatWarn": "Check it",
+      "compatError": "Problem",
+      "compatUnknown": "Unknown",
+      "infoVersion": "Version",
+      "infoId": "Mod ID",
+      "infoAuthors": "Authors",
+      "infoLoader": "Loader",
+      "infoMinecraft": "Minecraft",
+      "infoCompat": "Estimated compatibility",
+      "infoCompatHint": "Based on the mod's own metadata — not a guarantee, but common problems show up right away.",
+      "infoNoDescription": "No description",
+      "infoUnknownField": "not specified",
+      "tabInstalled": "Installed",
+      "tabCatalog": "Modrinth catalog",
+      "checkUpdates": "Check updates",
+      "updateAll": "Update all",
+      "updatesNone": "All mods are up to date",
+      "updatesUnknown": "Mods not from Modrinth cannot be checked",
+      "updatesFound": "Updates available: {0}",
+      "updatesDone": "Mods updated: {0}",
+      "updatesBackup": "Old versions are kept in the rx-mod-backups folder",
+      "catalogSearch": "Search mods on Modrinth",
+      "catalogRelevance": "Relevance",
+      "catalogDownloads": "Downloads",
+      "catalogFollows": "Follows",
+      "catalogUpdated": "Recently updated",
+      "catalogNewest": "Newest",
+      "catAll": "All",
+      "catOptimization": "Optimization",
+      "catUtility": "Utility",
+      "catDecoration": "Decoration",
+      "catAdventure": "Adventure",
+      "catTechnology": "Technology",
+      "catMagic": "Magic",
+      "catStorage": "Storage",
+      "catMobs": "Mobs",
+      "catalogLoadingMore": "Loading more mods…",
+      "catalogNoLoader": "A version with a mod loader is needed",
+      "catalogNoLoaderText": "Pick Fabric, Forge, NeoForge or Quilt — the catalog will show mods for exactly that version.",
+      "catalogLoading": "Searching mods…",
+      "catalogEmpty": "Nothing found",
+      "catalogEmptyText": "Try another query or category — only mods for your version are shown.",
+      "catalogOffline": "Modrinth is unavailable",
+      "catalogOfflineText": "Check your internet connection and try again.",
+      "catalogInstall": "Install",
+      "catalogInstalling": "Installing…",
+      "catalogInstalled": "Installed",
+      "catalogBy": "by {0}",
+      "catalogDone": "Mod installed",
+      "catalogDeps": "{0} dependencies",
+      "catalogNoVersion": "The mod has no build for your game and loader",
+      "catalogFailed": "Could not install the mod"
+    },
+    "loading": {
+      "progress": "Loading content",
+      "failed": "Failed to download content, try again later"
+    },
+    "elyby": {
+      "title": "Login to Ely.by account",
+      "login": "Enter login",
+      "password": "enter password",
+      "totp": "Enter TOTP code",
+      "totpNotify": "If you do not know what a TOTP code is or you do not have two-factor authentication enabled, do not fill out this field",
+      "INVALID_CREDENTIALS": "Wrong credentials",
+      "REQUIRES_TOTP": "TOTP token not specified",
+      "repeat": "You need to re-authorize"
+    },
+    "java": {
+      "preparing": "Java preparation",
+      "unpacking": "Unpacking Java",
+      "installed": "New version installed",
+      "failed": "Installation error occurred"
+    },
+    "commons": {
+      "login": "Sign in",
+      "newAccountAdded": "Added a new account",
+      "search": "Search",
+      "install": "Install",
+      "open": "Open",
+      "notSelected": "Not selected",
+      "starting": "Now in a new way",
+      "version": "Version",
+      "close": "Close",
+      "plsWait": "Please wait",
+      "downloading": "Download",
+      "installing": "Installation",
+      "news": "News",
+      "bigUpdates": "Major updates",
+      "create": "Create",
+      "clickOrDrop": "Click or drop file here"
+    },
+    "packs": {
+      "importing": "Modpack import in progress",
+      "imported": "Modpack successfully imported",
+      "importFailed": "Import failed",
+      "alreadyExists": "This modpack is already installed",
+      "created": "Modpack created successfully",
+      "installTo": "Install to",
+      "defaultDir": "Default directory",
+      "catalog": {
+        "title": "Modrinth catalog",
+        "subtitle": "Mods, modpacks, resource packs and shaders from the official catalog",
+        "openCatalog": "Open Modrinth",
+        "searchPlaceholder": "Search projects on Modrinth",
+        "sort": "Sort",
+        "sortDownloads": "Most downloaded",
+        "sortFollows": "Most followed",
+        "sortUpdated": "Recently updated",
+        "sortNewest": "Newest first",
+        "sortRelevance": "Relevance",
+        "installedTitle": "Installed",
+        "loading": "Loading the Modrinth catalog…",
+        "loadError": "The catalog could not be loaded. Check your internet connection.",
+        "retry": "Retry",
+        "empty": "Nothing found. Change the search or filters.",
+        "noDescription": "No description provided",
+        "versionsError": "Project versions could not be loaded",
+        "noCompatibleVersions": "No versions match the selected filters",
+        "installed": "Installed from Modrinth",
+        "installFailed": "Project installation failed"
+      },
+      "curseforge": {
+        "sortRating": "Highest rated",
+        "sortPopularity": "Most popular",
+        "title": "CurseForge catalog",
+        "subtitle": "Mods, modpacks, resource packs and shaders from the official CurseForge API",
+        "searchPlaceholder": "Search projects on CurseForge",
+        "apiKeyTitle": "CurseForge API key required",
+        "apiKeyDescription": "The key is verified by CurseForge and encrypted by Windows. It is not embedded in the installer.",
+        "apiKeyPlaceholder": "Paste your API key",
+        "saveKey": "Save",
+        "getKey": "Get a key",
+        "keyConfigured": "The CurseForge key is configured and stored securely",
+        "deleteKey": "Delete key",
+        "apiKeyRequired": "Add a CurseForge API key above to open the catalog.",
+        "invalidKey": "CurseForge rejected the key. Check it and try again.",
+        "secureStorageUnavailable": "Secure storage is unavailable, so the key will not be stored as plain text.",
+        "keySaveError": "Could not save the key",
+        "keyDeleteError": "Could not delete the key",
+        "loading": "Loading the CurseForge catalog…",
+        "loadError": "CurseForge could not be loaded. Check your connection and API key.",
+        "manualDownloadRequired": "The author disabled third-party downloads. The CurseForge page was opened for manual installation.",
+        "invalidDownload": "CurseForge returned an unsafe URL or file name",
+        "hashError": "File checksum verification failed",
+        "dependencyMissing": "No compatible required dependency was found",
+        "invalidManifest": "The archive has no valid CurseForge manifest.json",
+        "packFilesError": "The modpack file list could not be loaded",
+        "fileMetadataError": "CurseForge file metadata could not be loaded",
+        "installed": "Installed from CurseForge",
+        "installFailed": "CurseForge project installation failed"
+      },
+      "filters": {
+        "title": "Filters",
+        "type": "View",
+        "mods": "Modifications",
+        "rp": "Resourcepacks",
+        "shaders": "Shaderpacks",
+        "packs": "Modpacks",
+        "loaders": "Modloaders",
+        "versions": "Game versions"
+      },
+      "install": "Install",
+      "updatePack": "Update modpack",
+      "createPack": "Create assembly",
+      "newPack": {
+        "title": "New modpack",
+        "input": "Enter the name of the assembly",
+        "description": "Select the version from the main list on the basis of which you want to build the project"
+      },
+      "updatePackM": {
+        "title": "Mod update",
+        "disclaimer": "Mod updates are now only available in manual mode for testing. Select a build to test",
+        "check": "Check for updates",
+        "checking": "Checking for updates",
+        "installing": "Installing updates",
+        "found": "Found: ",
+        "update": "Update everything"
+      }
+    },
+    "servers": {
+      "title": "Servers",
+      "disclaimer": "The launcher developer does not guarantee the quality and integrity of the servers",
+      "ipCopied": "IP copied!",
+      "link": "How to add my server here?",
+      "privacyModeEnabled": "Private",
+      "privacyWarning": "Direct server launch is blocked by privacy mode. Use a VPN/proxy or disable privacy mode.",
+      "catalog": {
+        "subtitle": "Live server catalog with player counts, MOTD and local history",
+        "refresh": "Refresh statuses",
+        "addCustom": "Add server",
+        "filters": "Server filters",
+        "search": "Server name or address",
+        "all": "All",
+        "sort": "Sort",
+        "sortOnlineDesc": "Highest online first",
+        "sortOnlineAsc": "Lowest online first",
+        "sortName": "By name",
+        "noInternet": "The catalog requires an internet connection",
+        "noInternetHint": "Check your connection and try again. RxLaunch keeps the network catalog closed until the status service responds.",
+        "retry": "Try again",
+        "loading": "Checking connection and loading servers…",
+        "empty": "No servers match this filter",
+        "historyHint": "Peak and average are calculated from observations on this PC over 30 days",
+        "customTitle": "Add your server",
+        "customSubtitle": "It will be saved in RxLaunch and synced to Minecraft's server list before launch.",
+        "cancel": "Cancel",
+        "nameLabel": "Name",
+        "addressLabel": "IP or domain",
+        "categoryLabel": "Category",
+        "save": "Add",
+        "graphEmpty": "The chart will appear after several successful measurements",
+        "autoVersion": "Automatic version",
+        "custom": "Custom",
+        "current": "Current",
+        "peak": "Peak",
+        "average": "Average",
+        "graphTitle": "Online history",
+        "measurements": "measurements",
+        "observed": "Observations on this PC",
+        "copy": "Copy",
+        "added": "Added",
+        "addToMinecraft": "Add to game",
+        "play": "Play",
+        "delete": "Delete",
+        "online": "online",
+        "offline": "Offline",
+        "noInternetToast": "No internet connection — the Servers tab is unavailable",
+        "serverAdded": "Server added to Minecraft's list",
+        "syncFailed": "Could not update Minecraft's server list",
+        "invalidAddress": "Check the server IP or domain",
+        "duplicate": "This server is already in the catalog",
+        "customAdded": "Server added to the catalog"
+      }
+    },
+    "starter": {
+      "configuring": "Assembling the configuration",
+      "preparingGame": "Preparing the game for launch",
+      "starting": "The game starts",
+      "started": "The game has started",
+      "closing": "The game is closing",
+      "failed": "The game could not be started. Details were saved to the log",
+      "cancelled": "Launch cancelled",
+      "cancelWait": "The previous launch is still stopping — wait a couple of seconds",
+      "remaining": "~{0} left",
+      "sec": "s",
+      "min": "min"
+    },
+    "updater": {
+      "available": "New update available",
+      "downloading": "Downloading in progress",
+      "ready": "After restarting the launcher, the update will be installed",
+      "deferred": "The update will install after Minecraft closes so your statistics are not lost",
+      "changelog": "List of changes",
+      "install": "Install"
+    },
+    "settings": {
+      "title": "Settings",
+      "sections": {
+        "personalization": "Personalization",
+        "game": "Gameplay",
+        "startup": "Startup options",
+        "java": "Java options",
+        "about": "About launcher"
+      },
+      "game": {
+        "consoleOnStart": "Open console when starting game",
+        "consoleOnCrash": "Open console when crashing",
+        "hideOnStart": "Hide the launcher when starting the game",
+        "autoInstallDeps": "Automatically install required mod dependencies",
+        "discordRpc": {
+          "title": "Discord Rich Presence",
+          "description": "Shows whether the player is in the launcher or in a running game.",
+          "showNickname": {
+            "title": "Show player nickname",
+            "description": "Adds the active game profile nickname to the RxLaunch Game status."
+          },
+          "showServer": {
+            "title": "Show server",
+            "description": "Shows the server address for direct launches or when a connection is detected in the Minecraft log."
+          },
+          "showTime": {
+            "title": "Show elapsed time",
+            "description": "Shows how long the main menu or the game has been running."
+          }
+        },
+        "serverPrivacyMode": {
+          "title": "Server privacy mode (experimental)",
+          "description": "Disables background server pings and launcher stats. Direct play from the server tab is blocked; manual server joins still reveal your IP without a VPN/proxy."
+        }
+      },
+      "java": {
+        "auto": {
+          "title": "Automatically select Java version",
+          "description": "The version is selected and installed based on the official Mojang manifest"
+        },
+        "user": "Custom Java version",
+        "selectJavaExe": "Select the executable file java.exe"
+      },
+      "personalization": {
+        "language": "Launcher language",
+        "mainColor": {
+          "title": "Main color",
+          "description": "Your launcher is your personality"
+        },
+        "darkMode": {
+          "title": "Color mode",
+          "description": "The launcher will use the selected mode"
+        },
+        "background": {
+          "title": "The background",
+          "description": "Today is a big castle, or a hellish world?"
+        },
+        "backgroundAppearance": {
+          "title": "Background tuning",
+          "description": "Fit the image to your interface",
+          "blur": "Blur",
+          "brightness": "Brightness",
+          "scale": "Scale",
+          "reset": "Reset"
+        },
+        "disableCss": {
+          "title": "Disable CSS Effects",
+          "description": "Disables shadows and filter() effects"
+        },
+        "disableAnimations": {
+          "title": "Disable animations",
+          "description": "The time of all animations and transitions is reduced to a minimum"
+        },
+        "disableStartupAnimation": {
+          "title": "Disable startup animation",
+          "description": "Removes startup animation, thereby reducing launcher loading time"
+        },
+        "fontFamily": {
+          "title": "Primary UI font",
+          "description": "Each font in the list is shown the way it will look",
+          "search": "Search fonts",
+          "sample": "Play · Hello, Minecraft 1.21",
+          "empty": "Nothing found",
+          "default": "default"
+        },
+        "launcherAvatar": {
+          "title": "Launcher avatar",
+          "description": "Changes the icon in the interface, window and Windows shortcuts",
+          "matchColor": "Match interface color",
+          "matchColorDescription": "The theme color follows the selected avatar",
+          "options": {
+            "classic": "Rx Classic",
+            "ember": "Ember",
+            "frost": "Frost",
+            "emerald": "Emerald",
+            "violet": "Portal",
+            "gold": "Gold",
+            "neon": "Neon",
+            "abyss": "Abyss",
+            "storm": "Storm",
+            "celestial": "Celestial",
+            "pixel": "Pixel"
+          }
+        },
+        "tabs": {
+          "title": "Sidebar tabs",
+          "description": "Turn on only what you use. Home and Settings are always there",
+          "names": {
+            "content": "Home",
+            "settings": "Settings",
+            "instances": "Instances",
+            "mods": "Mods",
+            "skins": "Skins",
+            "servers": "Servers",
+            "statistics": "Statistics",
+            "screenshots": "Screenshots",
+            "console": "Console"
+          }
+        }
+      },
+      "startup": {
+        "gameDirectory": {
+          "title": "Folder for storing game files",
+          "description": "It will store all the game files, Java and others"
+        },
+        "memory": {
+          "title": "Memory allocation",
+          "description": "The recommended value for modern versions of the game is from 4 GB. ",
+          "auto": "Choose automatically",
+          "advice": "Now: {memory} — based on mods ({mods}) and computer RAM ({total})"
+        },
+        "fullscreen": {
+          "title": "Full screen game mode",
+          "description": "The flag may not work with some builds"
+        },
+        "partialSplit": {
+          "title": "Separate version storage",
+          "description": "Mods, assemblies, resource packs and other user files will be stored in an individual folder with each version (Game folder/home)"
+        },
+        "fullSplit": {
+          "title": "Full version separation (experimental)",
+          "description": "ALL files required for each version will be stored in an individual folder (Game folder/home)",
+          "description2": "Only enable this feature if you have problems running certain versions when you already have a large installed base!",
+          "description3": "Each version, when the function is enabled, will take up a large amount of space"
+        },
+        "multiplayerFix": {
+          "title": "Network compatibility (experimental)",
+          "description": "Prefers IPv4 and applies safe network timeouts. It does not disable Microsoft checks or bypass account and server restrictions.",
+          "dependenciesNote": "Mod dependencies are downloaded separately through the automatic required-dependencies setting.",
+          "description2": "If multiplayer is blocked by account permissions, enable it on the official Xbox page.",
+          "openSettings": "Xbox settings",
+          "checkConnection": "Check connection",
+          "checking": "Checking connection…",
+          "online": "Services reachable",
+          "offline": "Minecraft services are unreachable"
+        },
+        "gameStartParams": {
+          "title": "Minecraft CLI arguments",
+          "description": "For example, -Xms512M"
+        },
+        "javaStartParams": {
+          "title": "Java CLI arguments",
+          "description": "For example, -XX:+UseG1GC"
+        },
+        "rxPerformanceMode": {
+          "title": "Rx performance mode",
+          "description": "Adds a tuned JVM profile to reduce freezes and improve frame stability."
+        },
+        "rxClientLobbyMode": {
+          "title": "Rx Client Lobby (In-Game, 1.21.4)",
+          "description": "Adds the Rx Client menu inside Minecraft (SinglePlayer/MultiPlayer/ALT manager/Discord/Telegram). Works on 1.21.4."
+        }
+      },
+      "about": {
+        "site": "Official site",
+        "sources": "Project source code",
+        "telegram": "Telegram channel",
+        "vk": "Vkontakte community",
+        "debug": "Build a debug archive",
+        "history": "Launcher update history",
+        "eula": "User Agreement",
+        "privacyPolicy": "Privacy Policy",
+        "lessDataCollection": {
+          "title": "Paranoia Mode",
+          "description": "The launcher sends no statistics and never reads the machine ID, skips third-party skin-head services, hides your nickname and server in Discord, and masks your Windows user name in logs and debug archives."
+        }
+      }
+    },
+    "flymenu": {
+      "home": "Home screen",
+      "settings": "Settings",
+      "packs": "Modpacks",
+      "mods": "Mods",
+      "skins": "Skins",
+      "servers": "Servers",
+      "statistics": "Statistics",
+      "console": "Console",
+      "folder": "Game folder",
+      "screenshots": "Screenshots",
+      "instances": "Instances"
+    },
+    "screenshots": {
+      "title": "Screenshots",
+      "subtitle": "All your in-game screenshots",
+      "count": "Screenshots: {0}",
+      "source": "Folder",
+      "allSources": "All folders",
+      "mainFolder": "Main folder",
+      "openFolder": "Open folder",
+      "emptyTitle": "No screenshots yet",
+      "emptyText": "Press F2 in game and the shot will appear here. Screenshots from every instance and version are collected automatically.",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "prev": "Previous",
+      "next": "Next",
+      "copy": "Copy",
+      "copied": "Screenshot copied",
+      "reveal": "Show in folder",
+      "delete": "Delete",
+      "deleteConfirm": "Delete for sure?",
+      "deleted": "Screenshot moved to the Recycle Bin",
+      "deleteFailed": "Could not delete the screenshot"
+    },
+    "skins": {
+      "title": "Player skins",
+      "subtitle": "Find a Java skin by nickname and inspect it in 3D",
+      "searchPlaceholder": "Minecraft player nickname",
+      "search": "Search",
+      "preview": "3D skin preview",
+      "defaultName": "Steve",
+      "previewUnavailable": "3D is unavailable — showing the texture",
+      "loading": "Finding skin",
+      "loadingHint": "Checking the Mojang profile and downloading its texture",
+      "previewHint": "Drag to rotate, use the wheel to zoom",
+      "models": {"classic": "Classic", "slim": "Slim"},
+      "selectedSkin": "Selected skin",
+      "cached": "Cached",
+      "profileId": "Profile UUID",
+      "model": "Model",
+      "updated": "Updated",
+      "download": "Download PNG",
+      "apply": "Use in profile",
+      "reset": "Show Steve",
+      "applyHint": "Applying changes the profile avatar inside RxLauncher. Licensed servers use the skin attached to your game account.",
+      "readyTitle": "Skin search is ready",
+      "readyHint": "Enter a Minecraft Java Edition player nickname",
+      "recent": "Recent searches",
+      "recentHint": "Up to eight recently found profiles",
+      "clearRecent": "Clear",
+      "emptyRecent": "Found players will appear here",
+      "invalidNicknameTitle": "Invalid nickname",
+      "invalidNickname": "Use 2–16 Latin letters, digits or underscores",
+      "notFoundTitle": "Skin not found",
+      "notFoundHint": "Check the nickname — standard Steve is shown",
+      "foundTitle": "Skin found",
+      "foundHint": "The texture is ready to download or use in the launcher",
+      "foundCacheHint": "A verified local copy is shown",
+      "errorTitle": "Search error",
+      "lookupError": "Could not load the skin. Check your connection and try again",
+      "downloadedTitle": "Texture saved",
+      "downloadedHint": "The PNG was saved to the selected folder",
+      "appliedTitle": "Profile avatar updated",
+      "appliedHint": "The selected launcher profile now displays this skin",
+      "noAccountTitle": "No profile selected",
+      "noAccountHint": "Select a player profile in the top bar first",
+      "actionErrorTitle": "Action failed",
+      "applyError": "Could not apply the skin to the selected profile",
+      "exportError": "Could not save the PNG texture",
+      "errors": {
+        "invalid_nickname": "The nickname must contain 2–16 Latin letters, digits or _",
+        "not_found": "No player with this nickname was found",
+        "offline": "There is no internet connection",
+        "network_error": "Could not connect to Minecraft services",
+        "rate_limited": "Too many requests. Try again shortly",
+        "service_unavailable": "Minecraft services are temporarily unavailable",
+        "invalid_response": "Minecraft returned an invalid response",
+        "invalid_signature": "The profile authenticity could not be verified",
+        "invalid_texture": "The skin texture is damaged or has an invalid format",
+        "timeout": "Minecraft services took too long to respond",
+        "no_active_account": "Select a player profile first",
+        "unsupported_account": "This profile type does not support a local avatar",
+        "cache_miss": "The skin is no longer cached. Search for it again",
+        "apply_failed": "Could not save the skin for the selected profile",
+        "export_failed": "Could not write the PNG to the selected folder",
+        "untrusted_sender": "The launcher security system rejected the request",
+        "unknown": "Unknown error. Please try again"
+      }
+    },
+    "flyout": {
+      "account": "ACCOUNT",
+      "version": "GAME VERSION",
+      "play": "Play",
+      "stop": "Stop",
+      "cancel": "Cancel",
+      "selectAccount": "Select a player profile first",
+      "selectVersion": "Select a game version first"
+    },
+    "versions": {
+      "releases": "Release versions",
+      "snapshots": "Snapshots",
+      "favourites": "Favorites",
+      "installed": "Installed",
+      "pack": "Assembly",
+      "offlineTitle": "Version servers are unreachable",
+      "offlineText": "Showing installed versions — they can be played without internet",
+      "all": "All",
+      "custom": "Custom",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "sortName": "By name",
+      "sortInstalled": "Installed first",
+      "sortFavorites": "Favorites first",
+      "addCustom": "Custom version",
+      "addFolder": "Version folder",
+      "addFile": ".json or .zip file",
+      "dropTitle": "Drop to add the version",
+      "dropHint": "Version folder, .json file or .zip archive",
+      "dropFooter": "You can drop a custom version here",
+      "installedBadge": "Installed",
+      "customBadge": "Custom",
+      "baseVersion": "Based on Minecraft {0}",
+      "shown": "Showing {0} of {1}",
+      "empty": "Nothing found",
+      "emptyHint": "Change the search or filters",
+      "imported": "Version added",
+      "errNoManifest": "No version file found (.json with mainClass or inheritsFrom)",
+      "errExists": "Version {0} already exists",
+      "errUnsupported": "Use a version folder, .json or .zip",
+      "errFailed": "Could not add the version",
+      "delete": "Delete version",
+      "deleteConfirm": "Click again to delete",
+      "deleted": "Version moved to the Recycle Bin",
+      "errDelete": "Could not delete the version"
+    },
+    "versionsPosters": [
+      {
+        "version": "1.21",
+        "description": "Tricky Trials"
+      },
+      {
+        "version": "1.20",
+        "description": "Trails & Tales"
+      },
+      {
+        "version": "1.19",
+        "description": "The Wild Update"
+      },
+      {
+        "version": "1.18",
+        "description": "Caves & Cliffs (part 2)"
+      },
+      {
+        "version": "1.17",
+        "description": "Caves & Cliffs (part 1)"
+      },
+      {
+        "version": "1.16",
+        "description": "Nether Update"
+      },
+      {
+        "version": "1.15",
+        "description": "Buzzy Bees"
+      },
+      {
+        "version": "1.14",
+        "description": "Village & Pillage"
+      },
+      {
+        "version": "1.13",
+        "description": "The Aquatic Update"
+      },
+      {
+        "version": "1.12",
+        "description": "Color World"
+      },
+      {
+        "version": "1.11",
+        "description": "Exploration Update"
+      }
+    ],
+    "units": {
+      "size1": [
+        "KB",
+        "MB",
+        "GB",
+        "TB",
+        "Pb",
+        "Ab",
+        "Zb",
+        "Yb"
+      ],
+      "size2": [
+        "KiB",
+        "MiB",
+        "GiB",
+        "Tib",
+        "PiB",
+        "EiB",
+        "ZiB",
+        "YiB"
+      ],
+      "mb": "MB",
+      "gb": "GB"
+    },
+    "rxAuth": {
+      "login": {
+        "title": "Login | RxID"
+      },
+      "register": {
+        "title": "Registration | RxID",
+        "repeatPassword": "Enter password again",
+        "go": "Create an account!",
+        "success": {
+          "title": "Registration successful!",
+          "description": "Done, you have created an account!",
+          "button": "Alright"
+        }
+      },
+      "goRegister": "I don't have an account",
+      "goLogin": "I already have an account",
+      "errors": {
+        "WRONG_CREDENTIALS": "Invalid login or password",
+        "PNG_REQUIRED": "Required to select a PNG file",
+        "FILE_BITMAP_TOO_BIG": "The file is too large or too large",
+        "UNKNOWN": "An error occurred while performing the action",
+        "ALREADY_EXISTS": "This user already exists, please select a different nickname"
+      },
+      "skin": {
+        "title": "Customizing the appearance",
+        "skin": "Skin",
+        "cape": "Cloak"
+      },
+      "useButton": "RxSkins skin system",
+      "fieldsError": "Fields are not filled in/filled in incorrectly",
+      "passwordsComp": "Passwords don't match"
+    },
+    "console": {
+      "title": "Console",
+      "subtitle": "Launcher and game events appear here instantly",
+      "live": "Live",
+      "search": "Search log",
+      "all": "All events",
+      "game": "Game",
+      "warnings": "Warnings",
+      "errors": "Errors",
+      "followOn": "Auto-scroll",
+      "followOff": "Scroll paused",
+      "clear": "Clear view",
+      "openDir": "Open logs folder",
+      "copy": "Copy log",
+      "copied": "Log copied successfully!"
+    },
+    "selectWorld": {
+      "title": "Choose a world",
+      "installHere": "Install here"
+    },
+    "packManager": {
+      "gamemodes": {
+        "0": "Survival",
+        "1": "Creative",
+        "2": "Adventure"
+      },
+      "difficulty": {
+        "0": "Peaceful",
+        "1": "Normal",
+        "2": "Difficult",
+        "3": "Hardcore"
+      },
+      "tabs": {
+        "worlds": "Worlds",
+        "install": "Install",
+        "addFile": "Add file",
+        "updates": "Updates",
+        "import": "Import"
+      },
+      "buttons": {
+        "export": "Export",
+        "folder": "Open folder",
+        "icon": "Change icon",
+        "play": "Play",
+        "delete": "Delete"
+      },
+      "installed": "Successfully installed!",
+      "failedWorld": "Failed to establish peace",
+      "successWorld": "Peace has been successfully established!",
+      "deleting": "Modpack is being removed",
+      "deleted": "Modpack removal complete!",
+      "worldDeleted": "The world has been successfully deleted!",
+      "exportStarted": "Export started",
+      "exportCompleted": "Export completed successfully!",
+      "importStarted": "Import started",
+      "importCompleted": "Import completed successfully!"
+    },
+    "crash": {
+      "title": "The game crashed",
+      "exitCode": "Exit code",
+      "openReport": "Crash report",
+      "openConsole": "Console",
+      "copy": "Copy",
+      "copied": "Report copied",
+      "gotIt": "Got it",
+      "disableMod": "Disable mod",
+      "disabled": "Disabled",
+      "modDisabled": "Mod disabled",
+      "findMod": "Find on Modrinth",
+      "openMods": "Open mods",
+      "openSettings": "Open settings",
+      "lastCrash": "Last crash"
+    },
+    "instances": {
+      "title": "Instances",
+      "subtitle": "Separate games with their own mods and worlds",
+      "count": "Instances: {0}",
+      "hint": "Each instance has its own mods, worlds, resource packs, settings and memory. Game versions are shared, so no space is wasted.",
+      "create": "Create instance",
+      "importMrpack": "Import .mrpack",
+      "emptyTitle": "No instances yet",
+      "emptyText": "Create an instance such as “Survival with shaders” or “PvP” — its mods and worlds won't interfere with others.",
+      "active": "Selected",
+      "mods": "Mods: {0}",
+      "memoryAutoShort": "Memory: auto",
+      "memoryGlobalShort": "Memory: from settings",
+      "neverPlayed": "Never played",
+      "played": "Played {0}",
+      "openMods": "Instance mods",
+      "openFolder": "Open folder",
+      "settings": "Settings",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "deleteConfirm": "Click again to delete",
+      "deleted": "Instance moved to the Recycle Bin",
+      "deleteFailed": "Could not delete the instance",
+      "duplicated": "Instance duplicated",
+      "copySuffix": "copy",
+      "createTitle": "New instance",
+      "editTitle": "Instance settings",
+      "name": "Name",
+      "namePlaceholder": "For example, Survival with shaders",
+      "version": "Game version",
+      "memory": "Memory",
+      "memoryGlobal": "From settings",
+      "memoryAuto": "Automatic",
+      "memoryManual": "Manual",
+      "memoryMb": "Amount, MB",
+      "javaArgs": "Custom Java arguments (optional)",
+      "changeIcon": "Custom icon",
+      "resetIcon": "Reset icon",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saved": "Instance saved",
+      "created": "Instance created and selected",
+      "needName": "Enter an instance name",
+      "needVersion": "Choose a game version"
+    }
+  }
+}

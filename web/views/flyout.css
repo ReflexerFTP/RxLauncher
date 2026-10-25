@@ -1,0 +1,161 @@
+/* ===== Нижний оверлей hero: выбор версии + запуск ===== */
+.flyout {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+
+    width: 100%;
+    padding: 18px 20px 20px;
+
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.flyout > div, .flyout button {
+    height: 62px;
+    border-radius: 14px !important;
+}
+
+/* Выбор версии — стеклянный pill слева */
+.flyout #versionSelect,
+.flyout #versionSelectPlaceholder {
+    width: max-content;
+    min-width: 230px;
+    background: rgba(20, 20, 22, 0.55) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0 10px 0 14px;
+    margin-right: auto;
+}
+
+.flyout #versionSelect:hover {
+    background: rgba(30, 30, 33, 0.68) !important;
+}
+
+.flyout #versionSelect .title {
+    font-size: 16pt;
+    font-weight: 800;
+    color: white;
+}
+
+.flyout #versionSelect .description {
+    color: rgba(220, 220, 220, 0.85);
+}
+
+.flyout #versionSelect .icon,
+.flyout #versionSelect img.icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+}
+
+.flyout #versionSelect .button {
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
+}
+
+.flyout #versionSelect .button * {
+    color: white;
+}
+
+/* Кнопка запуска — крупная зелёная справа */
+.flyout #playButton {
+    width: 270px;
+    min-width: 220px;
+    font-size: 16pt;
+    font-weight: 800;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 26px -8px var(--theme-primaryDarker);
+}
+
+.flyout #playButton .material-symbols-outlined {
+    font-size: 24px;
+}
+
+.flyout .flyout-mode {
+    animation-duration: .24s !important;
+}
+
+.flyout #stopGameButton {
+    width: 270px;
+    min-width: 220px;
+    font-size: 16pt;
+    font-weight: 800;
+    background: var(--error);
+}
+
+.flyout #stopGameButton,
+.flyout #stopGameButton * {
+    color: white !important;
+}
+
+.flyout #stopGameButton:hover {
+    filter: brightness(87%);
+}
+
+/* Отмена запуска — спокойная вторичная кнопка рядом с прогрессом */
+.flyout #cancelLaunchButton {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 100%;
+    min-width: 150px;
+    padding: 0 18px !important;
+    border-radius: 11px !important;
+    border: 1px solid var(--rx-stroke-strong, rgba(255, 255, 255, .14)) !important;
+    background: var(--theme-primaryBgLight) !important;
+    color: var(--text-color) !important;
+    font-size: 11pt;
+    font-weight: 700;
+}
+
+.flyout #cancelLaunchButton:hover { border-color: var(--error) !important; color: var(--error) !important; }
+.flyout #cancelLaunchButton .material-symbols-outlined { font-size: 20px; color: inherit; }
+.flyout:not(.start-mode) #cancelLaunchButton { display: none !important; }
+
+/* Скрытые режимы */
+.flyout > div.hidden {
+    display: none;
+}
+
+/* Прогресс / спиннер занимают левую часть как pill */
+.flyout .progress-pill,
+.flyout .spinner-wrapper {
+    margin-right: auto;
+    flex-grow: 1;
+    max-width: 60%;
+    background: rgba(20, 20, 22, 0.55) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Spinner wrapper */
+.flyout .spinner-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 12px;
+    flex-direction: row;
+    padding: 0 18px;
+}
+
+.flyout .spinner-wrapper .title {
+    font-weight: 500;
+    font-size: 13pt;
+    color: white;
+}
+
+/* Flyout start mode */
+.flyout.start-mode #versionSelect {
+    pointer-events: none !important;
+    cursor: not-allowed;
+}
+
+.flyout.start-mode #playButton {
+    display: none;
+}

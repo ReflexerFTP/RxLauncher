@@ -1,0 +1,54 @@
+<link rel="stylesheet" href="modals/changelog.css"/>
+
+<div class="modal" id="modal-changelog" style="display: none;">
+    <div class="changelog-shell">
+        <header class="changelog-header">
+            <button class="square transparent small" onclick="RxChangelogUI.goBack()" title="{{commons.close}}">
+                <span class="material-symbols-outlined">west</span>
+            </button>
+            <div class="changelog-header-icon"><span class="material-symbols-outlined">history</span></div>
+            <div class="changelog-heading-copy">
+                <h1>{{changelog.title}}</h1>
+                <p>{{changelog.subtitle}}</p>
+            </div>
+        </header>
+
+        <div class="changelog-body">
+            <!-- Лента версий -->
+            <nav class="changelog-rail" aria-label="{{changelog.title}}"></nav>
+
+            <!-- Выбранный патч -->
+            <article class="changelog-detail">
+                <div class="changelog-cover">
+                    <img alt="" data-changelog-image/>
+                    <div class="changelog-cover-copy">
+                        <span class="changelog-tag" data-changelog-tag></span>
+                        <span class="changelog-cover-version" data-changelog-version></span>
+                    </div>
+                </div>
+                <div class="changelog-detail-copy">
+                    <div class="changelog-meta">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        <time data-changelog-date></time>
+                    </div>
+                    <h2 data-changelog-title></h2>
+                    <p class="changelog-summary" data-changelog-summary></p>
+                    <h3>{{changelog.whatsNew}}</h3>
+                    <ol class="changelog-changes" data-changelog-changes></ol>
+                </div>
+                <footer class="changelog-steps">
+                    <button class="transparent" data-changelog-step="newer">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                        <span class="changelog-step-copy"><small>{{changelog.newer}}</small><strong data-step-label></strong></span>
+                    </button>
+                    <button class="transparent" data-changelog-step="older">
+                        <span class="changelog-step-copy"><small>{{changelog.older}}</small><strong data-step-label></strong></span>
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                </footer>
+            </article>
+        </div>
+    </div>
+</div>
+
+<script src="modals/changelog.js"></script>

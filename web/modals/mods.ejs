@@ -1,0 +1,147 @@
+<link rel="stylesheet" href="modals/mods.css"/>
+
+<div class="modal" id="modal-mods" style="display: none;">
+    <header class="mods-header">
+        <div class="mods-heading-icon"><span class="material-symbols-outlined">extension</span></div>
+        <div class="mods-heading-copy">
+            <h1>{{mods.title}}</h1>
+            <span>{{mods.subtitle}}</span>
+        </div>
+        <div class="mods-version-card">
+            <span class="material-symbols-outlined">deployed_code</span>
+            <div>
+                <small>{{mods.selectedVersion}}</small>
+                <b data-mods-version>{{commons.notSelected}}</b>
+            </div>
+        </div>
+    </header>
+
+    <!-- Вкладки: установленные моды / каталог Modrinth -->
+    <nav class="mods-tabs" data-mods-tabs>
+        <button type="button" class="mods-tab active" data-mods-view="installed">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <span>{{mods.tabInstalled}}</span>
+        </button>
+        <button type="button" class="mods-tab" data-mods-view="catalog">
+            <span class="material-symbols-outlined">travel_explore</span>
+            <span>{{mods.tabCatalog}}</span>
+        </button>
+    </nav>
+
+    <div class="mods-view" data-view="installed">
+        <section class="mods-toolbar">
+            <div class="mods-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" data-mods-search placeholder="{{mods.search}}"/>
+            </div>
+            <label class="mods-sort">
+                <span class="material-symbols-outlined">sort</span>
+                <select data-mods-sort>
+                    <option value="enabled">{{mods.sortEnabled}}</option>
+                    <option value="name">{{mods.sortName}}</option>
+                    <option value="newest">{{mods.sortNewest}}</option>
+                    <option value="oldest">{{mods.sortOldest}}</option>
+                    <option value="size">{{mods.sortSize}}</option>
+                    <option value="problems">{{mods.sortProblems}}</option>
+                </select>
+            </label>
+            <button data-mods-action="add"><span class="material-symbols-outlined">add</span><span>{{mods.add}}</span></button>
+            <button class="transparent" data-mods-action="updates"><span class="material-symbols-outlined">update</span><span>{{mods.checkUpdates}}</span></button>
+            <button class="transparent" data-mods-action="backup"><span class="material-symbols-outlined">archive</span><span>{{mods.backup}}</span></button>
+            <button class="transparent" data-mods-action="folder"><span class="material-symbols-outlined">folder_open</span><span>{{mods.openFolder}}</span></button>
+            <button class="transparent mods-last-crash" data-mods-action="last-crash" hidden><span class="material-symbols-outlined">heart_broken</span><span>{{crash.lastCrash}}</span></button>
+            <button class="transparent mods-delete-all" data-mods-action="delete-all"><span class="material-symbols-outlined">delete_sweep</span><span>{{mods.deleteAll}}</span></button>
+        </section>
+
+        <section class="mods-overview">
+            <div><span class="material-symbols-outlined">inventory_2</span><b data-mods-count>0</b><small>{{mods.total}}</small></div>
+            <div><span class="material-symbols-outlined">check_circle</span><b data-mods-enabled>0</b><small>{{mods.enabled}}</small></div>
+            <div><span class="material-symbols-outlined">pause_circle</span><b data-mods-disabled>0</b><small>{{mods.disabled}}</small></div>
+            <div class="mods-path"><span class="material-symbols-outlined">hard_drive</span><code data-mods-path>—</code></div>
+        </section>
+
+        <!-- Найденные обновления модов -->
+        <section class="mods-updates" data-mods-updates hidden>
+            <span class="material-symbols-outlined">upgrade</span>
+            <div class="mods-updates-copy">
+                <strong data-mods-updates-title></strong>
+                <span data-mods-updates-list></span>
+            </div>
+            <button data-mods-action="apply-updates"><span class="material-symbols-outlined">download</span><span>{{mods.updateAll}}</span></button>
+            <button class="transparent mods-updates-close" data-mods-action="hide-updates" title="{{commons.close}}"><span class="material-symbols-outlined">close</span></button>
+        </section>
+
+        <div class="mods-list-head">
+            <span>{{mods.file}}</span><span>{{mods.details}}</span><span>{{mods.status}}</span><span>{{mods.actions}}</span>
+        </div>
+        <div class="mods-list" data-mods-list></div>
+
+        <div class="mods-empty" data-mods-empty>
+            <span class="material-symbols-outlined">extension_off</span>
+            <h2>{{mods.emptyTitle}}</h2>
+            <p>{{mods.emptyText}}</p>
+            <button data-mods-action="add"><span class="material-symbols-outlined">add</span><span>{{mods.addFirst}}</span></button>
+        </div>
+    </div>
+
+    <!-- Каталог Modrinth: моды под выбранную версию и загрузчик -->
+    <div class="mods-view" data-view="catalog" hidden>
+        <section class="mods-toolbar mc-toolbar">
+            <div class="mods-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" data-catalog-search placeholder="{{mods.catalogSearch}}"/>
+            </div>
+            <label class="mods-sort">
+                <span class="material-symbols-outlined">sort</span>
+                <select data-catalog-sort>
+                    <option value="relevance">{{mods.catalogRelevance}}</option>
+                    <option value="downloads">{{mods.catalogDownloads}}</option>
+                    <option value="follows">{{mods.catalogFollows}}</option>
+                    <option value="updated">{{mods.catalogUpdated}}</option>
+                    <option value="newest">{{mods.catalogNewest}}</option>
+                </select>
+            </label>
+            <span class="mc-target" data-catalog-target></span>
+        </section>
+        <div class="mc-categories" data-catalog-categories>
+            <button type="button" class="active" data-category="">{{mods.catAll}}</button>
+            <button type="button" data-category="optimization">{{mods.catOptimization}}</button>
+            <button type="button" data-category="utility">{{mods.catUtility}}</button>
+            <button type="button" data-category="decoration">{{mods.catDecoration}}</button>
+            <button type="button" data-category="adventure">{{mods.catAdventure}}</button>
+            <button type="button" data-category="technology">{{mods.catTechnology}}</button>
+            <button type="button" data-category="magic">{{mods.catMagic}}</button>
+            <button type="button" data-category="storage">{{mods.catStorage}}</button>
+            <button type="button" data-category="mobs">{{mods.catMobs}}</button>
+        </div>
+        <div class="mc-scroll" data-catalog-scroll>
+            <div class="mc-list" data-catalog-list></div>
+            <div class="mc-status" data-catalog-status hidden>
+                <span class="material-symbols-outlined"></span>
+                <strong></strong>
+                <span></span>
+            </div>
+            <!-- Подгрузка при прокрутке к концу списка -->
+            <div class="mc-more" data-catalog-more hidden>
+                <span class="material-symbols-outlined">progress_activity</span>
+                <span>{{mods.catalogLoadingMore}}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Перетаскивание JAR-файлов прямо в окно -->
+    <div class="mods-drop-overlay" data-mods-drop hidden>
+        <div class="mods-drop-card">
+            <span class="material-symbols-outlined">upload_file</span>
+            <strong>{{mods.dropTitle}}</strong>
+            <span>{{mods.dropHint}}</span>
+        </div>
+    </div>
+
+    <div class="mods-no-version" data-mods-no-version hidden>
+        <span class="material-symbols-outlined">deployed_code_alert</span>
+        <h2>{{mods.noVersionTitle}}</h2>
+        <p>{{mods.noVersionText}}</p>
+        <button onclick="RxModals.switchModal('content'); RxVersionsUI.open();">{{mods.selectVersion}}</button>
+    </div>
+</div>

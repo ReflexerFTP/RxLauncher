@@ -1,0 +1,39 @@
+<link rel="stylesheet" href="modals/console.css"/>
+
+<div class="modal" id="modal-console" style="display: none;">
+    <header class="console-header">
+        <div class="console-header-icon"><span class="material-symbols-outlined">terminal</span></div>
+        <div class="console-header-copy">
+            <h1>{{console.title}}</h1>
+            <span>{{console.subtitle}}</span>
+        </div>
+        <div class="console-live"><i></i><span>{{console.live}}</span><b data-console-count>0</b></div>
+    </header>
+
+    <div class="console-toolbar">
+        <div class="console-search">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" data-console-search placeholder="{{console.search}}"/>
+        </div>
+        <select data-console-filter>
+            <option value="all">{{console.all}}</option>
+            <option value="game">{{console.game}}</option>
+            <option value="warn">{{console.warnings}}</option>
+            <option value="error">{{console.errors}}</option>
+        </select>
+        <button class="transparent active" data-console-action="follow" data-console-follow>
+            <span class="material-symbols-outlined">vertical_align_bottom</span>
+            <span>{{console.followOn}}</span>
+        </button>
+        <button class="transparent" data-console-action="clear" title="{{console.clear}}"><span class="material-symbols-outlined">delete_sweep</span></button>
+        <button class="transparent" data-console-action="folder" title="{{console.openDir}}"><span class="material-symbols-outlined">folder_open</span></button>
+        <button data-console-action="copy">
+            <span class="material-symbols-outlined">content_copy</span>
+            <span>{{console.copy}}</span>
+        </button>
+    </div>
+
+    <div class="wrapper console-wrapper">
+        <div class="console-textarea console-lines" data-console-lines></div>
+    </div>
+</div>

@@ -1,0 +1,104 @@
+/* Элементы */
+@import "./resets.css";
+@import "./layout.css";
+@import "./progress.css";
+@import "./slider.css";
+@import "./misc.css";
+@import "./button.css";
+@import "./tabs.css";
+@import "./custom-select.css";
+@import "./checkbox.css";
+@import "./checksList.css";
+@import "./spinner.css";
+@import "./modal.css";
+@import "./colorPicker.css";
+@import "./switch.css";
+@import "./scrollbar.css";
+@import "./chips.css";
+@import "./input.css";
+@import "./toast.css";
+@import "./alert.css";
+@import "./link.css";
+@import "./link_openInNew.css";
+
+@import "./themes/dark.css";
+@import "./themes/light.css";
+
+/* Слой редизайна 2026 — наслаивается поверх базовых стилей */
+@import "./redesign-2026.css";
+@import "./redesign-2026-v2.css";
+@import "./performance-2026.css";
+@import "./minimal-2026.css";
+@import "./rx-select.css";
+
+/* Шрифты */
+@import "../assets/fonts/MaterialSymbols/font.css";
+
+@font-face {
+    font-family: "Manrope";
+    src: url("../assets/fonts/Manrope.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Fira Code";
+    src: url("../assets/fonts/FiraCode.ttf") format("truetype");
+}
+
+body,
+html {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    border-radius: 32px;
+    color: var(--text-color);
+}
+
+html.noEffects,
+html.noEffects *:not(.icon img):not(.progress-pill):not(.progress-pill *):not(.line-spinner) {
+    filter: none !important;
+    box-shadow: none !important;
+}
+
+html.noAnimations,
+html.noAnimations *:not(.spinner):not(.progress-pill):not(.progress-pill *):not(.line-spinner) {
+    transition: 0s !important;
+    animation-duration: 0.001s !important;
+}
+
+html.noAnimations #aboutItem {
+    animation: none;
+    animation-duration: 0s;
+}
+
+* {
+    transition: 0.2s;
+    font-family: Manrope, sans-serif;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    -webkit-app-region: no-drag;
+    overflow: hidden;
+}
+
+.material-symbols-rounded,
+.material-symbols-outlined,
+.material-symbols-sharp {
+    margin: 0;
+    padding: 0;
+    height: max-content;
+    width: max-content;
+}
+
+:root {
+    --bradius: 8px;
+    --success: #29ae6b;
+    --error: #f04438;
+    --warning: #fdb022;
+    --info: #53b1fd;
+}
+
+dialog::backdrop {
+    backdrop-filter: blur(2px);
+}

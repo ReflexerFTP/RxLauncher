@@ -1,0 +1,563 @@
+/* Tabs */
+#modal-installMods .tabs > .tab {
+    flex-grow: 1;
+    padding: 8px;
+}
+
+#modal-installMods .tabs {
+    height: 32px;
+}
+
+#modal-installMods .layout-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px 0;
+}
+
+#modal-installMods .layout-tab:not(.active) {
+    display: none;
+}
+
+/* Sub tabs */
+#modal-installMods .tabs.sub {
+    height: max-content;
+}
+
+#modal-installMods .tabs.sub .tab {
+    height: 32px;
+    padding: 4px;
+    flex-direction: row !important;
+}
+
+html.light #modal-installMods .tabs.sub .tab.active *:not(.material-symbols-outlined) {
+    color: var(--theme-primary);
+}
+
+/* Modal */
+#modal-installMods {
+    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+}
+
+#modal-installMods .preloader {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#modal-installMods select {
+    height: 48px;
+    flex-grow: 1;
+    padding: 0 16px;
+    font-size: 14pt;
+    color: var(--text-color);
+}
+
+/* Modal layout */
+#modal-installMods .modal-layout {
+    display: grid;
+    grid-template-columns: 272px 1fr 25%;
+    grid-template-rows: max-content max-content max-content 48px 1fr;
+    grid-auto-columns: 1fr;
+    gap: 8px 8px;
+    grid-auto-flow: row;
+    grid-template-areas:
+    "catalogHead catalogHead catalogHead"
+    "curseforgeAuth curseforgeAuth curseforgeAuth"
+    "installTo installTo installTo"
+    "searchTools searchTools installedList"
+    "filters mods installedList";
+
+    width: 100%;
+    height: 100%;
+}
+
+#modal-installMods .catalog-head {
+    grid-area: catalogHead;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 32%, transparent);
+    border-radius: 14px;
+    background: linear-gradient(115deg, color-mix(in srgb, var(--theme-primary) 14%, var(--theme-primaryBgLight)), var(--theme-primaryBgLight));
+}
+
+#modal-installMods .catalog-head h1 {
+    margin: 0;
+    font-size: 20pt;
+}
+
+#modal-installMods .catalog-head .flex-grow > span {
+    color: var(--text-sub);
+    font-size: 10.5pt;
+}
+
+#modal-installMods .catalog-head__icon {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 13px;
+    background: var(--theme-primary);
+}
+
+#modal-installMods .catalog-head__icon span {
+    color: white;
+}
+
+#modal-installMods .catalog-provider-tabs {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--theme-primaryBgLighter);
+}
+
+#modal-installMods .catalog-provider {
+    height: 34px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+}
+
+#modal-installMods .catalog-provider.active {
+    background: var(--theme-primary);
+    color: white;
+}
+
+#modal-installMods .curseforge-auth {
+    grid-area: curseforgeAuth;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, #f16436 45%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, #f16436 10%, var(--theme-primaryBgLight));
+}
+
+#modal-installMods .curseforge-auth__setup,
+#modal-installMods .curseforge-auth__ready {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#modal-installMods .curseforge-auth__setup > .material-symbols-outlined,
+#modal-installMods .curseforge-auth__ready > .material-symbols-outlined {
+    color: #f16436;
+}
+
+#modal-installMods .curseforge-auth__setup .flex-col > span {
+    max-width: 390px;
+    color: var(--text-sub);
+    font-size: 9.5pt;
+}
+
+#modal-installMods .curseforge-auth__error {
+    color: #ef5350 !important;
+}
+
+#modal-installMods .curseforge-api-key {
+    width: min(310px, 28vw);
+    height: 40px;
+    padding: 0 11px;
+}
+
+#modal-installMods .catalog-tools {
+    grid-area: searchTools;
+    display: grid;
+    grid-template-columns: 1fr minmax(170px, 230px);
+    gap: 8px;
+}
+
+#modal-installMods .catalog-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 48px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: var(--theme-primaryBgLight);
+}
+
+#modal-installMods .catalog-search .search {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+#modal-installMods .catalog-sort {
+    width: 100%;
+    font-size: 11pt;
+}
+
+#modal-installMods .modal-layout .installedList {
+    grid-area: installedList;
+
+    background: var(--theme-primaryBgLight);
+    border-radius: 8px;
+    padding: 12px;
+
+    height: 100%;
+    overflow: auto;
+}
+
+#modal-installMods .installedList__title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+    font-size: 11pt;
+    font-weight: 700;
+}
+
+#modal-installMods .modal-layout .filters {
+    grid-area: filters;
+
+    background: var(--theme-primaryBgLight);
+    border-radius: 8px;
+    padding: 12px;
+
+    height: 100%;
+    overflow: auto;
+}
+
+#modal-installMods .modal-layout .installTo {
+    grid-area: installTo;
+    width: 100%;
+    height: max-content;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+#modal-installMods .modal-layout .installTo input {
+    flex-grow: 1;
+}
+
+/* Filters */
+#modal-installMods .modal-layout .filters__scroll-wrapper {
+    height: max-content;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#modal-installMods .modal-layout .filters .scroll-wrap {
+    max-height: 50vh;
+    overflow: auto;
+}
+
+#modal-installMods .modal-layout .filters .scroll-wrap > div {
+    height: max-content;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    padding: 6px;
+    background: var(--theme-primaryBgLighter);
+    border-radius: 8px;
+}
+
+#modal-installMods .modal-layout .packs-wrapper {
+    grid-area: mods;
+    overflow: auto;
+    position: relative;
+}
+
+#modal-installMods .catalog-status {
+    min-height: 86px;
+    margin-right: 8px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    border-radius: 12px;
+    background: var(--theme-primaryBgLight);
+    color: var(--text-sub);
+}
+
+#modal-installMods .catalog-status:not(.error) .catalog-status__retry {
+    display: none;
+}
+
+#modal-installMods .catalog-status.error .catalog-status__icon {
+    color: #ef5350;
+}
+
+#modal-installMods .catalog-status.loading .catalog-status__icon {
+    animation: catalogStatusSpin 1.2s linear infinite;
+}
+
+@keyframes catalogStatusSpin {
+    to { transform: rotate(360deg); }
+}
+
+#modal-installMods .packs-list {
+    height: max-content;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 8px;
+}
+
+/* Pack item */
+#modal-installMods .packs-list .item {
+    background: var(--theme-primaryBgLight);
+    padding: 6px 12px;
+    border-radius: 8px;
+
+    display: grid;
+    grid-template-columns: 64px 1fr max-content;
+    grid-template-rows: max-content max-content max-content;
+    grid-auto-columns: 1fr;
+    gap: 4px 8px;
+    grid-auto-flow: row;
+    grid-template-areas:
+    "icon title button"
+    "icon description button"
+    "icon specs button";
+}
+
+#modal-installMods .packs-list .item .icon {
+    justify-self: center;
+    align-self: center;
+    grid-area: icon;
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+}
+
+#modal-installMods .packs-list .item .button {
+    justify-self: center;
+    align-self: center;
+    grid-area: button;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+#modal-installMods .packs-list .item .button button {
+    font-size: 12pt;
+    padding: 8px 16px;
+    height: max-content;
+}
+
+#modal-installMods .packs-list .item .button .link * {
+    color: var(--theme-primaryLighter);
+    font-size: 11pt;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+}
+
+#modal-installMods .packs-list .item .button .link * {
+    display: inline-block !important;
+}
+
+#modal-installMods .packs-list .item .button .link,
+#modal-installMods .packs-list .item .button .link * {
+    text-decoration: none !important;
+}
+
+#modal-installMods .packs-list .item .button .link:hover * {
+    color: var(--theme-primary);
+}
+
+#modal-installMods .packs-list .item .title {
+    grid-area: title;
+    font-size: 16pt;
+    font-weight: 700;
+}
+
+#modal-installMods .packs-list .item .description {
+    grid-area: description;
+    font-size: 11pt;
+    opacity: 0.95;
+}
+
+#modal-installMods .packs-list .item .specs {
+    grid-area: specs;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#modal-installMods .packs-list .item .specs * {
+    color: var(--text-sub);
+    font-size: 12pt;
+}
+
+/* Versions list */
+#modal-installMods .packs-list .item:not(.opened) .versions-scroll {
+    display: none !important;
+}
+
+#modal-installMods .packs-list .item .versions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    height: max-content;
+    width: 100%;
+}
+
+#modal-installMods .packs-list .item .versions-scroll {
+    grid-area: versionsList;
+    max-height: 30vh;
+    width: 100%;
+    overflow: auto;
+}
+
+#modal-installMods .packs-list .item.opened {
+    grid-template-rows: max-content max-content max-content max-content max-content;
+    grid-template-areas:
+    "icon title button"
+    "icon description button"
+    "icon specs button"
+    "icon pressToOpen button"
+    "versionsList versionsList versionsList";
+    max-height: 60vh;
+}
+
+#modal-installMods .packs-list .item .versions-list .item {
+    background: var(--theme-primaryBgLighter);
+    padding: 6px 32px;
+    border-radius: 8px;
+
+    display: grid;
+    grid-template-columns: 1fr max-content;
+    grid-template-rows: max-content max-content;
+    grid-auto-columns: 1fr;
+    gap: 4px 8px;
+    grid-auto-flow: row;
+    grid-template-areas:
+    "title button"
+    "versions button";
+}
+
+#modal-installMods .packs-list .item .versions-list .item .title {
+    grid-area: title;
+}
+
+#modal-installMods .packs-list .item .versions-list .item .versions {
+    grid-area: versions;
+}
+
+#modal-installMods .packs-list .item .versions-list .item button,
+#modal-installMods .packs-list .item .versions-list .item .material-symbols-outlined {
+    align-self: center;
+    justify-self: center;
+
+    height: max-content;
+    width: max-content;
+
+    grid-area: button;
+}
+
+#modal-installMods .packs-list .item .versions-list .item button {
+    padding: 8px 16px;
+    font-size: 12pt;
+    border-radius: 32px !important;
+}
+
+#modal-installMods .packs-list .version-message {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-sub);
+    border-radius: 8px;
+    background: var(--theme-primaryBgLighter);
+}
+
+#modal-installMods .packs-list .version-message.error {
+    color: #ef5350;
+}
+
+/* Installed list */
+#modal-installMods .installedList .scroll-wrap {
+    display: flex;
+    flex-direction: column;
+    height: max-content;
+    width: 100%;
+    gap: 4px;
+}
+
+#modal-installMods .installedList .scroll-wrap .item {
+    width: 100%;
+    height: max-content;
+    padding: 8px;
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--theme-primaryBgLighter);
+}
+
+#modal-installMods .installedList .scroll-wrap .item .icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+#modal-installMods .installedList .scroll-wrap .item .name {
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+    font-size: 10pt;
+    width: 75%;
+}
+
+#modal-installMods .installedList .scroll-wrap .item button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    border-radius: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 1100px) {
+    #modal-installMods .modal-layout {
+        grid-template-columns: 230px 1fr;
+        grid-template-rows: max-content max-content max-content 48px 1fr;
+        grid-template-areas:
+        "catalogHead catalogHead"
+        "curseforgeAuth curseforgeAuth"
+        "installTo installTo"
+        "searchTools searchTools"
+        "filters mods";
+    }
+
+    #modal-installMods .installedList {
+        display: none;
+    }
+
+    #modal-installMods .catalog-provider-tabs {
+        order: 3;
+    }
+
+    #modal-installMods .curseforge-auth__setup {
+        flex-wrap: wrap;
+    }
+}

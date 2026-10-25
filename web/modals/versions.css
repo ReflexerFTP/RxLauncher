@@ -1,0 +1,387 @@
+/* ===== Окно выбора версии (открывается над кнопкой версии) ===== */
+#modal-versions {
+    position: fixed;
+    z-index: 3;
+    left: calc(24% + 6px);
+    bottom: calc(12% + 24px);
+    width: min(780px, 62vw);
+    height: min(600px, 66vh);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 18px;
+    border: 1px solid var(--rx-stroke-strong, rgba(255, 255, 255, .12));
+    /* Цвет темы полупрозрачный — кладём его дважды, чтобы обложка не просвечивала */
+    background-color: var(--theme-primaryBg) !important;
+    background-image: linear-gradient(var(--theme-primaryBg), var(--theme-primaryBg)) !important;
+    backdrop-filter: blur(24px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+}
+
+/* ===== Верхняя панель ===== */
+#modal-versions .vp-toolbar {
+    position: relative;
+    z-index: 6; /* меню «Своя версия» поверх вкладок */
+    overflow: visible; /* глобально у всех overflow: hidden — иначе меню обрезается */
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#modal-versions .vp-search,
+#modal-versions .vp-sort {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 11px;
+    border-radius: 11px;
+    background: var(--theme-primaryBgLight);
+    color: var(--text-sub);
+}
+
+#modal-versions .vp-search { flex: 1 1 auto; min-width: 0; }
+#modal-versions .vp-search .material-symbols-outlined,
+#modal-versions .vp-sort .material-symbols-outlined { font-size: 19px; }
+
+#modal-versions .vp-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0 !important;
+    border: 0 !important;
+    outline: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--text-color);
+    font-size: 10.5pt;
+}
+
+#modal-versions .vp-sort { flex: 0 0 auto; padding-right: 6px; }
+#modal-versions .vp-sort select { height: 100%; border: 0; outline: 0; background: transparent; color: var(--text-color); font: inherit; font-size: 9.5pt; cursor: pointer; }
+#modal-versions .vp-sort option { background: var(--theme-primaryBgLight); color: var(--text-color); }
+
+#modal-versions .vp-add { position: relative; flex: 0 0 auto; overflow: visible; }
+
+#modal-versions .vp-add-button {
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 13px !important;
+    border-radius: 11px !important;
+    font-size: 9.5pt;
+    white-space: nowrap;
+}
+
+#modal-versions .vp-add-button .material-symbols-outlined { font-size: 19px; }
+
+#modal-versions .vp-add-menu {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 230px;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid var(--rx-stroke-strong, rgba(255, 255, 255, .12));
+    background: var(--theme-primaryBg);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .45);
+}
+
+#modal-versions .vp-add-menu[hidden] { display: none; }
+
+#modal-versions .vp-add-menu button {
+    height: 38px !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start !important;
+    gap: 9px;
+    padding: 0 10px !important;
+    border-radius: 9px !important;
+    background: transparent !important;
+    color: var(--text-color) !important;
+    font-size: 9.5pt;
+    text-align: left;
+    transform: none !important;
+}
+
+#modal-versions .vp-add-menu button:hover { background: var(--theme-primaryBgLight) !important; }
+#modal-versions .vp-add-menu .material-symbols-outlined { font-size: 18px; color: var(--text-sub); }
+
+#modal-versions .vp-close {
+    flex: 0 0 auto;
+    width: 40px !important;
+    height: 40px !important;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+    border-radius: 11px !important;
+    background: var(--theme-primaryBgLight) !important;
+    color: var(--text-sub) !important;
+    transform: none !important;
+}
+
+#modal-versions .vp-close:hover { color: var(--text-color) !important; background: var(--theme-primaryBgLighter) !important; }
+#modal-versions .vp-close .material-symbols-outlined { font-size: 20px; }
+
+/* ===== Вкладки загрузчиков ===== */
+#modal-versions .vp-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--rx-stroke);
+}
+
+#modal-versions .vp-tabs::-webkit-scrollbar { display: none; }
+
+/* Свои слои: z-index кнопок внутри не перекрывает меню «Своя версия» */
+#modal-versions .vp-tabs,
+#modal-versions .vp-chips,
+#modal-versions .ver-list-wrapper { position: relative; z-index: 1; }
+
+#modal-versions .vp-tab {
+    flex: 0 0 auto;
+    height: 34px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 9px !important;
+    margin-bottom: -3px;
+    border-radius: 9px 9px 0 0 !important;
+    border-bottom: 2px solid transparent !important;
+    background: transparent !important;
+    color: var(--text-sub) !important;
+    font-size: 9.5pt;
+    font-weight: 600;
+    transform: none !important;
+}
+
+#modal-versions .vp-tab:hover { color: var(--text-color) !important; }
+#modal-versions .vp-tab.active { color: var(--text-color) !important; border-bottom-color: var(--theme-primary) !important; }
+
+#modal-versions .vp-tab small {
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--theme-primaryBgLight);
+    color: var(--text-sub);
+    font-size: 8pt;
+    text-align: center;
+}
+
+#modal-versions .vp-tab.active small { background: color-mix(in srgb, var(--theme-primary) 22%, transparent); color: var(--theme-primaryLighter); }
+
+/* ===== Чипы ===== */
+#modal-versions .vp-chips {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+}
+
+#modal-versions .vp-chips .chip {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--rx-stroke);
+    background: transparent;
+    color: var(--text-sub);
+    font-size: 8.5pt;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+}
+
+#modal-versions .vp-chips .chip .material-symbols-outlined { font-size: 15px; }
+#modal-versions .vp-chips .chip:hover { color: var(--text-color); border-color: var(--rx-stroke-strong, rgba(255, 255, 255, .16)); }
+
+#modal-versions .vp-chips .chip.active {
+    color: var(--theme-primaryLighter);
+    border-color: color-mix(in srgb, var(--theme-primary) 55%, transparent);
+    background: color-mix(in srgb, var(--theme-primary) 14%, transparent);
+}
+
+#modal-versions .vp-chips-divider { width: 1px; height: 16px; margin: 0 4px; background: var(--rx-stroke); }
+
+/* ===== Список ===== */
+#modal-versions .ver-list-wrapper {
+    position: relative;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    margin-right: -6px;
+    padding-right: 4px;
+}
+
+#modal-versions .versions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#modal-versions .versions-list .item {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 52px;
+    padding: 7px 10px;
+    border-radius: 11px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 52px;
+}
+
+#modal-versions .versions-list .item:hover { background: var(--theme-primaryBgLight); }
+
+#modal-versions .versions-list .item.active {
+    background: color-mix(in srgb, var(--theme-primary) 12%, var(--theme-primaryBgLight));
+    border-color: color-mix(in srgb, var(--theme-primary) 45%, transparent);
+}
+
+#modal-versions .versions-list .item .icon {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    border-radius: 8px;
+    image-rendering: pixelated;
+}
+
+#modal-versions .vp-item-copy { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+
+#modal-versions .vp-item-copy .title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+    font-size: 10.5pt;
+    font-weight: 700;
+}
+
+#modal-versions .vp-item-sub { color: var(--text-sub); font-size: 8.5pt; }
+
+#modal-versions .vp-badges { flex: 0 0 auto; display: flex; gap: 5px; }
+
+#modal-versions .vp-badge {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 8pt;
+    font-weight: 700;
+}
+
+#modal-versions .vp-badge .material-symbols-outlined { font-size: 14px; }
+#modal-versions .vp-badge.installed { color: var(--success); background: color-mix(in srgb, var(--success) 13%, transparent); }
+#modal-versions .vp-badge.custom { color: var(--theme-primaryLighter); background: color-mix(in srgb, var(--theme-primary) 15%, transparent); }
+
+#modal-versions .versions-list .item .favorite,
+#modal-versions .versions-list .item .vp-delete {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--text-sub);
+    font-size: 19px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .12s ease, background .12s ease;
+}
+
+#modal-versions .versions-list .item:hover .favorite,
+#modal-versions .versions-list .item:hover .vp-delete,
+#modal-versions .versions-list .item .favorite.active,
+#modal-versions .versions-list .item .vp-delete.confirm { opacity: 1; }
+
+#modal-versions .versions-list .item .favorite:hover,
+#modal-versions .versions-list .item .vp-delete:hover { background: var(--theme-primaryBgLighter); }
+
+#modal-versions .versions-list .item .favorite.active { color: var(--warning); font-variation-settings: "FILL" 1; }
+#modal-versions .versions-list .item .vp-delete:hover { color: var(--error); }
+#modal-versions .versions-list .item .vp-delete.confirm { color: #fff; background: var(--error); }
+
+#modal-versions .vp-check { flex: 0 0 auto; width: 20px; color: var(--theme-primaryLighter); font-size: 19px; visibility: hidden; font-variation-settings: "FILL" 1; }
+#modal-versions .versions-list .item.active .vp-check { visibility: visible; }
+
+#modal-versions .vp-empty {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--text-sub);
+    text-align: center;
+}
+
+#modal-versions .vp-empty[hidden] { display: none; }
+#modal-versions .vp-empty .material-symbols-outlined { font-size: 34px; margin-bottom: 4px; }
+#modal-versions .vp-empty strong { color: var(--text-color); font-size: 11pt; }
+#modal-versions .vp-empty span:last-child { font-size: 9pt; }
+
+#modal-versions .preloader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--theme-primaryBg);
+}
+
+/* ===== Низ ===== */
+#modal-versions .vp-footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--rx-stroke);
+    color: var(--text-sub);
+    font-size: 8.5pt;
+}
+
+#modal-versions .vp-footer-hint { display: flex; align-items: center; gap: 5px; }
+#modal-versions .vp-footer-hint .material-symbols-outlined { font-size: 16px; }
+
+/* ===== Перетаскивание своей версии ===== */
+#modal-versions .vp-drop {
+    position: absolute;
+    inset: 8px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 2px dashed color-mix(in srgb, var(--theme-primary) 70%, transparent);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--theme-primaryBg) 92%, transparent);
+    text-align: center;
+    pointer-events: none;
+}
+
+#modal-versions .vp-drop[hidden] { display: none; }
+#modal-versions .vp-drop .material-symbols-outlined { font-size: 42px; color: var(--theme-primaryLighter); }
+#modal-versions .vp-drop strong { font-size: 13pt; }
+#modal-versions .vp-drop span:last-child { color: var(--text-sub); font-size: 9.5pt; }

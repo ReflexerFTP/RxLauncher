@@ -1,0 +1,95 @@
+#modal-crash {
+    width: min(720px, 86vw) !important;
+    height: max-content !important;
+    max-height: 84vh !important;
+    padding: 20px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#modal-crash[style*="display: none"] { display: none !important; }
+
+.crash-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 0 0 auto;
+}
+
+.crash-head-icon {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: var(--error);
+    background: color-mix(in srgb, var(--error) 15%, transparent);
+}
+
+.crash-head-icon .material-symbols-outlined { font-size: 24px; color: inherit; }
+.crash-head-copy { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.crash-head-copy h1 { margin: 0; font-size: 16pt; }
+.crash-head-copy span { color: var(--text-sub); font-size: 9pt; }
+.crash-close { flex: 0 0 auto; width: 36px !important; height: 36px !important; border: 0 !important; }
+
+.crash-exception {
+    flex: 0 0 auto;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, .25);
+    color: var(--text-sub);
+    font: 9pt "Fira Code", monospace;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.crash-exception[hidden] { display: none !important; }
+
+.crash-findings {
+    min-height: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.crash-finding {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 80%, transparent);
+    border-left: 3px solid var(--warning);
+}
+
+.crash-finding.error { border-left-color: var(--error); }
+
+.crash-finding-icon { flex: 0 0 auto; font-size: 20px; color: var(--warning); }
+.crash-finding.error .crash-finding-icon { color: var(--error); }
+
+.crash-finding-body { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
+.crash-finding-body b { color: var(--text-color); font-size: 10.5pt; font-weight: 700; }
+.crash-finding-body p { margin: 0; color: var(--text-sub); font-size: 9.5pt; line-height: 1.45; }
+.crash-finding-body code { color: var(--text-sub); font: 8.5pt "Fira Code", monospace; white-space: normal; overflow-wrap: anywhere; }
+
+.crash-finding-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.crash-finding-actions button { height: 30px !important; padding: 0 10px !important; gap: 5px !important; font-size: 9pt !important; border-radius: 8px !important; }
+.crash-finding-actions .material-symbols-outlined { font-size: 16px; }
+
+.crash-footer {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.crash-footer button { height: 38px !important; padding: 0 12px !important; gap: 6px !important; font-size: 10pt !important; border-radius: 10px !important; }
+.crash-footer .material-symbols-outlined { font-size: 18px; }
+.crash-footer .crash-ok { min-width: 110px; }
+.crash-footer button:disabled { opacity: .4; cursor: default; }

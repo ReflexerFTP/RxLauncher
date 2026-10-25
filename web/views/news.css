@@ -1,0 +1,208 @@
+/* ===== Панель патчей на главной ===== */
+#modal-content .news-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 16px 12px !important;
+}
+
+.news-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 2px;
+    flex: 0 0 auto;
+}
+
+.news-head-title {
+    color: var(--text-color);
+    font-size: 12pt;
+    font-weight: 700;
+}
+
+.news-history-link {
+    height: 28px !important;
+    padding: 0 8px !important;
+    gap: 4px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    color: var(--text-sub);
+    font-size: 9pt !important;
+}
+
+.news-history-link * { color: var(--text-sub); }
+.news-history-link .material-symbols-outlined { font-size: 15px; }
+.news-history-link:hover * { color: var(--text-color); }
+
+/* ===== Свежий патч ===== */
+.patch-featured {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 78%, transparent);
+    border: 1px solid var(--rx2-line, rgba(255, 255, 255, .06));
+}
+
+.patch-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.patch-version {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--theme-primary);
+    color: var(--theme-text);
+    font-size: 8.5pt;
+    font-weight: 700;
+}
+
+.patch-tag {
+    color: var(--theme-primaryLighter);
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+.patch-date {
+    margin-left: auto;
+    color: var(--text-sub);
+    font-size: 8.5pt;
+}
+
+.patch-title {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 12pt;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -.01em;
+}
+
+.patch-changes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.patch-changes li {
+    position: relative;
+    padding-left: 14px;
+    color: var(--text-sub);
+    font-size: 9.5pt;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.patch-changes li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: .6em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--theme-primaryLighter);
+}
+
+.patch-more {
+    align-self: flex-start;
+    height: 30px !important;
+    padding: 0 10px !important;
+    gap: 5px !important;
+    font-size: 9pt !important;
+    border-radius: 8px !important;
+}
+
+.patch-more .material-symbols-outlined { font-size: 15px; }
+
+/* ===== Лента остальных версий ===== */
+.news {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+}
+
+.patch-timeline {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Вертикальная линия таймлайна */
+.patch-timeline::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 14px;
+    bottom: 14px;
+    width: 1px;
+    background: var(--rx2-line-strong, rgba(255, 255, 255, .1));
+}
+
+.patch-row {
+    position: relative;
+    width: 100% !important;
+    height: 38px !important;
+    padding: 0 8px 0 6px !important;
+    display: grid !important;
+    grid-template-columns: 16px max-content minmax(0, 1fr) max-content;
+    align-items: center;
+    gap: 10px !important;
+    border: 0 !important;
+    border-radius: 9px !important;
+    background: transparent !important;
+    text-align: left;
+    cursor: pointer;
+}
+
+.patch-row:hover { background: var(--rxm-hover, rgba(255, 255, 255, .055)) !important; filter: none !important; }
+
+.patch-dot {
+    justify-self: center;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-primaryBg);
+    box-shadow: 0 0 0 2px var(--text-sub);
+    opacity: .7;
+}
+
+.patch-row:hover .patch-dot { box-shadow: 0 0 0 2px var(--theme-primaryLighter); opacity: 1; }
+
+.patch-row-version {
+    color: var(--text-color);
+    font-size: 9pt;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.patch-row-title {
+    color: var(--text-sub);
+    font-size: 9.5pt;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.patch-row:hover .patch-row-title { color: var(--text-color); }
+
+.patch-row-date {
+    color: var(--text-sub);
+    font-size: 8.5pt;
+    opacity: .75;
+}

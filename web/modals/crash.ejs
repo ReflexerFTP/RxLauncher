@@ -1,0 +1,26 @@
+<link rel="stylesheet" href="modals/crash.css"/>
+
+<!-- Окно разбора вылета игры -->
+<div class="modal overlay centered" id="modal-crash" style="display: none;">
+    <header class="crash-head">
+        <div class="crash-head-icon"><span class="material-symbols-outlined">heart_broken</span></div>
+        <div class="crash-head-copy">
+            <h1>{{crash.title}}</h1>
+            <span data-crash-meta></span>
+        </div>
+        <button class="square small transparent crash-close" onclick="RxCrashUI.hide()" title="{{commons.close}}">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </header>
+
+    <div class="crash-exception" data-crash-exception hidden></div>
+
+    <div class="crash-findings" data-crash-findings></div>
+
+    <footer class="crash-footer">
+        <button class="transparent" data-crash-action="report"><span class="material-symbols-outlined">description</span><span>{{crash.openReport}}</span></button>
+        <button class="transparent" data-crash-action="console"><span class="material-symbols-outlined">terminal</span><span>{{crash.openConsole}}</span></button>
+        <button class="transparent" data-crash-action="copy"><span class="material-symbols-outlined">content_copy</span><span>{{crash.copy}}</span></button>
+        <button class="crash-ok" data-crash-action="close"><span>{{crash.gotIt}}</span></button>
+    </footer>
+</div>

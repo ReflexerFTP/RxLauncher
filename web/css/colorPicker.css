@@ -1,0 +1,53 @@
+.color-picker {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+input.color-picker {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+.color-edit {
+    background: var(--theme-primaryBgLighter);
+    padding: 0;
+    margin: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    min-width: 32px;
+}
+
+.color-edit:hover {
+    filter: brightness(118%);
+    background: var(--theme-primaryBgLighter);
+}
+
+.color-edit * {
+    color: var(--text-color);
+    font-size: 10pt;
+}
+
+.color-picker:hover {
+    filter: brightness(86%);
+}
+
+.color-picker .material-symbols-outlined {
+    color: white;
+    font-size: 16px;
+}
+
+.color-picker:not(.active) .material-symbols-outlined {
+    display: none;
+}
+
+.color-picker.active .material-symbols-outlined {
+    display: initial;
+}

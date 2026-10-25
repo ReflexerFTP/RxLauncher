@@ -1,0 +1,160 @@
+<link rel="stylesheet" href="modals/skins.css"/>
+
+<div class="modal" id="modal-skins" style="display: none;">
+    <div class="skin-browser-shell">
+        <header class="skin-browser-header">
+            <div class="skin-browser-heading">
+                <div class="skin-browser-heading-icon" aria-hidden="true">
+                    <span class="material-symbols-outlined">accessibility_new</span>
+                </div>
+                <div>
+                    <h1>{{skins.title}}</h1>
+                    <p>{{skins.subtitle}}</p>
+                </div>
+            </div>
+
+            <form class="skin-search-form" data-skin-search-form novalidate>
+                <label class="skin-search-field">
+                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                    <input type="search"
+                           data-skin-search-input
+                           maxlength="16"
+                           autocomplete="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           placeholder="{{skins.searchPlaceholder}}"
+                           aria-label="{{skins.searchPlaceholder}}"/>
+                </label>
+                <button type="submit" class="skin-primary-button" data-skin-action="search">
+                    <span class="material-symbols-outlined" aria-hidden="true">manage_search</span>
+                    <span>{{skins.search}}</span>
+                </button>
+            </form>
+        </header>
+
+        <div class="skin-browser-content">
+            <section class="skin-preview-card" aria-label="{{skins.preview}}">
+                <div class="skin-preview-aurora skin-preview-aurora-one"></div>
+                <div class="skin-preview-aurora skin-preview-aurora-two"></div>
+                <div class="skin-preview-grid" aria-hidden="true"></div>
+
+                <div class="skin-preview-stage" data-skin-preview-stage>
+                    <canvas data-skin-viewer-canvas aria-label="{{skins.preview}}"></canvas>
+                    <img data-skin-fallback-image
+                         src="assets/skins/default-steve.png"
+                         alt="{{skins.defaultName}}"
+                         draggable="false"/>
+                    <div class="skin-preview-unavailable" data-skin-preview-unavailable hidden>
+                        <span class="material-symbols-outlined" aria-hidden="true">view_in_ar</span>
+                        <strong>{{skins.previewUnavailable}}</strong>
+                    </div>
+                    <div class="skin-preview-loader" data-skin-preview-loader hidden aria-live="polite">
+                        <span class="skin-loader-ring"></span>
+                        <strong>{{skins.loading}}</strong>
+                        <small>{{skins.loadingHint}}</small>
+                    </div>
+                </div>
+
+                <footer class="skin-preview-footer">
+                    <div class="skin-preview-tip">
+                        <span class="material-symbols-outlined" aria-hidden="true">360</span>
+                        <span>{{skins.previewHint}}</span>
+                    </div>
+                    <span class="skin-model-pill" data-skin-model-pill>
+                        <span class="material-symbols-outlined" aria-hidden="true">deployed_code</span>
+                        <span data-skin-model-label>{{skins.models.classic}}</span>
+                    </span>
+                </footer>
+            </section>
+
+            <aside class="skin-browser-side">
+                <section class="skin-profile-card">
+                    <div class="skin-profile-topline">
+                        <div class="skin-profile-avatar" aria-hidden="true">
+                            <span class="material-symbols-outlined">person</span>
+                        </div>
+                        <div class="skin-profile-identity">
+                            <span>{{skins.selectedSkin}}</span>
+                            <strong data-skin-profile-name>{{skins.defaultName}}</strong>
+                        </div>
+                        <span class="skin-source-pill" data-skin-source-pill hidden>
+                            <span class="material-symbols-outlined">offline_bolt</span>
+                            <span>{{skins.cached}}</span>
+                        </span>
+                    </div>
+
+                    <dl class="skin-profile-details">
+                        <div>
+                            <dt>{{skins.profileId}}</dt>
+                            <dd data-skin-profile-id>—</dd>
+                        </div>
+                        <div>
+                            <dt>{{skins.model}}</dt>
+                            <dd data-skin-profile-model>{{skins.models.classic}}</dd>
+                        </div>
+                        <div>
+                            <dt>{{skins.updated}}</dt>
+                            <dd data-skin-profile-updated>—</dd>
+                        </div>
+                    </dl>
+
+                    <div class="skin-profile-actions">
+                        <button type="button" class="skin-secondary-button" data-skin-action="download" disabled>
+                            <span class="material-symbols-outlined" aria-hidden="true">download</span>
+                            <span>{{skins.download}}</span>
+                        </button>
+                        <button type="button" class="skin-primary-button" data-skin-action="apply" disabled>
+                            <span class="material-symbols-outlined" aria-hidden="true">checkroom</span>
+                            <span>{{skins.apply}}</span>
+                        </button>
+                        <button type="button" class="skin-icon-button" data-skin-action="reset"
+                                title="{{skins.reset}}" aria-label="{{skins.reset}}">
+                            <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
+                        </button>
+                    </div>
+                    <p class="skin-apply-hint">{{skins.applyHint}}</p>
+                </section>
+
+                <section class="skin-status-card is-ready" data-skin-status aria-live="polite">
+                    <span class="skin-status-icon material-symbols-outlined" data-skin-status-icon>verified</span>
+                    <div>
+                        <strong data-skin-status-title>{{skins.readyTitle}}</strong>
+                        <span data-skin-status-hint>{{skins.readyHint}}</span>
+                    </div>
+                </section>
+
+                <section class="skin-recent-card">
+                    <header>
+                        <div>
+                            <h2>{{skins.recent}}</h2>
+                            <p>{{skins.recentHint}}</p>
+                        </div>
+                        <button type="button" class="skin-clear-button" data-skin-action="clear-recent" hidden>
+                            <span class="material-symbols-outlined" aria-hidden="true">delete_sweep</span>
+                            <span>{{skins.clearRecent}}</span>
+                        </button>
+                    </header>
+                    <div class="skin-recent-list" data-skin-recent-list></div>
+                    <div class="skin-recent-empty" data-skin-recent-empty>
+                        <span class="material-symbols-outlined" aria-hidden="true">history</span>
+                        <span>{{skins.emptyRecent}}</span>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        RxSkinBrowserUI.bind();
+    });
+
+    document.addEventListener("showModalEvent", (event) => {
+        if (event.detail.modal === "skins") RxSkinBrowserUI.onShow();
+    });
+
+    document.addEventListener("hideModalEvent", (event) => {
+        if (event.detail.modal === "skins") RxSkinBrowserUI.onHide();
+    });
+</script>

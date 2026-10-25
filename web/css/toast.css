@@ -1,0 +1,125 @@
+/* ===== Уведомления ===== */
+#toasts-pool {
+    position: fixed;
+    z-index: 3000000;
+    right: 20px;
+    bottom: 20px;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 8px;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.toast {
+    --toast-accent: var(--theme-primaryLighter);
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 10px 12px 12px;
+    border: 1px solid var(--rx2-line-strong, rgba(255, 255, 255, .09));
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-primaryBg) 96%, transparent);
+    box-shadow: 0 16px 40px -16px rgba(0, 0, 0, .7);
+    cursor: pointer;
+    pointer-events: auto;
+    overflow: hidden;
+    animation: toast-in .24s cubic-bezier(.22, 1, .36, 1);
+}
+
+.toast.leaving { animation: toast-out .22s ease-in forwards; }
+
+.toast-success { --toast-accent: var(--success); }
+.toast-error { --toast-accent: var(--error); }
+.toast-warning { --toast-accent: var(--warning); }
+
+.toast-icon {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--toast-accent) 16%, transparent);
+}
+
+.toast-icon .material-symbols-outlined { font-size: 18px; color: var(--toast-accent); }
+
+.toast-copy { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; padding-top: 1px; }
+
+.toast-title { display: flex; align-items: center; gap: 6px; color: var(--text-color); font-size: 10pt; font-weight: 600; line-height: 1.35; }
+.toast-title > span:first-child { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+
+.toast-count {
+    flex: 0 0 auto;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--rxm-active, rgba(255, 255, 255, .09));
+    color: var(--text-sub);
+    font-size: 8pt;
+}
+
+.toast-count[hidden] { display: none; }
+
+.toast-description {
+    color: var(--text-sub);
+    font-size: 9pt;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.toast-action {
+    align-self: flex-start;
+    height: 26px !important;
+    margin-top: 5px;
+    padding: 0 10px !important;
+    border-radius: 7px !important;
+    font-size: 9pt !important;
+}
+
+.toast-close {
+    flex: 0 0 auto;
+    width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    opacity: 0;
+    transition: opacity .15s ease !important;
+}
+
+.toast:hover .toast-close { opacity: 1; }
+.toast-close .material-symbols-outlined { font-size: 16px; color: var(--text-sub); }
+.toast-close:hover .material-symbols-outlined { color: var(--text-color); }
+
+/* Оставшееся время */
+.toast-progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background: var(--toast-accent);
+    opacity: .7;
+    transform-origin: left;
+    animation: toast-progress var(--toast-duration, 5000ms) linear forwards;
+}
+
+/* «Отключить анимации» не должен превращать таймер уведомления в мгновенный */
+html.noAnimations #toasts-pool .toast-progress { animation-duration: var(--toast-duration, 5000ms) !important; }
+
+.toast.paused .toast-progress { animation-play-state: paused !important; }
+
+@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes toast-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes toast-out { to { opacity: 0; transform: translateX(24px); } }
+
+html.light .toast { background: rgba(255, 255, 255, .97); }

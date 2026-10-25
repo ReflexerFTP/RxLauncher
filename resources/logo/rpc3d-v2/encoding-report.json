@@ -1,0 +1,23 @@
+{
+  "RxLaunch-RPC-3D-v2.webp": {
+    "bytes": 2849334,
+    "size": [
+      1024,
+      1024
+    ],
+    "frames": 180,
+    "duration_ms": 6000,
+    "loop": 0
+  },
+  "RxLaunch-RPC-3D-v2.gif": {
+    "bytes": 4741203,
+    "size": [
+      512,
+      512
+    ],
+    "frames": 180,
+    "duration_ms": 6000,
+    "loop": 0
+  },
+  "loop_endpoint_max_difference": 0
+}

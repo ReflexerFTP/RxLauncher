@@ -1,0 +1,62 @@
+<link rel="stylesheet" href="modals/screenshots.css"/>
+
+<div class="modal" id="modal-screenshots" style="display: none;">
+    <header class="shots-header">
+        <div class="shots-heading-icon"><span class="material-symbols-outlined">photo_library</span></div>
+        <div class="shots-heading-copy">
+            <h1>{{screenshots.title}}</h1>
+            <span data-shots-count>{{screenshots.subtitle}}</span>
+        </div>
+        <label class="shots-source">
+            <span class="material-symbols-outlined">folder_special</span>
+            <select data-shots-source aria-label="{{screenshots.source}}">
+                <option value="all">{{screenshots.allSources}}</option>
+            </select>
+        </label>
+        <button class="transparent shots-open-folder" data-shots-open>
+            <span class="material-symbols-outlined">folder_open</span>
+            <span>{{screenshots.openFolder}}</span>
+        </button>
+    </header>
+
+    <div class="shots-scroll" data-shots-scroll>
+        <div class="shots-groups" data-shots-groups></div>
+        <div class="shots-empty" data-shots-empty hidden>
+            <span class="material-symbols-outlined">add_a_photo</span>
+            <h2>{{screenshots.emptyTitle}}</h2>
+            <p>{{screenshots.emptyText}}</p>
+        </div>
+    </div>
+
+    <!-- Просмотр одного скриншота -->
+    <div class="shots-viewer" data-shots-viewer hidden>
+        <button class="shots-viewer-nav prev" data-shots-step="-1" title="{{screenshots.prev}}">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <img alt="" data-shots-image/>
+        <button class="shots-viewer-nav next" data-shots-step="1" title="{{screenshots.next}}">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+        <div class="shots-viewer-bar">
+            <div class="shots-viewer-info">
+                <strong data-shots-name></strong>
+                <span data-shots-meta></span>
+            </div>
+            <button class="transparent" data-shots-action="copy">
+                <span class="material-symbols-outlined">content_copy</span>
+                <span>{{screenshots.copy}}</span>
+            </button>
+            <button class="transparent" data-shots-action="reveal">
+                <span class="material-symbols-outlined">folder_open</span>
+                <span>{{screenshots.reveal}}</span>
+            </button>
+            <button class="transparent shots-delete" data-shots-action="delete">
+                <span class="material-symbols-outlined">delete</span>
+                <span>{{screenshots.delete}}</span>
+            </button>
+            <button class="transparent shots-viewer-close" data-shots-close title="{{commons.close}}">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </div>
+</div>

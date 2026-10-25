@@ -1,0 +1,55 @@
+<div class="packs-wrapper">
+    <div class="catalog-status" style="display: none;">
+        <span class="material-symbols-outlined catalog-status__icon">info</span>
+        <span class="catalog-status__text"></span>
+        <button class="button pill small catalog-status__retry" type="button"
+                onclick="RxPacksUI.reloadAll(true, false, true)">{{packs.catalog.retry}}</button>
+    </div>
+    <!-- Список сборок -->
+    <div class="packs-list">
+        <div class="item placeholder"
+             style="display: none;">
+            <img class="icon" src="assets/modIcon.webp" loading="lazy"/>
+            <span class="title"></span>
+            <span class="description"></span>
+            <div class="specs">
+                <span class="material-symbols-outlined">download</span>
+                <span class="downloads"></span>
+                <span class="material-symbols-outlined favorite-icon">favorite</span>
+                <span class="favorite"></span>
+            </div>
+            <div class="button">
+                <button class="primary small pill button catalog-install" type="button">
+                    {{commons.install}}
+                </button>
+                <a class="link catalog-open" href="#">
+                    <span class="material-symbols-outlined">open_in_new</span>
+                    <span>{{commons.open}}</span>
+                </a>
+            </div>
+
+            <div class="versions-scroll">
+                <div class="versions-list-preloader">
+                    <div class="spinner"></div>
+                    <span class="title">{{loading.progress}}</span>
+                </div>
+                <div class="versions-list"></div>
+            </div>
+        </div>
+    </div>
+    <div class="preloader">
+        <div class="spinner small"></div>
+        <span class="title">{{loading.progress}}</span>
+    </div>
+</div>
+
+<style>
+    .versions-list-preloader {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+</style>

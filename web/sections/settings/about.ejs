@@ -1,0 +1,107 @@
+<link rel="stylesheet" href="sections/settings/about.css"/>
+
+<div class="flex flex-center flex-gap-8 settings-item" id="aboutItem">
+    <img src="assets/icon.png" data-launcher-avatar alt="Launcher icon" height="64"/>
+    <div class="flex flex-grow flex-col flex-justify-center flex-gap-4">
+        <!-- Заголовок -->
+        <div class="flex flex-align-center flex-gap-8">
+            <span class="name">RxLauncher</span>
+        </div>
+
+        <div class="description">
+            <!-- Версия лаунчера -->
+            <div class="chip" id="launcherVersion">
+                <span class="ver"></span>
+                <div class="microdot">
+                    <div class="dot"></div>
+                </div>
+                <span class="inDev" style="display: none">Development</span>
+                <span class="inRelease" style="display: none">Release</span>
+            </div>
+            <div class="microdot">
+                <div class="dot"></div>
+            </div>
+            <!-- Название OS -->
+            <h3 id="about_operatingSystem"></h3>
+            <div class="microdot">
+                <div class="dot"></div>
+            </div>
+            <!-- Имя пользователя OS -->
+            <h3 id="about_username"></h3>
+            <div class="microdot">
+                <div class="dot"></div>
+            </div>
+            <!-- Архитектура ПК -->
+            <h3 id="about_arch"></h3>
+            <div class="microdot">
+                <div class="dot"></div>
+            </div>
+            <!-- Название процессора -->
+            <h3 id="about_cpuName"></h3>
+        </div>
+    </div>
+</div>
+
+<div class="grid-wrapper">
+    <div class="flex flex-center flex-gap-8 settings-item clickable"
+         onclick="openExternal('https://t.me/maxxsrc')">
+        <div class="icon">
+            <img src="assets/telegram.png"/>
+        </div>
+        <div class="flex flex-grow flex-col flex-justify-center">
+            <span class="name">Telegram</span>
+        </div>
+    </div>
+
+    <div class="flex flex-center flex-gap-8 settings-item clickable"
+         onclick="openExternal('https://discord.gg/pgvWMxf5zr')">
+        <div class="icon">
+            <span class="material-symbols-outlined">groups</span>
+        </div>
+        <div class="flex flex-grow flex-col flex-justify-center">
+            <span class="name">Discord</span>
+        </div>
+    </div>
+
+    <div class="flex flex-center flex-gap-8 settings-item clickable"
+         onclick="RxChangelogUI.open()">
+        <div class="icon">
+            <span class="material-symbols-outlined">history</span>
+        </div>
+        <div class="flex flex-grow flex-col flex-justify-center">
+            <span class="name">{{settings.about.history}}</span>
+        </div>
+    </div>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">category</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.about.lessDataCollection.title}}</span>
+        <div class="description">{{settings.about.lessDataCollection.description}}</div>
+    </div>
+    <label class="switch" data-setting="lessDataCollection">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<script>
+    // Задаём текста из OS
+    $("#about_operatingSystem").text(os.version());
+    $("#about_username").text(os.userInfo().username);
+    $("#about_arch").text(os.arch());
+    let cpuName = os.cpus()[0].model.trim().split("@")[0].replaceAll("Processor", "");
+    $("#about_cpuName").text(cpuName);
+    // Задаём версию лаунчера
+    $("#launcherVersion .ver").text(LAUNCHER_VERSION);
+
+    // DEV or RELEASE mode?
+    if (IS_APP_IN_DEV) {
+        $("#launcherVersion .inDev").show();
+    } else {
+        $("#launcherVersion .inRelease").show();
+    }
+</script>

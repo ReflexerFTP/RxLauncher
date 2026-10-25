@@ -1,0 +1,305 @@
+#languages-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 0.5em;
+}
+
+/* ===== Палитра основного цвета ===== */
+#modal-settings .theme-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    max-width: 62%;
+    padding: 4px;
+    overflow: visible;
+}
+
+#modal-settings .theme-swatches .swatch {
+    position: relative;
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    overflow: visible;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18) !important;
+    transition: transform .15s ease, box-shadow .15s ease !important;
+}
+
+#modal-settings .theme-swatches .swatch:hover { transform: scale(1.12) !important; filter: none; }
+
+/* Активный — кольцо вокруг, а не галочка */
+#modal-settings .theme-swatches .swatch.active {
+    box-shadow: 0 0 0 2px var(--theme-primaryBg), 0 0 0 4px var(--text-color) !important;
+}
+
+#modal-settings .theme-swatches .swatch-divider {
+    width: 1px;
+    height: 20px;
+    margin: 0 2px;
+    background: var(--rx2-line-strong, rgba(255, 255, 255, .12));
+}
+
+#modal-settings .theme-swatches .swatch-custom {
+    display: grid;
+    place-items: center;
+    background: conic-gradient(#f43f5e, #f59e0b, #22c55e, #06b6d4, #6366f1, #a855f7, #f43f5e);
+}
+
+#modal-settings .theme-swatches .swatch-custom .material-symbols-outlined {
+    font-size: 14px;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+    pointer-events: none;
+}
+
+#modal-settings .theme-swatches .swatch-custom input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+#languages-list .item .icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+}
+
+#languages-list .item .text > span:first-child {
+    font-weight: 600;
+}
+
+#languages-list .item .text > span:last-child,
+#languages-list .item .text sup {
+    color: var(--text-sub);
+}
+
+#languages-list .item .text sup {
+    opacity: 0.88;
+    font-weight: 400 !important;
+}
+
+/* ===== Вкладки бокового меню ===== */
+#modal-settings .tabs-settings-item { align-items: stretch; }
+
+#modal-settings .tabs-toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+
+#modal-settings .tab-toggle {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 46px !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start !important;
+    gap: 10px;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--rx-stroke) !important;
+    background: var(--theme-primaryBgLight) !important;
+    color: var(--text-sub) !important;
+    text-align: left;
+    transform: none !important;
+}
+
+#modal-settings .tab-toggle .material-symbols-outlined { font-size: 20px; color: inherit; }
+#modal-settings .tab-toggle-name { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 10pt; font-weight: 600; }
+#modal-settings .tab-toggle:hover:not(:disabled) { border-color: var(--rx-stroke-strong, rgba(255, 255, 255, .16)) !important; color: var(--text-color) !important; }
+
+#modal-settings .tab-toggle.on {
+    color: var(--text-color) !important;
+    border-color: color-mix(in srgb, var(--theme-primary) 55%, transparent) !important;
+    background: color-mix(in srgb, var(--theme-primary) 12%, var(--theme-primaryBgLight)) !important;
+}
+
+#modal-settings .tab-toggle.on .tab-toggle-state { color: var(--theme-primaryLighter); font-variation-settings: "FILL" 1; }
+#modal-settings .tab-toggle.locked { opacity: .7; cursor: default; }
+
+/* ===== Выбор шрифта с превью ===== */
+#modal-settings .font-picker {
+    flex: 0 0 auto;
+    width: min(320px, 46%);
+}
+
+#modal-settings .font-picker-trigger {
+    width: 100%;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px 0 6px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--rx-stroke) !important;
+    background: var(--theme-primaryBgLight) !important;
+    color: var(--text-color) !important;
+    text-align: left;
+}
+
+#modal-settings .font-picker-trigger:hover,
+#modal-settings .font-picker.open .font-picker-trigger { border-color: var(--rx-stroke-strong) !important; }
+
+#modal-settings .font-picker-aa {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: var(--theme-primaryBgLighter);
+    color: var(--theme-primaryLighter);
+    font-size: 13pt;
+    font-weight: 700;
+}
+
+#modal-settings .font-picker-current {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 11pt;
+    font-weight: 600;
+}
+
+#modal-settings .font-picker-trigger > .material-symbols-outlined {
+    color: var(--text-sub);
+    transition: transform .15s ease;
+}
+
+#modal-settings .font-picker.open .font-picker-trigger > .material-symbols-outlined { transform: rotate(180deg); }
+
+/* Список рисуется в body, чтобы его не обрезала прокрутка настроек */
+.font-picker-popover {
+    position: fixed;
+    z-index: 9500;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid var(--rx-stroke-strong, rgba(255, 255, 255, .14));
+    background: var(--theme-primaryBg);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .45);
+    animation: font-picker-in .12s ease-out;
+}
+
+@keyframes font-picker-in { from { opacity: 0; transform: translateY(-4px); } }
+
+.font-picker-search {
+    flex: 0 0 auto;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 6px;
+    padding: 0 10px;
+    border-radius: 10px;
+    background: var(--theme-primaryBgLight);
+}
+
+.font-picker-search .material-symbols-outlined { color: var(--text-sub); font-size: 19px; }
+.font-picker-search input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+
+.font-picker-list {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.font-picker-item {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 52px;
+}
+
+.font-picker-item[hidden] { display: none; }
+.font-picker-item:hover { background: var(--theme-primaryBgLight); }
+.font-picker-item.active { background: color-mix(in srgb, var(--theme-primary) 16%, transparent); }
+.font-picker-item-copy { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.font-picker-item-name, .font-picker-item-sample { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.font-picker-item-name { color: var(--text-color); font-size: 11pt; font-weight: 600; }
+.font-picker-item-sample { color: var(--text-sub); font-size: 9.5pt; }
+.font-picker-check { flex: 0 0 auto; font-size: 18px; color: var(--theme-primaryLighter); visibility: hidden; }
+.font-picker-item.active .font-picker-check { visibility: visible; }
+.font-picker-empty { padding: 18px 10px; color: var(--text-sub); text-align: center; font-size: 9.5pt; }
+.font-picker-empty[hidden] { display: none; }
+
+#modal-settings .settings-item .wallpapers-list-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: end;
+    align-items: center;
+    max-width: 50%;
+}
+
+#modal-settings .wallpaper-appearance-item {
+    align-items: flex-start;
+}
+
+#modal-settings .wallpaper-appearance-item .appearance-copy {
+    min-width: 190px;
+    padding-top: 7px;
+}
+
+#modal-settings .wallpaper-appearance-controls {
+    width: min(440px, 48%);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+
+#modal-settings .wallpaper-appearance-controls label {
+    display: grid;
+    grid-template-columns: 1fr max-content;
+    align-items: center;
+    column-gap: 8px;
+    padding: 8px 10px 4px;
+    border: 1px solid var(--rx-stroke);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 82%, transparent);
+}
+
+#modal-settings .wallpaper-appearance-controls label > span {
+    color: var(--text-sub);
+    font-size: 9.5pt;
+    font-weight: 700;
+}
+
+#modal-settings .wallpaper-appearance-controls output {
+    color: var(--text-color);
+    font-size: 9.5pt;
+    font-weight: 800;
+}
+
+#modal-settings .wallpaper-appearance-controls input {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+
+#modal-settings .wallpaper-appearance-reset {
+    grid-column: 1 / -1;
+    justify-self: end;
+    height: 34px;
+    padding: 0 12px;
+    gap: 6px;
+}

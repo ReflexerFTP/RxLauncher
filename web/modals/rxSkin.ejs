@@ -1,0 +1,77 @@
+<link rel="stylesheet" href="modals/rxSkin.css"/>
+
+<div class="modal overlay centered" id="modal-rxSkin" style="display: none;">
+    <div class="flex flex-gap-8 flex-align-center">
+        <button class="square transparent small" onclick="RxModals.hideModal('rxSkin')">
+            <span class="material-symbols-outlined">west</span>
+        </button>
+        <span class="material-symbols-outlined">add_reaction</span>
+        <h1>{{rxAuth.skin.title}}</h1>
+    </div>
+    <form id="texture-image-form">
+        <input type="file" id="texture-image" name="texture-image" accept="image/png" style="display: none"/>
+    </form>
+    <div class="layout">
+        <div class="skindiv">
+            <h2>{{rxAuth.skin.skin}}</h2>
+            <div data-mode="skin" class="dragzone">
+                <span class="material-symbols-outlined">upload_file</span>
+                <h4>{{commons.clickOrDrop}}</h4>
+            </div>
+        </div>
+        <canvas id="skin_container"></canvas>
+        <div class="capediv">
+            <h2>{{rxAuth.skin.cape}}</h2>
+            <div data-mode="cape" class="dragzone">
+                <span class="material-symbols-outlined">upload_file</span>
+                <h4>{{commons.clickOrDrop}}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="error"></div>
+</div>
+
+<script>
+    let textureUploadType = "";
+    global.currentAccountInEditor = {};
+
+    $(function () {
+        // Настройка drag and drop
+        $("#modal-rxSkin .layout .dragzone").each(function () {
+            $(this).on("dragenter", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                $(this).addClass("dragged");
+            })
+
+            $(this).on("dragover", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            })
+
+            $(this).on("dragleave", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                $(this).removeClass("dragged");
+            })
+
+            $(this).on("drop", function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                textureUploadType = $(this).data("mode");
+                RxSkinsUI.uploadTexture(textureUploadType, e.originalEvent.dataTransfer.files[0]);
+                $(this).removeClass("dragged");
+            })
+        })
+
+        $("#modal-rxSkin .layout .dragzone").click(function () {
+            textureUploadType = $(this).data("mode");
+
+            let inputElement = $("#modal-rxSkin #texture-image");
+            inputElement.trigger("click");
+            inputElement.one("change", () => {
+                RxSkinsUI.uploadTexture(textureUploadType);
+            });
+        });
+    })
+</script>

@@ -1,0 +1,351 @@
+<link rel="stylesheet" href="sections/settings/personalization.css"/>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">palette</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.personalization.mainColor.title}}</span>
+        <div class="description">{{settings.personalization.mainColor.description}}</div>
+    </div>
+    <!-- Палитра по кругу оттенков + свой цвет -->
+    <div class="theme-swatches" role="radiogroup" aria-label="{{settings.personalization.mainColor.title}}">
+        <button type="button" class="swatch" data-color="#e53935" title="#e53935"></button>
+        <button type="button" class="swatch" data-color="#f4511e" title="#f4511e"></button>
+        <button type="button" class="swatch" data-color="#f59e0b" title="#f59e0b"></button>
+        <button type="button" class="swatch" data-color="#22c55e" title="#22c55e"></button>
+        <button type="button" class="swatch" data-color="#14b8a6" title="#14b8a6"></button>
+        <button type="button" class="swatch" data-color="#06b6d4" title="#06b6d4"></button>
+        <button type="button" class="swatch" data-color="#3b82f6" title="#3b82f6"></button>
+        <button type="button" class="swatch" data-color="#6366f1" title="#6366f1"></button>
+        <button type="button" class="swatch" data-color="#8b5cf6" title="#8b5cf6"></button>
+        <button type="button" class="swatch" data-color="#a855f7" title="#a855f7"></button>
+        <button type="button" class="swatch" data-color="#ec4899" title="#ec4899"></button>
+        <button type="button" class="swatch" data-color="#f43f5e" title="#f43f5e"></button>
+        <span class="swatch-divider"></span>
+        <label class="swatch swatch-custom">
+            <input type="color" class="theme-custom-color" value="#e53935"/>
+            <span class="material-symbols-outlined">colorize</span>
+        </label>
+    </div>
+</div>
+
+<!-- Вкладки бокового меню -->
+<div class="flex flex-col flex-gap-8 settings-item tabs-settings-item">
+    <div class="flex flex-align-center flex-gap-8" style="width: 100%;">
+        <div class="icon">
+            <span class="material-symbols-outlined">view_sidebar</span>
+        </div>
+        <div class="flex flex-grow flex-col flex-justify-center">
+            <span class="name">{{settings.personalization.tabs.title}}</span>
+            <div class="description">{{settings.personalization.tabs.description}}</div>
+        </div>
+    </div>
+    <div class="tabs-toggle-grid" id="tabs-toggle-grid"></div>
+</div>
+
+<!-- Настройка dark mode -->
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">dark_mode</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.personalization.darkMode.title}}</span>
+        <div class="description">{{settings.personalization.darkMode.description}}</div>
+    </div>
+    <div class="placeholder dark" data-mode="dark">
+        <div class="left"></div>
+        <div class="bottom-1"></div>
+        <div class="bottom-2"></div>
+        <div class="main"></div>
+    </div>
+    <div class="placeholder light" data-mode="light">
+        <div class="left"></div>
+        <div class="bottom-1"></div>
+        <div class="bottom-2"></div>
+        <div class="main"></div>
+    </div>
+</div>
+
+<!-- Выбор обоев -->
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">image</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.personalization.background.title}}</span>
+        <div class="description">{{settings.personalization.background.description}}</div>
+    </div>
+    <div class="wallpapers-list-wrapper">
+        <img src="assets/backgrounds/min/1.webp" alt="Обои 1" data-wp="1" class="wp-item"/>
+        <img src="assets/backgrounds/min/2.webp" alt="Обои 2" data-wp="2" class="wp-item"/>
+        <img src="assets/backgrounds/min/3.webp" alt="Обои 3" data-wp="3" class="wp-item"/>
+        <img src="assets/backgrounds/min/4.webp" alt="Обои 4" data-wp="4" class="wp-item"/>
+        <img src="assets/backgrounds/min/5.webp" alt="Обои 5" data-wp="5" class="wp-item"/>
+        <img src="assets/backgrounds/min/6.jpg" alt="Обои 6" data-wp="6" class="wp-item"/>
+        <img src="assets/backgrounds/min/7.jpg" alt="Обои 7" data-wp="7" class="wp-item"/>
+        <img src="assets/backgrounds/min/8.jpg" alt="Обои 8" data-wp="8" class="wp-item"/>
+        <div class="wp-item placeholder" data-wp="custom">
+            <span class="material-symbols-outlined">add</span>
+        </div>
+    </div>
+</div>
+
+<!-- Тонкая настройка фонового изображения -->
+<div class="flex flex-center flex-gap-8 settings-item wallpaper-appearance-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">tune</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center appearance-copy">
+        <span class="name">{{settings.personalization.backgroundAppearance.title}}</span>
+        <div class="description">{{settings.personalization.backgroundAppearance.description}}</div>
+    </div>
+    <div class="wallpaper-appearance-controls">
+        <label>
+            <span>{{settings.personalization.backgroundAppearance.blur}}</span>
+            <output data-output="blur">4 px</output>
+            <input type="range" min="0" max="20" step="1" value="4" data-wallpaper-setting="blur"/>
+        </label>
+        <label>
+            <span>{{settings.personalization.backgroundAppearance.brightness}}</span>
+            <output data-output="brightness">75%</output>
+            <input type="range" min="35" max="100" step="1" value="75" data-wallpaper-setting="brightness"/>
+        </label>
+        <label>
+            <span>{{settings.personalization.backgroundAppearance.scale}}</span>
+            <output data-output="scale">104%</output>
+            <input type="range" min="100" max="120" step="1" value="104" data-wallpaper-setting="scale"/>
+        </label>
+        <button class="small transparent wallpaper-appearance-reset" type="button">
+            <span class="material-symbols-outlined">restart_alt</span>
+            <span>{{settings.personalization.backgroundAppearance.reset}}</span>
+        </button>
+    </div>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">format_size</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.personalization.fontFamily.title}}</span>
+        <div class="description">{{settings.personalization.fontFamily.description}}</div>
+    </div>
+    <!-- Свой выпадающий список: каждый пункт нарисован своим шрифтом -->
+    <div class="font-picker" id="fontFamily">
+        <button type="button" class="font-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="font-picker-aa font-preview">Aa</span>
+            <span class="font-picker-current font-preview">Manrope</span>
+            <span class="material-symbols-outlined">expand_more</span>
+        </button>
+    </div>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">lens_blur</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.personalization.disableCss.title}}</span>
+        <div class="description">{{settings.personalization.disableCss.description}}</div>
+    </div>
+    <label class="switch" data-setting="disableCssEffects">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">animation</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.personalization.disableAnimations.title}}</span>
+        <div class="description">{{settings.personalization.disableAnimations.description}}</div>
+    </div>
+    <label class="switch" data-setting="disableAnimations">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">motion_play</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.personalization.disableStartupAnimation.title}}</span>
+        <div class="description">{{settings.personalization.disableStartupAnimation.description}}</div>
+    </div>
+    <label class="switch" data-setting="disableStartupAnimation">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-col flex-gap-8 settings-item">
+    <div class="flex flex-align-center flex-gap-8" style="width: 100%;">
+        <div class="icon">
+            <span class="material-symbols-outlined">translate</span>
+        </div>
+        <span class="name flex-grow">{{settings.personalization.language}}</span>
+    </div>
+    <div class="checksList" id="languages-list" style="width: 100%;">
+        <div class="item placeholder" style="display: none;" onclick="RxTranslator.setCurrentLanguage('$4')"
+             data-lang="$4">
+            <img class="icon" src="assets/flags/$4.svg" loading="lazy"/>
+            <div class="text" style="display: flex; justify-content: center; flex-direction: column">
+                <span>$1</span>
+                <span>$2</span>
+            </div>
+            <span class='check material-symbols-outlined'>check</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    var fontPicker = {
+        fonts: [],
+        active: "Manrope",
+        $root: $("#fontFamily"),
+        $popover: null,
+        opening: false,
+        requestId: 0,
+
+        cssFamily: (font) => `"${String(font).replace(/["\\]/g, "")}", "Manrope", sans-serif`,
+
+        init: async () => {
+            fontPicker.$root.find(".font-picker-trigger").on("click", async (e) => {
+                e.stopPropagation();
+                if (fontPicker.$popover || fontPicker.opening) return fontPicker.close();
+                const requestId = ++fontPicker.requestId;
+                fontPicker.opening = true;
+                // Системные шрифты запрашиваем при открытии: на старте их список может быть ещё недоступен
+                if (fontPicker.fonts.length <= 2) fontPicker.fonts = await RxUI.getFontsAvailable();
+                if (requestId !== fontPicker.requestId) return;
+                fontPicker.opening = false;
+                fontPicker.open();
+            });
+            $(document).on("hideModalEvent.fontPickerLifecycle", (e) => {
+                if (e.originalEvent?.detail?.modal === "settings") fontPicker.close();
+            });
+            fontPicker.fonts = await RxUI.getFontsAvailable();
+            fontPicker.setActive(await RxThemes.loadFont());
+        },
+
+        setActive: (font) => {
+            fontPicker.active = font;
+            fontPicker.$root.find(".font-preview").css("font-family", fontPicker.cssFamily(font));
+            fontPicker.$root.find(".font-picker-current").text(font);
+        },
+
+        open: () => {
+            if (fontPicker.$popover || !fontPicker.$root.is(":visible")) return;
+            const copy = MESSAGES.settings.personalization.fontFamily;
+            const $popover = $(`<div class="font-picker-popover" role="listbox">
+                <label class="font-picker-search">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" spellcheck="false"/>
+                </label>
+                <div class="font-picker-list"></div>
+                <div class="font-picker-empty" hidden></div>
+            </div>`);
+            $popover.find("input").attr("placeholder", copy.search);
+            $popover.find(".font-picker-empty").text(copy.empty);
+            const $list = $popover.find(".font-picker-list");
+            fontPicker.fonts.forEach((font) => {
+                const $item = $(`<div class="font-picker-item" role="option" tabindex="-1">
+                    <div class="font-picker-item-copy">
+                        <span class="font-picker-item-name font-preview"></span>
+                        <span class="font-picker-item-sample font-preview"></span>
+                    </div>
+                    <span class="material-symbols-outlined font-picker-check">check</span>
+                </div>`);
+                $item.attr({"data-font": font, "aria-selected": font === fontPicker.active}).toggleClass("active", font === fontPicker.active);
+                $item.find(".font-preview").css("font-family", fontPicker.cssFamily(font));
+                $item.find(".font-picker-item-name").text(font === "Manrope" ? `${font} · ${copy.default}` : font);
+                $item.find(".font-picker-item-sample").text(copy.sample);
+                $list.append($item);
+            });
+
+            $popover.on("click", (e) => e.stopPropagation());
+            $list.on("click", ".font-picker-item", function () {
+                fontPicker.choose($(this).attr("data-font"));
+            });
+            $popover.find("input").on("input", function () {
+                const query = $(this).val().trim().toLowerCase();
+                let visible = 0;
+                $list.children().each(function () {
+                    const match = !query || $(this).attr("data-font").toLowerCase().includes(query);
+                    this.hidden = !match;
+                    if (match) visible++;
+                });
+                $popover.find(".font-picker-empty").prop("hidden", visible > 0);
+            }).on("keydown", (e) => {
+                if (e.key === "Enter") {
+                    const first = $list.children(":not([hidden])").first().attr("data-font");
+                    if (first) fontPicker.choose(first);
+                }
+            });
+
+            $("body").append($popover);
+            fontPicker.$popover = $popover;
+            fontPicker.$root.addClass("open");
+            fontPicker.$root.find(".font-picker-trigger").attr("aria-expanded", "true");
+            fontPicker.position();
+            $popover.find("input").trigger("focus");
+            const activeItem = $list.children(".active")[0];
+            if (activeItem) activeItem.scrollIntoView({block: "center"});
+
+            $(document).on("click.fontPicker", fontPicker.close);
+            $(document).on("keydown.fontPicker", (e) => { if (e.key === "Escape") fontPicker.close(); });
+            $(window).on("resize.fontPicker", fontPicker.position);
+            document.addEventListener("scroll", fontPicker.onScroll, true);
+        },
+
+        // Окно настроек прокручивается — двигаем список вместе с кнопкой
+        onScroll: (e) => {
+            if (fontPicker.$popover && !fontPicker.$popover[0].contains(e.target)) fontPicker.position();
+        },
+
+        position: () => {
+            if (!fontPicker.$popover) return;
+            const rect = fontPicker.$root[0].getBoundingClientRect();
+            const below = window.innerHeight - rect.bottom - 18;
+            const above = rect.top - 18;
+            const openBelow = below >= 260 || below >= above;
+            const height = Math.min(360, Math.max(0, openBelow ? below : above));
+            const top = openBelow ? rect.bottom + 6 : Math.max(12, rect.top - height - 6);
+            const width = Math.min(Math.max(rect.width, 320), window.innerWidth - 24);
+            fontPicker.$popover.css({
+                top: `${top}px`,
+                left: `${Math.max(12, Math.min(rect.right - width, window.innerWidth - width - 12))}px`,
+                width: `${width}px`,
+                maxHeight: `${height}px`
+            });
+        },
+
+        choose: async (font) => {
+            fontPicker.close();
+            RxConfig.write("fontFamily", font);
+            fontPicker.setActive(await RxThemes.loadFont());
+        },
+
+        close: () => {
+            fontPicker.requestId++;
+            fontPicker.opening = false;
+            fontPicker.$root.find(".font-picker-trigger").attr("aria-expanded", "false");
+            if (!fontPicker.$popover) return;
+            fontPicker.$popover.remove();
+            fontPicker.$popover = null;
+            fontPicker.$root.removeClass("open");
+            $(document).off(".fontPicker");
+            $(window).off(".fontPicker");
+            document.removeEventListener("scroll", fontPicker.onScroll, true);
+        }
+    };
+
+    $(function () {
+        fontPicker.init();
+    });
+</script>

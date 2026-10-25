@@ -1,0 +1,28 @@
+{
+  "loader": "forge",
+  "gameVersion": "1.21.4",
+  "generatedAt": "2026-05-22T15:28:17.530Z",
+  "files": [
+    {
+      "projectId": "Wq5SjeWM",
+      "versionId": "8Jq0Trp6",
+      "filename": "fancymenu_forge_3.7.1_MC_1.21.4.jar",
+      "sha1": "42d5e7f1591c21520469c21a80d02225a84f19c9",
+      "size": 3622459
+    },
+    {
+      "projectId": "CVT4pFB2",
+      "versionId": "dhnytTnF",
+      "filename": "melody_forge_1.0.10_MC_1.21.jar",
+      "sha1": "b5ba856de68fbf7c5ca26a9d1658e1b0d4d76f5c",
+      "size": 189827
+    },
+    {
+      "projectId": "J81TRJWm",
+      "versionId": "c0wZm04t",
+      "filename": "konkrete_forge_1.9.10_MC_1.21.4.jar",
+      "sha1": "45b94c0d44a38cf571adbb78b89cd87e1bb8812a",
+      "size": 773897
+    }
+  ]
+}

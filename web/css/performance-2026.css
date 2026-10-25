@@ -1,0 +1,18 @@
+/* Preserve the cinematic layout while avoiding continuous full-window repaints. */
+.background::before { animation: none !important; transform: none !important; }
+.background::after { backdrop-filter: none !important; background: rgba(0,0,0,.18); }
+body.global-wrapper::after, .hero-noise { display: none !important; }
+.hero .hero-bg { animation: none !important; transform: none !important; filter: none !important; }
+.flymenu, .modal, .news-panel, .title-wrapper .account-chip,
+.title-wrapper .lang-toggle, .title-wrapper .win-btn { backdrop-filter: none !important; }
+.flymenu .item { will-change: auto !important; }
+html.rx-in-background *, html.rx-in-background *::before, html.rx-in-background *::after {
+    animation-play-state: paused !important;
+    transition: none !important;
+}
+/* Окно скрыто (игра идёт): выгружаем большие картинки, чтобы освободить память */
+html.rx-memory-saver .background.img,
+html.rx-memory-saver #modal-content .hero-bg,
+html.rx-memory-saver .wp-item { background-image: none !important; }
+/* Размытие под нижней панелью держало отдельный буфер видеопамяти — заменено плотным фоном */
+.flyout { backdrop-filter: none !important; }

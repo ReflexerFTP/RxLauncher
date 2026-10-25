@@ -1,0 +1,54 @@
+<link rel="stylesheet" href="views/titleWrapped.css"/>
+
+<div class="title-wrapper animate__animated animate__fadeIn animate__faster">
+    <!-- Лого и заголовок (бренд) -->
+    <div class="title brand flex flex-gap-8 flex-align-center">
+        <img src="assets/icon.png" data-launcher-avatar alt="RxLauncher" width="34" height="34">
+        <span>RxLauncher</span>
+        <span class="material-symbols-outlined brand-caret">expand_more</span>
+    </div>
+
+    <!-- Правый кластер -->
+    <div class="topbar-right flex flex-align-center flex-gap-8">
+        <!-- Аккаунт-чип -->
+        <div class="account-chip" onclick="RxAccountsUI.open()">
+            <div class="line-spinner custom-select" id="accountSelectPlaceholder"></div>
+            <div class="custom-select icon-and-description" id="accountSelect" style="display: none">
+                <img class="icon" style="display: none"/>
+                <span class="title">{{commons.notSelected}}</span>
+                <span class="description">{{flyout.account}}</span>
+                <div class="button">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Переключатель языка -->
+        <div class="lang-toggle">
+            <div class="lang-opt" data-lang="en" onclick="RxTranslator.setCurrentLanguage('en')">EN</div>
+            <div class="lang-opt" data-lang="ru" onclick="RxTranslator.setCurrentLanguage('ru')">RU</div>
+        </div>
+
+        <!-- Кнопки сворачивания и закрытия окна -->
+        <div class="windowButtons flex flex-gap-4">
+            <button class="square small transparent win-btn" onclick="RxUI.minimizeMainWindow()">
+                <span class="material-symbols-outlined">minimize</span>
+            </button>
+            <button class="square small transparent win-btn win-close" onclick="RxUI.closeMainWindow()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        // Подсветка активного языка
+        try {
+            let curLang = RxTranslator.getCurrentLanguage();
+            $(".lang-toggle .lang-opt").removeClass("active");
+            $(`.lang-toggle .lang-opt[data-lang="${curLang}"]`).addClass("active");
+        } catch (e) {
+        }
+    });
+</script>

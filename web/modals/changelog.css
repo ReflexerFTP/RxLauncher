@@ -1,0 +1,294 @@
+#modal-changelog {
+    padding: 20px !important;
+    max-height: none !important;
+}
+
+#modal-changelog .changelog-shell {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ===== Шапка ===== */
+#modal-changelog .changelog-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+#modal-changelog .changelog-header > button {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+}
+
+#modal-changelog .changelog-header-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+}
+
+#modal-changelog .changelog-heading-copy { min-width: 0; flex: 1 1 auto; }
+#modal-changelog .changelog-heading-copy h1 { font-size: 21px; }
+#modal-changelog .changelog-heading-copy p { margin: 3px 0 0; color: var(--text-sub); font-size: 11px; }
+
+/* ===== Две колонки ===== */
+#modal-changelog .changelog-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 16px;
+}
+
+/* ===== Лента версий ===== */
+#modal-changelog .changelog-rail {
+    position: relative;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px 6px 2px 0;
+}
+
+#modal-changelog .changelog-rail-item {
+    position: relative;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start !important;
+    gap: 12px;
+    padding: 10px 12px 10px 10px !important;
+    border-radius: 12px !important;
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    color: var(--text-color) !important;
+    text-align: left;
+    transform: none !important;
+}
+
+/* Вертикальная линия таймлайна через точки */
+#modal-changelog .changelog-rail-item::before {
+    content: "";
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--rx-stroke);
+}
+
+#modal-changelog .changelog-rail-item:first-child::before { top: 16px; }
+#modal-changelog .changelog-rail-item:last-child::before { bottom: calc(100% - 16px); }
+#modal-changelog .changelog-rail-item:hover { background: color-mix(in srgb, var(--theme-primaryBgLight) 70%, transparent) !important; }
+
+#modal-changelog .changelog-rail-item.active {
+    background: var(--theme-primaryBgLight) !important;
+    border-color: var(--rx-stroke) !important;
+}
+
+#modal-changelog .changelog-rail-dot {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    width: 12px;
+    height: 12px;
+    margin-top: 3px;
+    border-radius: 50%;
+    background: var(--theme-primaryBg);
+    box-shadow: inset 0 0 0 2px var(--rx-stroke-strong, rgba(255, 255, 255, .2));
+}
+
+#modal-changelog .changelog-rail-item.active .changelog-rail-dot {
+    background: var(--theme-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 25%, transparent);
+}
+
+#modal-changelog .changelog-rail-copy { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+#modal-changelog .changelog-rail-head { display: flex; align-items: center; gap: 7px; }
+#modal-changelog .changelog-rail-version { color: var(--text-color); font: 700 10.5px "Fira Code", monospace; }
+#modal-changelog .changelog-rail-item.active .changelog-rail-version { color: var(--theme-primaryLighter); }
+
+#modal-changelog .changelog-rail-latest {
+    padding: 2px 6px;
+    border-radius: 999px;
+    color: var(--theme-primaryLighter);
+    background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
+    font-size: 8.5px;
+    font-weight: 800;
+}
+
+#modal-changelog .changelog-rail-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--text-sub);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: normal;
+}
+
+#modal-changelog .changelog-rail-item.active .changelog-rail-title { color: var(--text-color); }
+#modal-changelog .changelog-rail-date { color: var(--text-sub); font-size: 9.5px; opacity: .75; }
+
+/* ===== Подробности патча ===== */
+#modal-changelog .changelog-detail {
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--rx-stroke);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 72%, transparent);
+}
+
+#modal-changelog .changelog-cover {
+    position: relative;
+    flex: 0 0 auto;
+    height: 150px;
+    overflow: hidden;
+    border-radius: 17px 17px 0 0;
+}
+
+#modal-changelog .changelog-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+#modal-changelog .changelog-cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, .62));
+}
+
+#modal-changelog .changelog-cover-copy {
+    position: absolute;
+    z-index: 1;
+    left: 22px;
+    right: 22px;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#modal-changelog .changelog-tag {
+    padding: 4px 9px;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(0, 0, 0, .4);
+    border: 1px solid rgba(255, 255, 255, .18);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+
+#modal-changelog .changelog-cover-version {
+    color: #fff;
+    font: 700 22px "Fira Code", monospace;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, .5);
+}
+
+#modal-changelog .changelog-detail-copy {
+    flex: 1 0 auto;
+    padding: 18px 22px 6px;
+}
+
+#modal-changelog .changelog-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-sub);
+    font-size: 10.5px;
+}
+
+#modal-changelog .changelog-meta .material-symbols-outlined { font-size: 15px; }
+#modal-changelog .changelog-detail h2 { margin: 6px 0 0; color: var(--text-color); font-size: 20px; line-height: 1.25; white-space: normal; }
+#modal-changelog .changelog-summary { margin: 8px 0 0; color: var(--text-sub); font-size: 12px; line-height: 1.55; white-space: normal; }
+
+#modal-changelog .changelog-detail h3 {
+    margin: 20px 0 8px;
+    color: var(--text-sub);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+#modal-changelog .changelog-changes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: change;
+}
+
+#modal-changelog .changelog-changes li {
+    counter-increment: change;
+    position: relative;
+    padding: 10px 0 10px 34px;
+    border-top: 1px solid var(--rx-stroke);
+    color: var(--text-color);
+    font-size: 11.5px;
+    line-height: 1.5;
+    white-space: normal;
+}
+
+#modal-changelog .changelog-changes li:first-child { border-top: 0; }
+
+#modal-changelog .changelog-changes li::before {
+    content: counter(change, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 24px;
+    color: var(--theme-primaryLighter);
+    font: 700 10px/1.75 "Fira Code", monospace;
+}
+
+/* ===== Соседние версии ===== */
+#modal-changelog .changelog-steps {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px 22px 18px;
+}
+
+#modal-changelog .changelog-steps button {
+    min-width: 0;
+    height: auto !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--rx-stroke) !important;
+    color: var(--text-color) !important;
+    text-align: left;
+}
+
+#modal-changelog .changelog-steps button[data-changelog-step="older"] { justify-content: flex-end; text-align: right; }
+#modal-changelog .changelog-steps button:disabled { visibility: hidden; }
+#modal-changelog .changelog-steps .material-symbols-outlined { flex: 0 0 auto; color: var(--text-sub); font-size: 18px; }
+#modal-changelog .changelog-step-copy { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+#modal-changelog .changelog-step-copy small { color: var(--text-sub); font-size: 9px; }
+#modal-changelog .changelog-step-copy strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; font-weight: 700; }
+
+@media (max-width: 1000px) {
+    #modal-changelog .changelog-body { grid-template-columns: 220px minmax(0, 1fr); }
+}

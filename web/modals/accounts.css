@@ -1,0 +1,310 @@
+/* ===== Поповер профилей (под чипом аккаунта) ===== */
+#modal-accounts {
+    position: absolute;
+    top: 62px;
+    right: 120px;
+    bottom: auto !important;
+    left: auto !important;
+    z-index: 12 !important;
+
+    width: 340px;
+    height: auto;
+    min-height: 0;
+    max-height: min(560px, 80vh) !important;
+    padding: 10px !important;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    border: 1px solid var(--rx2-line-strong, rgba(255, 255, 255, .08)) !important;
+    border-radius: 16px !important;
+    background: color-mix(in srgb, var(--theme-primaryBg) 97%, transparent) !important;
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .7) !important;
+}
+
+/* Поповер не затемняет весь лаунчер, как обычные окна */
+body:has(#modal-accounts:not([style*="display: none"])) > .modal-overlay {
+    backdrop-filter: none !important;
+    background: transparent !important;
+}
+
+#modal-accounts .accounts-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px 2px;
+}
+
+#modal-accounts .accounts-title {
+    color: var(--text-color);
+    font-size: 11pt;
+    font-weight: 700;
+}
+
+#modal-accounts .accounts-count {
+    min-width: 22px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--rxm-hover, rgba(255, 255, 255, .06));
+    color: var(--text-sub);
+    font-size: 8.5pt;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* ===== Список ===== */
+#modal-accounts .acc-list-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0 -2px;
+    padding: 0 2px;
+}
+
+#modal-accounts .accounts-list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#modal-accounts .acc-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 18px 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    height: 52px;
+    padding: 0 6px 0 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    touch-action: none;
+    transition: background .15s ease, box-shadow .15s ease;
+}
+
+#modal-accounts .acc-item:hover {
+    background: var(--rxm-hover, rgba(255, 255, 255, .055));
+}
+
+#modal-accounts .acc-item.active {
+    background: var(--rxm-accent-soft, color-mix(in srgb, var(--theme-primary) 18%, transparent));
+}
+
+#modal-accounts .acc-handle {
+    font-size: 18px;
+    color: var(--text-sub);
+    opacity: .25;
+    cursor: grab;
+    transition: opacity .15s ease;
+}
+
+#modal-accounts .acc-item:hover .acc-handle { opacity: .8; }
+
+#modal-accounts .acc-avatar {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    overflow: visible;
+}
+
+#modal-accounts .acc-avatar .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    object-fit: cover;
+    image-rendering: pixelated;
+}
+
+#modal-accounts .acc-avatar .type {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 2px solid var(--theme-primaryBg);
+    background: var(--theme-primaryBg);
+}
+
+#modal-accounts .acc-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+#modal-accounts .acc-nick {
+    color: var(--text-color);
+    font-size: 10.5pt;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#modal-accounts .acc-type {
+    color: var(--text-sub);
+    font-size: 8.5pt;
+    white-space: nowrap;
+}
+
+#modal-accounts .acc-rename {
+    width: 100%;
+    height: 30px;
+    padding: 0 8px !important;
+    font-size: 10.5pt;
+    font-weight: 600;
+}
+
+#modal-accounts .acc-item:not(.editing) .acc-rename,
+#modal-accounts .acc-item.editing .acc-nick,
+#modal-accounts .acc-item.editing .acc-type { display: none; }
+
+/* Справа: галочка у активного, кнопки при наведении */
+#modal-accounts .acc-side {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+#modal-accounts .acc-check {
+    display: none;
+    font-size: 20px;
+    color: var(--theme-primaryLighter);
+    padding: 0 4px;
+}
+
+#modal-accounts .acc-item.active .acc-check { display: block; }
+
+#modal-accounts .acc-actions {
+    display: none;
+    gap: 2px;
+}
+
+#modal-accounts .acc-item:hover .acc-actions,
+#modal-accounts .acc-item.confirm-delete .acc-actions { display: flex; }
+
+#modal-accounts .acc-item:hover .acc-check,
+#modal-accounts .acc-item.confirm-delete .acc-check,
+#modal-accounts .acc-item.editing .acc-check,
+#modal-accounts .accounts-list.sorting .acc-actions { display: none; }
+
+#modal-accounts .acc-actions button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0 !important;
+    border-radius: 8px;
+    background: transparent !important;
+    display: grid;
+    place-items: center;
+}
+
+#modal-accounts .acc-actions button:hover { background: var(--rxm-active, rgba(255, 255, 255, .085)) !important; }
+#modal-accounts .acc-actions .material-symbols-outlined { font-size: 18px; color: var(--text-sub); }
+#modal-accounts .acc-actions .edit:hover .material-symbols-outlined { color: var(--text-color); }
+#modal-accounts .acc-actions .delete:hover .material-symbols-outlined { color: var(--error); }
+
+#modal-accounts .acc-item.confirm-delete .delete {
+    width: auto;
+    padding: 0 8px;
+    background: color-mix(in srgb, var(--error) 18%, transparent) !important;
+}
+
+#modal-accounts .acc-item.confirm-delete .delete .material-symbols-outlined { color: var(--error); }
+
+/* ===== Перетаскивание ===== */
+#modal-accounts .accounts-list.sorting .acc-item { cursor: grabbing; }
+#modal-accounts .accounts-list.sorting .acc-item:not(.dragging):hover { background: transparent; }
+#modal-accounts .accounts-list.sorting .acc-item.active:not(.dragging) { background: var(--rxm-accent-soft, transparent); }
+
+#modal-accounts .acc-item.dragging {
+    z-index: 5;
+    background: var(--theme-primaryBgLighter) !important;
+    box-shadow: 0 12px 28px -10px rgba(0, 0, 0, .65);
+    transition: none !important;
+}
+
+#modal-accounts .acc-item.dragging .acc-handle { opacity: 1; }
+
+/* ===== Пусто ===== */
+#modal-accounts .accounts-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 22px 16px;
+    color: var(--text-sub);
+    font-size: 9.5pt;
+    text-align: center;
+}
+
+#modal-accounts .accounts-empty .material-symbols-outlined { font-size: 28px; opacity: .6; }
+
+/* ===== Добавление ===== */
+#modal-accounts .add-local {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 42px;
+    padding: 0 4px 0 10px;
+    border: 1px solid var(--rx2-line, rgba(255, 255, 255, .06));
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 70%, transparent);
+    transition: border-color .15s ease;
+}
+
+#modal-accounts .add-local:focus-within { border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent); }
+#modal-accounts .add-local-icon { font-size: 19px; color: var(--text-sub); }
+
+#modal-accounts .add-local input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 10.5pt;
+}
+
+#modal-accounts .add-local-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+}
+
+#modal-accounts .add-local-button .material-symbols-outlined { font-size: 18px; }
+
+/* ===== Низ ===== */
+#modal-accounts .acc-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 2px 0 4px;
+}
+
+#modal-accounts .accounts-hint {
+    flex: 1 1 auto;
+    color: var(--text-sub);
+    font-size: 8pt;
+    line-height: 1.35;
+    opacity: .8;
+}
+
+#modal-accounts .acc-elyby {
+    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 10px;
+    gap: 6px;
+    font-size: 9.5pt;
+    border-radius: 9px;
+}
+
+#modal-accounts .acc-elyby img { width: 16px; height: 16px; border-radius: 4px; }
+
+/* ===== Чип аккаунта в шапке ===== */
+#accountSelect .icon .avatar { width: 26px; height: 26px; object-fit: cover; }

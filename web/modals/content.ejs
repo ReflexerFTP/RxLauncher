@@ -1,0 +1,36 @@
+<link rel="stylesheet" href="modals/content.css"/>
+<link rel="stylesheet" href="modals/content-v2.css"/>
+
+<div class="modal home-modal" id="modal-content" style="display: none">
+    <div class="home-grid">
+        <section class="hero" aria-label="{{home.heroAria}}">
+            <div class="hero-bg"></div>
+            <div class="hero-shade"></div>
+            <div class="hero-noise"></div>
+
+            <div class="hero-top">
+                <%- include('../views/updateNotify'); %>
+            </div>
+
+            <div class="hero-story">
+                <div class="hero-release-row">
+                    <span class="hero-release-dot"></span>
+                    <span data-hero-release>Minecraft 1.21</span>
+                </div>
+                <h1 data-hero-title>{{home.defaultReleaseTitle}}</h1>
+                <p data-hero-description>{{home.defaultReleaseDescription}}</p>
+                <div class="hero-facts">
+                    <span><span class="material-symbols-outlined">deployed_code</span><b data-hero-loader>Java Edition</b></span>
+                    <span><span class="material-symbols-outlined">auto_awesome</span><b data-hero-version>1.21</b></span>
+                    <span><span class="material-symbols-outlined">cloud_off</span><b>{{home.offlineReady}}</b></span>
+                </div>
+            </div>
+
+            <%- include('../views/flyout'); %>
+        </section>
+
+        <aside class="news-panel" aria-label="{{changelog.latest}}">
+            <%- include('../views/news'); %>
+        </aside>
+    </div>
+</div>

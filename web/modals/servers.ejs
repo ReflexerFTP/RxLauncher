@@ -1,0 +1,144 @@
+<link rel="stylesheet" href="modals/servers.css"/>
+
+<div class="modal" id="modal-servers" style="display: none;">
+    <header class="server-catalog-header">
+        <div class="server-catalog-heading">
+            <span class="material-symbols-outlined server-catalog-logo">dns</span>
+            <div>
+                <h1>{{servers.title}}</h1>
+                <p>{{servers.catalog.subtitle}}</p>
+            </div>
+        </div>
+        <div class="server-catalog-actions">
+            <button type="button" class="server-icon-button" data-server-action="refresh"
+                    title="{{servers.catalog.refresh}}" aria-label="{{servers.catalog.refresh}}">
+                <span class="material-symbols-outlined">refresh</span>
+            </button>
+            <button type="button" class="server-primary-button" data-server-action="open-add">
+                <span class="material-symbols-outlined">add</span>
+                <span>{{servers.catalog.addCustom}}</span>
+            </button>
+        </div>
+    </header>
+
+    <section class="server-catalog-toolbar" aria-label="{{servers.catalog.filters}}">
+        <label class="server-search">
+            <span class="material-symbols-outlined">search</span>
+            <input type="search" data-server-search placeholder="{{servers.catalog.search}}" autocomplete="off"/>
+        </label>
+        <div class="server-category-tabs" role="tablist">
+            <button type="button" class="active" data-server-category="all">{{servers.catalog.all}}</button>
+            <button type="button" data-server-category="anarchy">Anarchy</button>
+            <button type="button" data-server-category="grief">Grief</button>
+            <button type="button" data-server-category="boxpvp">BoxPvP</button>
+        </div>
+        <label class="server-sort">
+            <span class="material-symbols-outlined">sort</span>
+            <select data-server-sort aria-label="{{servers.catalog.sort}}">
+                <option value="online-desc">{{servers.catalog.sortOnlineDesc}}</option>
+                <option value="online-asc">{{servers.catalog.sortOnlineAsc}}</option>
+                <option value="name">{{servers.catalog.sortName}}</option>
+            </select>
+        </label>
+    </section>
+
+    <section class="server-offline-state" data-server-offline hidden>
+        <div class="server-offline-orbit">
+            <span class="material-symbols-outlined">wifi_off</span>
+        </div>
+        <h2>{{servers.catalog.noInternet}}</h2>
+        <p>{{servers.catalog.noInternetHint}}</p>
+        <button type="button" class="server-primary-button" data-server-action="retry">
+            <span class="material-symbols-outlined">refresh</span>
+            <span>{{servers.catalog.retry}}</span>
+        </button>
+    </section>
+
+    <section class="server-error-state" data-server-error hidden aria-live="polite">
+        <div class="server-error-orbit">
+            <span class="material-symbols-outlined">cloud_off</span>
+        </div>
+        <h2 data-server-error-title></h2>
+        <p data-server-error-hint></p>
+        <button type="button" class="server-primary-button" data-server-action="retry">
+            <span class="material-symbols-outlined">refresh</span>
+            <span data-server-error-retry></span>
+        </button>
+    </section>
+
+    <section class="server-loading-state" data-server-loading hidden aria-live="polite">
+        <div class="server-loading-pulse"></div>
+        <span>{{servers.catalog.loading}}</span>
+    </section>
+
+    <section class="server-empty-state" data-server-empty hidden>
+        <span class="material-symbols-outlined">manage_search</span>
+        <span>{{servers.catalog.empty}}</span>
+    </section>
+
+    <div class="serversListWrapper" data-server-content>
+        <div class="serversList" role="list"></div>
+    </div>
+
+    <footer class="server-catalog-footer" data-server-footer>
+        <span class="material-symbols-outlined">monitoring</span>
+        <span>{{servers.catalog.historyHint}}</span>
+        <span class="server-footer-dot"></span>
+        <span>{{servers.disclaimer}}</span>
+    </footer>
+
+    <section class="server-add-panel" data-server-add-panel hidden aria-label="{{servers.catalog.customTitle}}">
+        <div class="server-add-card">
+            <header>
+                <div>
+                    <h2>{{servers.catalog.customTitle}}</h2>
+                    <p>{{servers.catalog.customSubtitle}}</p>
+                </div>
+                <button type="button" class="server-icon-button" data-server-action="close-add"
+                        aria-label="{{servers.catalog.cancel}}">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </header>
+            <label>
+                <span>{{servers.catalog.nameLabel}}</span>
+                <input type="text" maxlength="48" data-custom-server-name placeholder="My Server"/>
+            </label>
+            <label>
+                <span>{{servers.catalog.addressLabel}}</span>
+                <input type="text" maxlength="255" data-custom-server-address placeholder="play.example.net:25565"
+                       spellcheck="false"/>
+            </label>
+            <label>
+                <span>{{servers.catalog.categoryLabel}}</span>
+                <select data-custom-server-category>
+                    <option value="anarchy">Anarchy</option>
+                    <option value="grief">Grief</option>
+                    <option value="boxpvp">BoxPvP</option>
+                </select>
+            </label>
+            <div class="server-add-buttons">
+                <button type="button" class="server-secondary-button" data-server-action="close-add">
+                    {{servers.catalog.cancel}}
+                </button>
+                <button type="button" class="server-primary-button" data-server-action="save-custom">
+                    <span class="material-symbols-outlined">playlist_add</span>
+                    <span>{{servers.catalog.save}}</span>
+                </button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    $(function () {
+        RxServersUI.bind();
+    });
+
+    document.addEventListener("showModalEvent", (event) => {
+        if (event.detail.modal === "servers") RxServersUI.onShow();
+    });
+
+    document.addEventListener("hideModalEvent", (event) => {
+        if (event.detail.modal === "servers") RxServersUI.onHide();
+    });
+</script>

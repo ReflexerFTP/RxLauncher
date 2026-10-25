@@ -1,0 +1,53 @@
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">motion_photos_auto</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.java.auto.title}}</span>
+        <div class="description">{{settings.java.auto.description}}</div>
+    </div>
+    <label class="switch" data-setting="autoSelectJava" data-checked>
+        <input type="checkbox" id="autoSelectJavaChk">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item" id="selectJavaSettingsItem">
+    <div class="icon">
+        <span class="material-symbols-outlined">folder</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.java.user}}</span>
+        <div class="flex flex-center flex-gap-8">
+            <input type="text" class="lighter flex-grow" readonly id="javaDirectoryInput">
+            <button class="square small" onclick='changeJava()'>
+                <span class="material-symbols-outlined">folder</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    #modal-settings:has(#autoSelectJavaChk:checked) #selectJavaSettingsItem {
+        display: none !important;
+    }
+</style>
+
+<script>
+    $(function () {
+        // Файл java.exe
+        $("#javaDirectoryInput").val(RxConfig.read("selectedJava", ""));
+    })
+
+    function changeJava() {
+        ipcRenderer.invoke("open-dialog", {
+            properties: ["dontAddToRecent"],
+            title: MESSAGES.settings.java.selectJavaExe,
+            filters: [{name: "java.exe", extensions: ["exe"]}],
+        }).then(result => {
+            let pathResult = path.normalize(result[0]);
+            RxConfig.write("selectedJava", pathResult);
+            $("#javaDirectoryInput").val(pathResult);
+        })
+    }
+</script>

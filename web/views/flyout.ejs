@@ -1,0 +1,47 @@
+<link rel="stylesheet" href="views/flyout.css"/>
+
+<div class="flyout animate__animated animate__fadeInUp animate__faster">
+    <!-- Выбор версии -->
+    <div class="line-spinner custom-select" id="versionSelectPlaceholder"></div>
+
+    <div class="custom-select icon-and-description flyout-mode" id="versionSelect" data-mode="idle"
+         onclick="RxVersionsUI.open()" style="display: none">
+        <img class="icon" style="display: none"/>
+        <span class="title">{{commons.notSelected}}</span>
+        <span class="description">{{flyout.version}}</span>
+        <div class="button">
+            <span class="material-symbols-outlined">expand_more</span>
+        </div>
+    </div>
+    <!-- Прогресс бар -->
+    <div class="progress-pill hidden flyout-mode" id="mainProgress" data-mode="progress">
+        <div class="inner indeterminate" style="width: 1%;"></div>
+        <div class="wrapper">
+            <span class="title">{{loading.progress}}</span>
+            <span class="description">{{loading.progress}}</span>
+        </div>
+        <span class="percent">0%</span>
+    </div>
+    <!-- Режим со спиннером -->
+    <div class="spinner-wrapper hidden flyout-mode" id="spinnerWrapper_flyout" data-mode="spinner">
+        <div class="icon spinner small"></div>
+        <span class="title">{{loading.progress}}</span>
+    </div>
+    <!-- Кнопка запуска игры -->
+    <button id="playButton" onclick="RxFlyout.startSelectedVersion()">
+        <span class="material-symbols-outlined">play_arrow</span>
+        <span>{{flyout.play}}</span>
+    </button>
+
+    <!-- Отмена запуска, пока идут загрузки -->
+    <button id="cancelLaunchButton" class="transparent" style="display: none" onclick="RxStarter.cancel()">
+        <span class="material-symbols-outlined">close</span>
+        <span>{{flyout.cancel}}</span>
+    </button>
+
+    <!-- Кнопка завершения игры -->
+    <button id="stopGameButton" style="display: none" onclick="RxStarter.kill()">
+        <span class="material-symbols-outlined">stop_circle</span>
+        <span>{{flyout.stop}}</span>
+    </button>
+</div>

@@ -1,0 +1,125 @@
+/* Main window */
+#modal-packManager {
+    width: 94vw;
+    height: 94vh;
+    padding: 21px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#modal-packManager .title-wrapper img.icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+}
+
+#modal-packManager .title-wrapper .description {
+    font-size: 12pt;
+    color: var(--text-sub);
+}
+
+#modal-packManager .title-wrapper .delete {
+    background: var(--error);
+}
+
+#modal-packManager .title-wrapper .play {
+    background: var(--success);
+}
+
+#modal-packManager .title-wrapper .export {
+    background: var(--info);
+}
+
+#modal-packManager .title-wrapper button.icon {
+    background: var(--theme-primaryBgLighter);
+}
+
+/* Tabs */
+#modal-packManager .tabs .tab {
+    padding: 12px;
+}
+
+#modal-packManager .tabs button {
+    padding: 0 10px !important;
+    height: 40px;
+    width: max-content;
+    min-width: max-content;
+}
+
+#modal-packManager .tabs button span {
+    font-size: 13pt;
+}
+
+/* Layout */
+#modal-packManager .layout-tab .scroll-wrap {
+    padding: 12px;
+    overflow-y: auto;
+    max-height: 50vh;
+    border-radius: 8px;
+}
+
+#modal-packManager .layout-tab .scroll-wrap > div {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: max-content;
+    gap: 8px;
+}
+
+#modal-packManager .layout-tab .scroll-wrap > div .item {
+    background: var(--theme-primaryBgLight);
+    padding: 14px;
+    gap: 4px 14px;
+    height: max-content;
+}
+
+#modal-packManager .layout-tab .scroll-wrap > div .item .description {
+    color: var(--text-sub);
+    opacity: 0.9;
+    text-transform: none;
+    font-size: 13pt;
+    font-weight: 300;
+}
+
+#modal-packManager .layout-tab:not(.active) {
+    display: none;
+}
+
+/* Item */
+#modal-packManager .layout-tab .custom-select.icon-and-description:hover {
+    filter: none;
+    cursor: default;
+}
+
+#modal-packManager .layout-tab .custom-select.icon-and-description button:hover {
+    filter: brightness(115%);
+}
+
+#modal-packManager .layout-tab .custom-select.icon-and-description {
+    grid-template-columns: max-content 40px 1fr max-content;
+    grid-template-areas:
+    "switch icon title button"
+    "switch icon description button";
+}
+
+#modal-packManager .layout-tab .custom-select.icon-and-description .switch {
+    justify-self: center;
+    align-self: center;
+    grid-area: switch;
+
+    width: 48px;
+    height: 28px;
+}
+
+#modal-packManager .layout-tab .custom-select.icon-and-description input:not(:checked) + .inner:before {
+    left: 0;
+}
+
+#modal-packManager .layout-tab .custom-select.icon-and-description .switch .inner:before {
+    height: 21px;
+    width: 21px;
+    left: -8px;
+    bottom: 3px;
+}

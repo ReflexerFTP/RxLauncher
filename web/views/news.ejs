@@ -1,0 +1,17 @@
+<link rel="stylesheet" href="views/news.css"/>
+
+<div class="news-head">
+    <span class="news-head-title">{{changelog.latest}}</span>
+    <button class="news-history-link transparent" id="news-open-history" title="{{changelog.openAll}}">
+        <span>{{changelog.historyShort}}</span>
+        <span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+</div>
+
+<!-- Свежий патч: что изменилось -->
+<article class="patch-featured" id="home-patch-featured"></article>
+
+<!-- Остальные версии лентой -->
+<div class="news">
+    <div class="news-list patch-timeline" id="home-patch-list"></div>
+</div>
