@@ -83,6 +83,7 @@ class RxInstancesUI {
                     <button class="transparent" data-instance-action="mods" title="${esc(MESSAGES.instances.openMods)}"><span class="material-symbols-outlined">extension</span></button>
                     <button class="transparent" data-instance-action="folder" title="${esc(MESSAGES.instances.openFolder)}"><span class="material-symbols-outlined">folder_open</span></button>
                     <button class="transparent" data-instance-action="edit" title="${esc(MESSAGES.instances.settings)}"><span class="material-symbols-outlined">tune</span></button>
+                    <button class="transparent" data-instance-action="share" title="${esc(MESSAGES.instances.share)}"><span class="material-symbols-outlined">ios_share</span></button>
                     <button class="transparent" data-instance-action="duplicate" title="${esc(MESSAGES.instances.duplicate)}"><span class="material-symbols-outlined">content_copy</span></button>
                     <button class="transparent inst-delete" data-instance-action="delete" title="${esc(MESSAGES.instances.delete)}"><span class="material-symbols-outlined">delete</span></button>
                 </div>
@@ -214,6 +215,8 @@ class RxInstancesUI {
                 return openExternal(RxInstancesUI.dirFor(id));
             case "edit":
                 return RxInstancesUI.openDialog(id);
+            case "share":
+                return RxTogetherUI.openFor(`pack-${id}`);
             case "update":
                 $button.prop("disabled", true);
                 return RxCatalog.updatePack(id);

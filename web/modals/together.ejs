@@ -1,0 +1,85 @@
+<link rel="stylesheet" href="modals/together.css"/>
+
+<div class="modal" id="modal-together" style="display: none;">
+    <header class="inst-header">
+        <div class="inst-heading-icon"><span class="material-symbols-outlined">group</span></div>
+        <div class="inst-heading-copy">
+            <h1>{{together.title}}</h1>
+            <span>{{together.subtitle}}</span>
+        </div>
+    </header>
+
+    <div class="tg-scroll">
+        <div class="tg-grid">
+            <!-- Поделиться -->
+            <section class="tg-card">
+                <div class="tg-card-head">
+                    <span class="material-symbols-outlined">ios_share</span>
+                    <div>
+                        <h2>{{together.shareTitle}}</h2>
+                        <p>{{together.shareText}}</p>
+                    </div>
+                </div>
+                <label class="inst-field">
+                    <span>{{together.whatToShare}}</span>
+                    <select data-share-source></select>
+                </label>
+                <label class="inst-field">
+                    <span>{{together.server}}</span>
+                    <input type="text" data-share-server spellcheck="false" placeholder="{{together.serverPlaceholder}}"/>
+                </label>
+                <div class="tg-chips" data-share-servers></div>
+                <div class="tg-actions">
+                    <button data-share-action="code"><span class="material-symbols-outlined">key</span><span>{{together.makeCode}}</span></button>
+                    <button class="transparent" data-share-action="mrpack"><span class="material-symbols-outlined">archive</span><span>{{together.exportMrpack}}</span></button>
+                </div>
+                <div class="tg-result" data-share-result hidden>
+                    <code data-share-code></code>
+                    <div class="tg-result-meta" data-share-meta></div>
+                    <div class="tg-actions">
+                        <button data-share-action="copy-invite"><span class="material-symbols-outlined">content_copy</span><span>{{together.copyInvite}}</span></button>
+                        <button class="transparent" data-share-action="copy-code"><span class="material-symbols-outlined">key</span><span>{{together.copyCode}}</span></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Принять -->
+            <section class="tg-card">
+                <div class="tg-card-head">
+                    <span class="material-symbols-outlined">move_to_inbox</span>
+                    <div>
+                        <h2>{{together.joinTitle}}</h2>
+                        <p>{{together.joinText}}</p>
+                    </div>
+                </div>
+                <textarea class="tg-input" data-join-code rows="4" spellcheck="false" placeholder="RX1-…"></textarea>
+                <div class="tg-actions">
+                    <button data-join-action="paste" class="transparent"><span class="material-symbols-outlined">content_paste</span><span>{{together.paste}}</span></button>
+                    <button data-join-action="check"><span class="material-symbols-outlined">search</span><span>{{together.check}}</span></button>
+                </div>
+                <div class="tg-preview" data-join-preview hidden>
+                    <div class="tg-preview-head">
+                        <span class="material-symbols-outlined">stacks</span>
+                        <div>
+                            <strong data-join-name></strong>
+                            <span data-join-sub></span>
+                        </div>
+                    </div>
+                    <div class="tg-preview-stats" data-join-stats></div>
+                    <div class="tg-actions">
+                        <button data-join-action="install-play"><span class="material-symbols-outlined">play_arrow</span><span>{{together.installPlay}}</span></button>
+                        <button class="transparent" data-join-action="install"><span class="material-symbols-outlined">download</span><span>{{together.installOnly}}</span></button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- История -->
+        <section class="tg-history" data-history-wrap hidden>
+            <h3>{{together.history}}</h3>
+            <div class="tg-history-list" data-history></div>
+        </section>
+
+        <p class="inst-hint tg-note">{{together.note}}</p>
+    </div>
+</div>

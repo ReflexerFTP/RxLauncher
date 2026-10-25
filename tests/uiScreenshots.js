@@ -54,7 +54,8 @@ const STAGES = [
     ["statistics", `RxModals.switchModal("statistics")`],
     ["screenshots", `RxModals.switchModal("screenshots")`],
     ["console", `RxModals.switchModal("console")`],
-    ["friends", `RxModals.switchModal("friends")`],
+    ["together", `RxModals.switchModal("together")`],
+    ["together-preview", `($("#modal-together [data-join-code]").val(RxShare.encode({v: 1, n: "Выживание с друзьями", g: "1.21.1", l: "fabric", m: ["AANobbMI", "P7dR8mSH"], r: ["abcdEFGH"], s: [], by: "Steve", sv: "play.example.org"})), RxTogetherUI.check(), new Promise(resolve => setTimeout(resolve, 200)))`],
     ["settings", `RxModals.switchModal("settings")`],
     ["settings-personalization", `$('#modal-settings .tabs .tab[data-tab="personalization"]').click()`],
     ["settings-game", `$('#modal-settings .tabs .tab[data-tab="game"]').click()`],
@@ -81,6 +82,10 @@ app.whenReady().then(async () => {
     await window.webContents.executeJavaScript(`(() => {
         RxConfig.write("activeVersion", "fabric-1.21.4");
         RxAccountsManager.addLocalAccount("Steve");
+        // Пример сборки для экрана «Сборки»
+        RxPacks.writeModpackManifest("demo_pack", {id: "demo_pack", uuid: "demo", displayName: "Fabulously Optimized 6.5.0",
+            baseVersion: {full: "fabric-1.21.1", type: "fabric", number: "1.21.1"}, files: [], icon: false, created: Date.now(),
+            memory: {mode: "auto", mb: 4096}});
         RxAccountsUI.reloadAccountSelect();
         RxVersionsUI.loadVersions();
         RxToasts.removeAll();

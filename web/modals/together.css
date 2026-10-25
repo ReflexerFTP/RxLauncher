@@ -1,0 +1,172 @@
+/* «Играть вместе»: шапка и поля — как в разделе «Сборки» (instances.css) */
+#modal-together {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 22px;
+    min-height: 0;
+}
+
+.tg-scroll { min-height: 0; flex: 1 1 auto; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 14px; }
+.tg-scroll > * { flex: 0 0 auto; }
+
+.tg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 12px;
+    align-items: start;
+    overflow: visible;
+}
+
+.tg-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--rx-stroke);
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 82%, transparent);
+    overflow: visible;
+}
+
+.tg-card-head { display: flex; gap: 12px; align-items: flex-start; }
+
+.tg-card-head > .material-symbols-outlined {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    font-size: 22px;
+    color: var(--theme-primaryLighter);
+    background: color-mix(in srgb, var(--theme-primary) 16%, var(--theme-primaryBgLighter));
+}
+
+.tg-card-head h2 { margin: 0 0 3px; font-size: 13pt; }
+.tg-card-head p { margin: 0; color: var(--text-sub); font-size: 9pt; line-height: 1.45; }
+
+.tg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tg-chips:empty { display: none; }
+
+.tg-chips button {
+    height: 28px !important;
+    padding: 0 11px !important;
+    border-radius: 999px !important;
+    border: 1px solid var(--rx-stroke) !important;
+    background: transparent !important;
+    color: var(--text-sub) !important;
+    font-size: 8.5pt;
+    font-weight: 700;
+}
+
+.tg-chips button:hover { color: var(--text-color) !important; border-color: color-mix(in srgb, var(--theme-primary) 55%, transparent) !important; }
+
+.tg-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.tg-actions button {
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px !important;
+    border-radius: 11px !important;
+    font-size: 9.5pt;
+}
+
+.tg-actions .material-symbols-outlined { font-size: 18px; color: inherit; }
+.tg-actions .spin { animation: mc-spin 1s linear infinite; }
+
+.tg-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 11px;
+    border: 1px solid var(--rx-stroke);
+    background: var(--theme-primaryBgLight);
+    color: var(--text-color);
+    font: 9pt "Fira Code", monospace;
+    resize: none;
+    outline: none;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.tg-input:focus { border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent); }
+
+.tg-result,
+.tg-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 13px;
+    background: var(--theme-primaryBg);
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 35%, transparent);
+}
+
+.tg-result[hidden], .tg-preview[hidden], .tg-history[hidden] { display: none; }
+
+.tg-result code {
+    display: block;
+    max-height: 64px;
+    overflow: hidden;
+    color: var(--text-sub);
+    font: 8.5pt "Fira Code", monospace;
+    word-break: break-all;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.tg-result-meta, .tg-preview-stats { display: flex; flex-wrap: wrap; gap: 6px 12px; color: var(--text-sub); font-size: 8.5pt; }
+.tg-result-meta > span, .tg-preview-stats > span { display: flex; align-items: center; gap: 4px; }
+.tg-result-meta .material-symbols-outlined, .tg-preview-stats .material-symbols-outlined { font-size: 15px; }
+.tg-result-meta .warn { color: var(--warning); }
+
+.tg-preview-head { display: flex; gap: 11px; align-items: center; }
+
+.tg-preview-head > .material-symbols-outlined {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    color: var(--theme-primaryLighter);
+    background: var(--theme-primaryBgLighter);
+}
+
+.tg-preview-head div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tg-preview-head strong { font-size: 11pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tg-preview-head span { color: var(--text-sub); font-size: 9pt; }
+
+.tg-history { display: flex; flex-direction: column; gap: 8px; }
+.tg-history h3 { margin: 0; font-size: 11pt; }
+.tg-history-list { display: flex; flex-direction: column; gap: 6px; overflow: visible; }
+
+.tg-history-row {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px 8px 12px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 82%, transparent);
+}
+
+.tg-history-row > .material-symbols-outlined { font-size: 19px; color: var(--theme-primaryLighter); }
+.tg-history-copy { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tg-history-copy strong { font-size: 9.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tg-history-copy span { color: var(--text-sub); font-size: 8pt; }
+
+.tg-history-row button {
+    width: 34px;
+    height: 34px !important;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+    border-radius: 10px !important;
+}
+
+.tg-history-row button .material-symbols-outlined { font-size: 18px; color: inherit; }
+.tg-note { margin-top: auto; }
