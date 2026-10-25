@@ -52,6 +52,37 @@ const STAGES = [
     ["skins", `RxModals.switchModal("skins")`],
     ["servers", `RxModals.switchModal("servers")`],
     ["statistics", `RxModals.switchModal("statistics")`],
+    ["statistics-data", `(() => {
+        // Три недели правдоподобной игры: разные ники, версии, серверы и миры
+        const day = 86400000;
+        const sessions = [];
+        const servers = ["mc.hypixel.net", "play.funtime.su", "mc.holyworld.ru"];
+        const worlds = ["Выживание", "Креатив", "Хардкор 2"];
+        for (let index = 0; index < 34; index++) {
+            const startedAt = Date.now() - (index % 21) * day - (index * 37 % 9) * 3600000 - 1800000;
+            const playSeconds = 900 + (index * 1373) % 9000;
+            const key = RxPlayStats.dayKey(startedAt);
+            const online = index % 3 !== 0;
+            const context = online ? servers[index % 3] : worlds[index % 3];
+            const kills = (index * 7) % 23;
+            const deaths = (index * 3) % 6;
+            sessions.push({
+                id: "demo-" + index, startedAt, endedAt: startedAt + playSeconds * 1000, lastCheckpointAt: startedAt + playSeconds * 1000,
+                playSeconds, versionId: ["fabric-1.21.4", "pack-demo_pack", "vanilla-1.21.1", "forge-1.20.1"][index % 4],
+                nickname: index % 5 === 0 ? "Alex" : "Steve", kills, deaths, bestKillStreak: Math.min(kills, 4 + index % 7),
+                serverSeconds: online ? {[context]: playSeconds} : {}, worldSeconds: online ? {} : {[context]: playSeconds},
+                dailySeconds: {[key]: playSeconds}, dailyCombat: {[key]: {kills, deaths, bestKillStreak: Math.min(kills, 4 + index % 7)}},
+                dailyContexts: {[key]: online ? {servers: {[context]: playSeconds}, worlds: {}} : {servers: {}, worlds: {[context]: playSeconds}}},
+                endReason: "closed"
+            });
+        }
+        const normalized = sessions.map(session => RxPlayStats.normalizeSession(session));
+        const aggregate = RxPlayStats.aggregateSessions(normalized, "");
+        RxPlayStats.data = {...RxPlayStats.createEmptyData(), sessions: normalized, totals: aggregate.totals, dimensions: aggregate.dimensions, days: aggregate.days};
+        RxStatisticsUI.render(true);
+        return new Promise(resolve => setTimeout(resolve, 300));
+    })()`],
+    ["statistics-data-scrolled", `(document.querySelector("#modal-statistics .st-scroll").scrollTop = 99999, new Promise(resolve => setTimeout(resolve, 300)))`],
     ["screenshots", `RxModals.switchModal("screenshots")`],
     ["console", `RxModals.switchModal("console")`],
     ["together", `RxModals.switchModal("together")`],

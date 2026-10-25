@@ -257,8 +257,8 @@ app.whenReady().then(async () => {
             playtime: document.querySelector("[data-stat-value='playtime']")?.textContent.trim(),
             kills: document.querySelector("[data-stat-value='kills']")?.textContent.trim(),
             deaths: document.querySelector("[data-stat-value='deaths']")?.textContent.trim(),
-            runningLabel: document.querySelector("#stats-session-list .stats-session-row .stats-session-main:nth-child(2) span")?.textContent.trim(),
-            serverRows: document.querySelectorAll("[data-ranking='servers'] .stats-rank-row").length
+            runningLabel: document.querySelector("#stats-session-list [data-session-state]")?.textContent.trim(),
+            serverRows: document.querySelectorAll("[data-ranking='servers'] .st-rank-row").length
         };
         await RxModals.switchModal("settings");
         const personalizationTab = document.querySelector('#modal-settings .tabs .tab[data-tab="personalization"]');

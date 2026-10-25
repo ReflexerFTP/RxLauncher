@@ -1291,10 +1291,10 @@ class RxPlayStats {
                 ? Math.round((aggregate.totals.kills / aggregate.totals.deaths) * 100) / 100
                 : aggregate.totals.kills,
             rankings: {
-                servers: RxPlayStats.recordsToRanking(aggregate.dimensions.servers).slice(0, 3),
-                nicknames: RxPlayStats.recordsToRanking(aggregate.dimensions.nicknames).slice(0, 3),
-                worlds: RxPlayStats.recordsToRanking(aggregate.dimensions.worlds).slice(0, 3),
-                versions: RxPlayStats.recordsToRanking(aggregate.dimensions.versions).slice(0, 3)
+                servers: RxPlayStats.recordsToRanking(aggregate.dimensions.servers).slice(0, 5),
+                nicknames: RxPlayStats.recordsToRanking(aggregate.dimensions.nicknames).slice(0, 5),
+                worlds: RxPlayStats.recordsToRanking(aggregate.dimensions.worlds).slice(0, 5),
+                versions: RxPlayStats.recordsToRanking(aggregate.dimensions.versions).slice(0, 5)
             },
             days: {...aggregate.days},
             sessions: visibleSessions.sort((a, b) => (b.endedAt || b.lastCheckpointAt) - (a.endedAt || a.lastCheckpointAt)),

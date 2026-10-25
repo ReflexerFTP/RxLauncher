@@ -1,32 +1,27 @@
 <link rel="stylesheet" href="modals/statistics.css"/>
 
 <div class="modal" id="modal-statistics" style="display: none;">
-    <div class="stats-shell">
-        <header class="stats-header">
-            <div class="stats-heading">
-                <div class="stats-heading-icon">
-                    <span class="material-symbols-outlined">monitoring</span>
+    <div class="st-shell">
+        <header class="inst-header st-header">
+            <div class="inst-heading-icon"><span class="material-symbols-outlined">monitoring</span></div>
+            <div class="inst-heading-copy">
+                <div class="st-title-row">
+                    <h1>{{statistics.title}}</h1>
+                    <span class="st-live" id="stats-live-pill">
+                        <span class="st-live-dot"></span>
+                        <span>{{statistics.live}}</span>
+                    </span>
                 </div>
-                <div>
-                    <div class="stats-title-row">
-                        <h1>{{statistics.title}}</h1>
-                        <span class="stats-live-pill" id="stats-live-pill">
-                            <span class="stats-live-dot"></span>
-                            <span>{{statistics.live}}</span>
-                        </span>
-                    </div>
-                    <p>{{statistics.subtitle}}</p>
-                </div>
+                <span>{{statistics.subtitle}}</span>
             </div>
-
-            <div class="stats-filters">
-                <div class="stats-period-tabs" id="stats-period-tabs">
-                    <button class="stats-period-btn active" data-period="all">{{statistics.period.all}}</button>
-                    <button class="stats-period-btn" data-period="30d">{{statistics.period.month}}</button>
-                    <button class="stats-period-btn" data-period="7d">{{statistics.period.week}}</button>
-                    <button class="stats-period-btn" data-period="today">{{statistics.period.today}}</button>
+            <div class="st-filters">
+                <div class="mods-tabs st-periods" id="stats-period-tabs">
+                    <button type="button" class="mods-tab stats-period-btn active" data-period="all">{{statistics.period.all}}</button>
+                    <button type="button" class="mods-tab stats-period-btn" data-period="30d">{{statistics.period.month}}</button>
+                    <button type="button" class="mods-tab stats-period-btn" data-period="7d">{{statistics.period.week}}</button>
+                    <button type="button" class="mods-tab stats-period-btn" data-period="today">{{statistics.period.today}}</button>
                 </div>
-                <label class="stats-profile-filter">
+                <label class="mods-sort st-profile">
                     <span class="material-symbols-outlined">person</span>
                     <select id="stats-nickname-filter" aria-label="{{statistics.profile}}">
                         <option value="all">{{statistics.allProfiles}}</option>
@@ -35,141 +30,123 @@
             </div>
         </header>
 
-        <div class="stats-scroll">
-            <div class="stats-migration-note" id="stats-migration-note">
+        <div class="st-scroll">
+            <div class="cat-notice st-note" id="stats-migration-note">
                 <span class="material-symbols-outlined">info</span>
                 <span>{{statistics.migrationNote}}</span>
             </div>
 
-            <section class="stats-kpi-grid">
-                <article class="stats-kpi stats-kpi-time">
-                    <div class="stats-kpi-icon"><span class="material-symbols-outlined">schedule</span></div>
-                    <div class="stats-kpi-copy">
-                        <span class="stats-kpi-label">{{statistics.playtime}}</span>
-                        <strong data-stat-value="playtime">0 {{statistics.units.hours}}</strong>
-                        <small><span data-stat-value="sessions">0</span> <span>{{statistics.sessions}}</span></small>
-                    </div>
-                    <div class="stats-kpi-orbit"></div>
+            <!-- Главные цифры -->
+            <section class="st-kpis">
+                <article class="st-kpi st-kpi-main">
+                    <span class="st-kpi-label"><span class="material-symbols-outlined">schedule</span><span>{{statistics.playtime}}</span></span>
+                    <strong data-stat-value="playtime">0</strong>
+                    <small><span data-stat-value="sessions">0</span> <span>{{statistics.sessions}}</span> · <span data-stat-value="avgSession"></span></small>
                 </article>
-
-                <article class="stats-kpi stats-kpi-kills">
-                    <div class="stats-kpi-icon"><span class="material-symbols-outlined">swords</span></div>
-                    <div class="stats-kpi-copy">
-                        <span class="stats-kpi-label">{{statistics.kills}}</span>
-                        <strong data-stat-value="kills">0</strong>
-                        <small>K/D <span data-stat-value="kd">0</span></small>
-                    </div>
-                    <div class="stats-kpi-orbit"></div>
+                <article class="st-kpi">
+                    <span class="st-kpi-label"><span class="material-symbols-outlined">swords</span><span>{{statistics.kills}}</span></span>
+                    <strong data-stat-value="kills">0</strong>
+                    <small>K/D <span data-stat-value="kd">0</span></small>
                 </article>
-
-                <article class="stats-kpi stats-kpi-deaths">
-                    <div class="stats-kpi-icon"><span class="material-symbols-outlined">skull</span></div>
-                    <div class="stats-kpi-copy">
-                        <span class="stats-kpi-label">{{statistics.deaths}}</span>
-                        <strong data-stat-value="deaths">0</strong>
-                        <small><span>{{statistics.localTracking}}</span></small>
-                    </div>
-                    <div class="stats-kpi-orbit"></div>
+                <article class="st-kpi">
+                    <span class="st-kpi-label"><span class="material-symbols-outlined">skull</span><span>{{statistics.deaths}}</span></span>
+                    <strong data-stat-value="deaths">0</strong>
+                    <small><span>{{statistics.localTracking}}</span></small>
                 </article>
-
-                <article class="stats-kpi stats-kpi-streak">
-                    <div class="stats-kpi-icon"><span class="material-symbols-outlined">local_fire_department</span></div>
-                    <div class="stats-kpi-copy">
-                        <span class="stats-kpi-label">{{statistics.bestStreak}}</span>
-                        <strong data-stat-value="bestStreak">0</strong>
-                        <small><span>{{statistics.withoutDeath}}</span></small>
-                    </div>
-                    <div class="stats-kpi-orbit"></div>
+                <article class="st-kpi">
+                    <span class="st-kpi-label"><span class="material-symbols-outlined">local_fire_department</span><span>{{statistics.bestStreak}}</span></span>
+                    <strong data-stat-value="bestStreak">0</strong>
+                    <small><span>{{statistics.withoutDeath}}</span></small>
                 </article>
             </section>
 
-            <section class="stats-middle-grid">
-                <article class="stats-card stats-activity-card">
-                    <div class="stats-card-heading">
+            <!-- Активность и календарь -->
+            <section class="st-row">
+                <article class="st-card st-activity">
+                    <div class="st-card-head">
                         <div>
                             <h2>{{statistics.activity}}</h2>
-                            <p>{{statistics.activityHint}}</p>
+                            <p data-stat-value="activityHint">{{statistics.activityHint}}</p>
                         </div>
-                        <span class="material-symbols-outlined">bar_chart</span>
+                        <strong class="st-card-total" data-stat-value="activityTotal"></strong>
                     </div>
-                    <div class="stats-chart" id="stats-activity-chart"></div>
+                    <div class="st-chart" id="stats-activity-chart"></div>
                 </article>
 
-                <article class="stats-card stats-favorite-card">
-                    <div class="stats-favorite-icon"><span class="material-symbols-outlined">landscape</span></div>
-                    <span class="stats-favorite-eyebrow">{{statistics.favoriteWorld}}</span>
-                    <strong data-stat-value="favoriteWorld">—</strong>
-                    <span data-stat-value="favoriteWorldTime">{{statistics.noData}}</span>
+                <article class="st-card st-calendar-card">
+                    <div class="st-card-head">
+                        <div>
+                            <h2>{{statistics.calendar}}</h2>
+                            <p data-stat-value="calendarHint"></p>
+                        </div>
+                    </div>
+                    <div class="st-calendar" id="stats-calendar"></div>
+                    <div class="st-legend">
+                        <span>{{statistics.less}}</span>
+                        <i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i>
+                        <span>{{statistics.more}}</span>
+                    </div>
                 </article>
             </section>
 
-            <section class="stats-ranking-grid">
-                <article class="stats-card stats-ranking" data-ranking="servers">
-                    <div class="stats-card-heading">
-                        <div><h2>{{statistics.topServers}}</h2><p>{{statistics.byPlaytime}}</p></div>
-                        <span class="material-symbols-outlined">dns</span>
-                    </div>
-                    <div class="stats-ranking-list"></div>
+            <!-- Где и как играете -->
+            <section class="st-rankings">
+                <article class="st-card" data-ranking="servers">
+                    <div class="st-card-head"><div><h2>{{statistics.topServers}}</h2><p>{{statistics.byPlaytime}}</p></div><span class="material-symbols-outlined">dns</span></div>
+                    <div class="st-rank-list"></div>
                 </article>
-
-                <article class="stats-card stats-ranking" data-ranking="nicknames">
-                    <div class="stats-card-heading">
-                        <div><h2>{{statistics.topNicknames}}</h2><p>{{statistics.byPlaytime}}</p></div>
-                        <span class="material-symbols-outlined">badge</span>
-                    </div>
-                    <div class="stats-ranking-list"></div>
+                <article class="st-card" data-ranking="worlds">
+                    <div class="st-card-head"><div><h2>{{statistics.topWorlds}}</h2><p>{{statistics.byPlaytime}}</p></div><span class="material-symbols-outlined">public</span></div>
+                    <div class="st-rank-list"></div>
                 </article>
-
-                <article class="stats-card stats-ranking" data-ranking="worlds">
-                    <div class="stats-card-heading">
-                        <div><h2>{{statistics.topWorlds}}</h2><p>{{statistics.byPlaytime}}</p></div>
-                        <span class="material-symbols-outlined">public</span>
-                    </div>
-                    <div class="stats-ranking-list"></div>
+                <article class="st-card" data-ranking="versions">
+                    <div class="st-card-head"><div><h2>{{statistics.topVersions}}</h2><p>{{statistics.byPlaytime}}</p></div><span class="material-symbols-outlined">deployed_code</span></div>
+                    <div class="st-rank-list"></div>
+                </article>
+                <article class="st-card" data-ranking="nicknames">
+                    <div class="st-card-head"><div><h2>{{statistics.topNicknames}}</h2><p>{{statistics.byPlaytime}}</p></div><span class="material-symbols-outlined">badge</span></div>
+                    <div class="st-rank-list"></div>
                 </article>
             </section>
 
-            <section class="stats-card stats-sessions-card">
-                <div class="stats-card-heading stats-sessions-heading">
+            <!-- Последние сессии -->
+            <section class="st-card st-sessions">
+                <div class="st-card-head">
                     <div>
                         <h2>{{statistics.recentSessions}}</h2>
                         <p>{{statistics.sessionsHint}}</p>
                     </div>
-                    <div class="stats-session-pagination">
-                        <button class="stats-icon-btn" id="stats-session-prev" title="{{statistics.previous}}">
+                    <div class="st-pagination">
+                        <button class="transparent" id="stats-session-prev" title="{{statistics.previous}}">
                             <span class="material-symbols-outlined">chevron_left</span>
                         </button>
                         <span id="stats-session-page">1 / 1</span>
-                        <button class="stats-icon-btn" id="stats-session-next" title="{{statistics.next}}">
+                        <button class="transparent" id="stats-session-next" title="{{statistics.next}}">
                             <span class="material-symbols-outlined">chevron_right</span>
                         </button>
                     </div>
                 </div>
-                <div class="stats-session-list" id="stats-session-list"></div>
+                <div class="st-session-list" id="stats-session-list"></div>
             </section>
 
-            <footer class="stats-storage">
-                <div class="stats-storage-copy">
-                    <span class="material-symbols-outlined">verified_user</span>
-                    <div>
-                        <strong>{{statistics.storageTitle}}</strong>
-                        <span id="stats-storage-path"></span>
-                    </div>
+            <footer class="st-storage">
+                <span class="material-symbols-outlined">verified_user</span>
+                <div class="st-storage-copy">
+                    <strong>{{statistics.storageTitle}}</strong>
+                    <span id="stats-storage-path"></span>
                 </div>
-                <div class="stats-storage-actions">
-                    <button class="stats-secondary-btn" id="stats-refresh-button">
-                        <span class="material-symbols-outlined">refresh</span>
-                        <span>{{statistics.refresh}}</span>
-                    </button>
-                    <button class="stats-secondary-btn" id="stats-open-folder-button">
-                        <span class="material-symbols-outlined">folder_open</span>
-                        <span>{{statistics.openFolder}}</span>
-                    </button>
-                    <button class="stats-export-btn" id="stats-export-button">
-                        <span class="material-symbols-outlined">download</span>
-                        <span>{{statistics.export}}</span>
-                    </button>
-                </div>
+                <button class="transparent" id="stats-refresh-button">
+                    <span class="material-symbols-outlined">refresh</span>
+                    <span>{{statistics.refresh}}</span>
+                </button>
+                <button class="transparent" id="stats-open-folder-button">
+                    <span class="material-symbols-outlined">folder_open</span>
+                    <span>{{statistics.openFolder}}</span>
+                </button>
+                <button id="stats-export-button">
+                    <span class="material-symbols-outlined">download</span>
+                    <span>{{statistics.export}}</span>
+                </button>
             </footer>
         </div>
     </div>

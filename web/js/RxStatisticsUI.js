@@ -99,32 +99,37 @@ class RxStatisticsUI {
         $select.val(RxStatisticsUI.nickname);
     };
 
+    // Сколько дней показывать на графике активности для выбранного периода
+    static chartDays = () => ({"30d": 30, "7d": 7})[RxStatisticsUI.period] || 14;
+
+    static CALENDAR_WEEKS = 16;
+
     static render = (refreshOptions = false) => {
         const snapshot = RxPlayStats.getDashboard({
             period: RxStatisticsUI.period,
             nickname: RxStatisticsUI.nickname
         });
         if (refreshOptions) RxStatisticsUI.updateNicknameOptions(snapshot.nicknameOptions);
+        const set = (key, value) => $(`#modal-statistics [data-stat-value='${key}']`).text(value);
+        const totals = snapshot.totals;
 
-        $("#modal-statistics [data-stat-value='playtime']").text(RxStatisticsUI.formatDuration(snapshot.totals.playSeconds));
-        $("#modal-statistics [data-stat-value='sessions']").text(RxStatisticsUI.formatNumber(snapshot.totals.sessions));
-        $("#modal-statistics [data-stat-value='kills']").text(RxStatisticsUI.formatNumber(snapshot.totals.kills));
-        $("#modal-statistics [data-stat-value='deaths']").text(RxStatisticsUI.formatNumber(snapshot.totals.deaths));
-        $("#modal-statistics [data-stat-value='bestStreak']").text(RxStatisticsUI.formatNumber(snapshot.totals.bestKillStreak));
-        $("#modal-statistics [data-stat-value='kd']").text(Number(snapshot.kd || 0).toLocaleString(RxStatisticsUI.locale(), {maximumFractionDigits: 2}));
+        set("playtime", RxStatisticsUI.formatDuration(totals.playSeconds, true));
+        set("sessions", RxStatisticsUI.formatNumber(totals.sessions));
+        set("avgSession", MESSAGES.statistics.avgSession.replace("{0}",
+            RxStatisticsUI.formatDuration(totals.sessions ? totals.playSeconds / totals.sessions : 0, true)));
+        set("kills", RxStatisticsUI.formatNumber(totals.kills));
+        set("deaths", RxStatisticsUI.formatNumber(totals.deaths));
+        set("bestStreak", RxStatisticsUI.formatNumber(totals.bestKillStreak));
+        set("kd", Number(snapshot.kd || 0).toLocaleString(RxStatisticsUI.locale(), {maximumFractionDigits: 2}));
         $("#stats-live-pill").toggleClass("active", snapshot.active);
         $("#stats-storage-path").text(snapshot.storagePath).attr("title", snapshot.storagePath);
 
-        const favoriteWorld = snapshot.rankings.worlds[0];
-        $("#modal-statistics [data-stat-value='favoriteWorld']").text(favoriteWorld?.name || "—");
-        $("#modal-statistics [data-stat-value='favoriteWorldTime']").text(
-            favoriteWorld ? RxStatisticsUI.formatDuration(favoriteWorld.playSeconds, true) : MESSAGES.statistics.noData
-        );
-
         RxStatisticsUI.renderActivity(snapshot.days);
-        RxStatisticsUI.renderRanking("servers", snapshot.rankings.servers);
-        RxStatisticsUI.renderRanking("nicknames", snapshot.rankings.nicknames);
-        RxStatisticsUI.renderRanking("worlds", snapshot.rankings.worlds);
+        // Календарь всегда за последние недели, независимо от выбранного периода
+        RxStatisticsUI.renderCalendar(RxStatisticsUI.period === "all"
+            ? snapshot.days
+            : RxPlayStats.getDashboard({period: "all", nickname: RxStatisticsUI.nickname}).days);
+        ["servers", "worlds", "versions", "nicknames"].forEach(type => RxStatisticsUI.renderRanking(type, snapshot.rankings[type] || []));
         RxStatisticsUI.renderSessions(snapshot.sessions);
 
         $("#stats-migration-note").toggle(
@@ -133,47 +138,104 @@ class RxStatisticsUI {
         return snapshot;
     };
 
+    // Понятное имя версии: «Fabric 1.21.4», у сборки — её название
+    static versionName = (versionId) => {
+        try {
+            return RxVersionsManager.versionToDisplayName(versionId) || versionId;
+        } catch (_) {
+            return versionId;
+        }
+    };
+
+    static emptyState = (text) => $("<div>").addClass("st-empty")
+        .append($("<span>").addClass("material-symbols-outlined").text("hourglass_empty"), $("<span>").text(text));
+
     static renderRanking = (type, items) => {
-        const $list = $(`#modal-statistics .stats-ranking[data-ranking="${type}"] .stats-ranking-list`);
+        const $list = $(`#modal-statistics [data-ranking="${type}"] .st-rank-list`);
         $list.empty();
         if (!items.length) {
-            $list.append($("<div>").addClass("stats-empty-ranking").text(MESSAGES.statistics.noDataYet));
+            $list.append(RxStatisticsUI.emptyState(MESSAGES.statistics.noDataYet));
             return;
         }
         const maximum = Math.max(1, items[0].playSeconds);
         items.forEach((item, index) => {
-            const percent = Math.max(4, Math.round((item.playSeconds / maximum) * 100));
-            const $row = $("<div>").addClass("stats-rank-row");
-            $row.append($("<span>").addClass("stats-rank-number").text(index + 1));
-            $row.append($("<span>").addClass("stats-rank-name").text(item.name).attr("title", item.name));
-            $row.append($("<span>").addClass("stats-rank-time").text(RxStatisticsUI.formatDuration(item.playSeconds, true)));
-            const $track = $("<div>").addClass("stats-rank-track");
-            $track.append($("<div>").addClass("stats-rank-progress").css("width", `${percent}%`));
-            $row.append($track);
-            $list.append($row);
+            const name = type === "versions" ? RxStatisticsUI.versionName(item.name) : item.name;
+            const percent = Math.max(3, Math.round((item.playSeconds / maximum) * 100));
+            $list.append($("<div>").addClass("st-rank-row").append(
+                $("<span>").addClass("st-rank-num").text(index + 1),
+                $("<span>").addClass("st-rank-name").text(name).attr("title", name),
+                $("<span>").addClass("st-rank-time").text(RxStatisticsUI.formatDuration(item.playSeconds, true)),
+                $("<div>").addClass("st-rank-track").append($("<div>").addClass("st-rank-progress").css("width", `${percent}%`))
+            ));
         });
     };
 
+    static lastDays = (count) => {
+        const now = new Date();
+        return Array.from({length: count}, (_, index) => {
+            const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (count - 1 - index));
+            return {date, key: RxPlayStats.dayKey(date.getTime())};
+        });
+    };
+
+    // Столбцы по дням с сеткой по часам и подсказкой при наведении
     static renderActivity = (days) => {
         const $chart = $("#stats-activity-chart");
         $chart.empty();
-        const now = new Date();
-        const values = [];
-        for (let offset = 13; offset >= 0; offset--) {
-            const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
-            const key = RxPlayStats.dayKey(date.getTime());
-            values.push({date, key, seconds: Number(days[key]?.playSeconds) || 0});
+        const count = RxStatisticsUI.chartDays();
+        const values = RxStatisticsUI.lastDays(count).map(item => ({...item, seconds: Number(days[item.key]?.playSeconds) || 0}));
+        const total = values.reduce((sum, item) => sum + item.seconds, 0);
+        $("#modal-statistics [data-stat-value='activityHint']").text(MESSAGES.statistics.lastDays.replace("{0}", count));
+        $("#modal-statistics [data-stat-value='activityTotal']").text(total ? RxStatisticsUI.formatDuration(total, true) : "");
+
+        // Шкала: круглое число часов (или минут, если играли мало)
+        const maximum = Math.max(...values.map(item => item.seconds));
+        const step = maximum >= 3 * 3600 ? 3600 * Math.ceil(maximum / 3600 / 3) : maximum >= 3600 ? 1800 : 600;
+        const top = Math.max(step * 3, Math.ceil(maximum / step) * step);
+        for (let line = step; line <= top; line += step) {
+            const units = MESSAGES.statistics.units;
+            const lineLabel = line % 3600 === 0 ? `${line / 3600} ${units.hoursShort}` : line < 3600 ? `${line / 60} ${units.minutesShort}` : RxStatisticsUI.formatDuration(line, true);
+            $chart.append($("<div>").addClass("st-grid-line").css("bottom", `calc(20px + (100% - 20px) * ${line / top})`)
+                .append($("<span>").text(lineLabel)));
         }
-        const maximum = Math.max(1, ...values.map(item => item.seconds));
+
+        const weekday = new Intl.DateTimeFormat(RxStatisticsUI.locale(), {weekday: "short"});
+        const fullDate = new Intl.DateTimeFormat(RxStatisticsUI.locale(), {weekday: "long", day: "numeric", month: "long"});
         values.forEach((item, index) => {
-            const percent = item.seconds > 0 ? Math.max(4, Math.round((item.seconds / maximum) * 100)) : 2;
-            const $column = $("<div>").addClass("stats-chart-column").toggleClass("today", index === values.length - 1);
-            const $track = $("<div>").addClass("stats-chart-track").attr("title", `${RxStatisticsUI.formatDuration(item.seconds)} · ${item.key}`);
-            $track.append($("<div>").addClass("stats-chart-bar").css("height", `${percent}%`));
-            $column.append($track);
-            $column.append($("<span>").addClass("stats-chart-label").text(item.date.toLocaleDateString(RxStatisticsUI.locale(), {weekday: "short"}).slice(0, 2)));
-            $chart.append($column);
+            const height = item.seconds > 0 ? Math.max(3, (item.seconds / top) * 100) : 0;
+            const label = count > 14 ? (index % 3 === (count - 1) % 3 ? String(item.date.getDate()) : "") : `${weekday.format(item.date).slice(0, 2)} ${item.date.getDate()}`;
+            $chart.append($("<div>").addClass("st-bar-column").toggleClass("today", index === values.length - 1).append(
+                $("<div>").addClass("st-bar-tip").text(item.seconds ? RxStatisticsUI.formatDuration(item.seconds, true) : MESSAGES.statistics.noPlay)
+                    .append($("<small>").text(fullDate.format(item.date))),
+                $("<div>").addClass("st-bar").toggleClass("empty", !item.seconds).css("height", item.seconds ? `${height}%` : "3px"),
+                $("<span>").addClass("st-bar-label").text(label)
+            ));
         });
+    };
+
+    // Календарь игры за последние недели: столбец — неделя, клетка — день
+    static renderCalendar = (days) => {
+        const $calendar = $("#stats-calendar");
+        $calendar.empty();
+        const today = new Date();
+        const todayKey = RxPlayStats.dayKey(today.getTime());
+        const weekStart = (today.getDay() + 6) % 7; // понедельник = 0
+        const total = RxStatisticsUI.CALENDAR_WEEKS * 7;
+        const cells = RxStatisticsUI.lastDays(total - (6 - weekStart));
+        const maximum = Math.max(1, ...cells.map(item => Number(days[item.key]?.playSeconds) || 0));
+        const format = new Intl.DateTimeFormat(RxStatisticsUI.locale(), {day: "numeric", month: "long"});
+        let played = 0;
+        cells.forEach(item => {
+            const seconds = Number(days[item.key]?.playSeconds) || 0;
+            if (seconds) played++;
+            const level = seconds ? Math.min(4, 1 + Math.floor((seconds / maximum) * 3.999)) : 0;
+            $calendar.append($("<i>").attr({"data-level": level, title: `${format.format(item.date)} · ${seconds ? RxStatisticsUI.formatDuration(seconds, true) : MESSAGES.statistics.noPlay}`})
+                .toggleClass("today", item.key === todayKey));
+        });
+        // Оставшиеся дни текущей недели
+        for (let index = weekStart + 1; index < 7; index++) $calendar.append($("<i>").addClass("future"));
+        $("#modal-statistics [data-stat-value='calendarHint']").text(
+            MESSAGES.statistics.calendarHint.replace("{0}", RxStatisticsUI.CALENDAR_WEEKS).replace("{1}", played));
     };
 
     static sessionContext = (session) => {
@@ -196,33 +258,29 @@ class RxStatisticsUI {
         $("#stats-session-next").prop("disabled", RxStatisticsUI.sessionPage >= pageCount);
 
         if (!pageItems.length) {
-            $list.append($("<div>").addClass("stats-empty-sessions").text(MESSAGES.statistics.noSessions));
+            $list.append(RxStatisticsUI.emptyState(MESSAGES.statistics.noSessions));
             return;
         }
 
         pageItems.forEach(session => {
             const context = RxStatisticsUI.sessionContext(session);
-            const $row = $("<div>").addClass("stats-session-row");
-            const $main = $("<div>").addClass("stats-session-main");
-            $main.append($("<strong>").text(session.nickname));
-            $main.append($("<span>").text(RxStatisticsUI.formatDate(session.startedAt)));
-            const $version = $("<div>").addClass("stats-session-main");
-            $version.append($("<strong>").text(session.versionId));
-            const sessionState = session.endReason === "running"
-                ? MESSAGES.statistics.running
-                : session.endReason === "interrupted"
-                    ? MESSAGES.statistics.interrupted
-                    : MESSAGES.statistics.completed;
-            $version.append($("<span>").text(sessionState));
-            const $context = $("<div>").addClass("stats-session-context");
-            $context.append($("<strong>").text(context.name).attr("title", context.name));
-            $context.append($("<span>").text(context.type));
-            const $duration = $("<span>").addClass("stats-session-value").text(RxStatisticsUI.formatDuration(session.playSeconds, true));
-            const $combat = $("<div>").addClass("stats-session-combat");
-            $combat.append($("<span>").append($("<i>").addClass("material-symbols-outlined").text("swords"), document.createTextNode(session.kills)));
-            $combat.append($("<span>").append($("<i>").addClass("material-symbols-outlined").text("skull"), document.createTextNode(session.deaths)));
-            $row.append($main, $version, $context, $duration, $combat);
-            $list.append($row);
+            const state = ["running", "interrupted"].includes(session.endReason) ? session.endReason : "completed";
+            $list.append($("<div>").addClass("st-session").append(
+                $("<span>").addClass("st-session-icon material-symbols-outlined").text(context.icon).attr("title", context.type),
+                $("<div>").addClass("st-session-copy").append(
+                    $("<strong>").text(context.name).attr("title", context.name),
+                    $("<span>").text(`${RxStatisticsUI.versionName(session.versionId)} · ${session.nickname}`)
+                ),
+                $("<span>").addClass(`st-session-state ${state}`).attr("data-session-state", state).text(MESSAGES.statistics[state]),
+                $("<div>").addClass("st-session-combat").append(
+                    $("<span>").attr("title", MESSAGES.statistics.kills).append($("<span>").addClass("material-symbols-outlined").text("swords"), document.createTextNode(session.kills)),
+                    $("<span>").attr("title", MESSAGES.statistics.deaths).append($("<span>").addClass("material-symbols-outlined").text("skull"), document.createTextNode(session.deaths))
+                ),
+                $("<div>").addClass("st-session-time").append(
+                    $("<strong>").text(RxStatisticsUI.formatDuration(session.playSeconds, true)),
+                    $("<span>").text(RxStatisticsUI.formatDate(session.startedAt))
+                )
+            ));
         });
     };
 
