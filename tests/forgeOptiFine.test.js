@@ -30,30 +30,22 @@ const indexHtml = `
       <td class='colForge'>Forge 47.2.18</td>
     </tr>`;
 
-const request = {
-    get: (options, callback) => {
-        const url = typeof options === "string" ? options : options.url;
-        if (pageMode === "offline") {
-            callback(new Error("offline"));
-            return {abort: () => true};
-        }
+const page = (url, body) => ({ok: true, status: 200, url, headers: {}, body});
 
-        if (url === "https://optifine.net/downloads") {
-            callback(null, {statusCode: 200}, indexHtml);
-            return {abort: () => true};
-        }
+const RxHttp = {
+    text: async (url) => {
+        if (pageMode === "offline") throw new Error("offline");
+        if (url === "https://optifine.net/downloads") return page(url, indexHtml);
 
         const parsed = new URL(url);
         const file = parsed.searchParams.get("f");
         if (pageMode === "malicious") {
-            callback(null, {statusCode: 200}, `<a href='https://evil.example/downloadx?f=${file}&x=0123456789abcdef'>Download</a>`);
-            return {abort: () => true};
+            return page(url, `<a href='https://evil.example/downloadx?f=${file}&x=0123456789abcdef'>Download</a>`);
         }
 
-        callback(null, {statusCode: 200}, `
+        return page(url, `
             <a href='https://evil.example/downloadx?f=${file}&x=0123456789abcdef'>Bad</a>
             <a href='downloadx?f=${file}&amp;x=0123456789abcdef0123456789abcdef'>Download</a>`);
-        return {abort: () => true};
     }
 };
 
@@ -67,7 +59,7 @@ const context = vm.createContext({
     os,
     process,
     require,
-    request,
+    RxHttp,
     performance,
     setTimeout,
     clearTimeout,

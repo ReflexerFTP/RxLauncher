@@ -74,7 +74,12 @@
       "live": "Game active",
       "profile": "Profile",
       "allProfiles": "All nicknames",
-      "period": { "all": "All time", "month": "30 days", "week": "7 days", "today": "Today" },
+      "period": {
+        "all": "All time",
+        "month": "30 days",
+        "week": "7 days",
+        "today": "Today"
+      },
       "migrationNote": "Your previous playtime is already included in the total. Nicknames, servers, worlds and combat details are collected from this update onward.",
       "playtime": "Playtime",
       "sessions": "game sessions",
@@ -110,7 +115,13 @@
       "interrupted": "Recovered after interruption",
       "running": "In game now",
       "completed": "Completed",
-      "units": { "hours": "h", "minutes": "min", "seconds": "sec", "hoursShort": "h", "minutesShort": "m" }
+      "units": {
+        "hours": "h",
+        "minutes": "min",
+        "seconds": "sec",
+        "hoursShort": "h",
+        "minutesShort": "m"
+      }
     },
     "mods": {
       "title": "Mods",
@@ -332,7 +343,8 @@
         "installing": "Installing updates",
         "found": "Found: ",
         "update": "Update everything"
-      }
+      },
+      "filesFailed": "Could not download the instance files"
     },
     "servers": {
       "title": "Servers",
@@ -644,7 +656,10 @@
       "loading": "Finding skin",
       "loadingHint": "Checking the Mojang profile and downloading its texture",
       "previewHint": "Drag to rotate, use the wheel to zoom",
-      "models": {"classic": "Classic", "slim": "Slim"},
+      "models": {
+        "classic": "Classic",
+        "slim": "Slim"
+      },
       "selectedSkin": "Selected skin",
       "cached": "Cached",
       "profileId": "Profile UUID",
@@ -917,7 +932,11 @@
       "findMod": "Find on Modrinth",
       "openMods": "Open mods",
       "openSettings": "Open settings",
-      "lastCrash": "Last crash"
+      "lastCrash": "Last crash",
+      "installMod": "Install",
+      "installing": "Installing…",
+      "installed": "Installed",
+      "installFailed": "Could not install automatically"
     },
     "instances": {
       "title": "Instances",

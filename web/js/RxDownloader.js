@@ -74,111 +74,113 @@ class RxDownloader {
         RxDownloader.activeDownloads.clear();
     }
 
+    // Загрузка, которую можно прервать кнопкой «Отмена»
+    static abortable = async (task) => {
+        const controller = new AbortController();
+        const abort = () => controller.abort();
+        RxDownloader.activeDownloads.add(abort);
+        try {
+            return await task(controller.signal);
+        } finally {
+            RxDownloader.activeDownloads.delete(abort);
+        }
+    }
+
     // Скачать файл
-    static downloadFile = (url, filePath, displayName = null, updateProgress = true) => {
+    static downloadFile = async (url, filePath, displayName = null, updateProgress = true, hashes = {}) => {
         RxCollector.writeLog(`New download [url=${url}] [displayName=${displayName}]`);
         if (displayName === null) {
             displayName = path.basename(filePath);
         }
-        let dirname = path.dirname(filePath);
-        if (!fs.existsSync(dirname)) {
-            fs.mkdirSync(dirname, {
-                recursive: true,
-            });
-        }
-
-        let received_bytes = 0;
-        let total_bytes = 0;
-        let percent = "";
-
-        return new Promise((resolve, reject) => {
-            RxDownloader.prepareUIToDownload(displayName).then(() => {
-                RxCollector.writeLog(`UI prepared for download`);
-                let settled = false;
-                const fileStream = fs.createWriteStream(filePath);
-                const downloadRequest = request.get(url);
-
-                const abort = () => fail(new Error("Download cancelled"));
-                RxDownloader.activeDownloads.add(abort);
-                const fail = (error) => {
-                    if (settled) return;
-                    settled = true;
-                    RxDownloader.activeDownloads.delete(abort);
-                    downloadRequest.abort();
-                    fileStream.destroy();
-                    if (fs.existsSync(filePath)) {
-                        try {
-                            fs.unlinkSync(filePath);
-                        } catch (_) {
-                            fileStream.once("close", () => {
-                                if (fs.existsSync(filePath)) {
-                                    try { fs.unlinkSync(filePath); } catch (_) {}
-                                }
-                            });
-                        }
-                    }
-                    reject(error);
-                };
-
-                downloadRequest.on("response", function (response) {
-                    if (response.statusCode < 200 || response.statusCode >= 300) {
-                        fail(new Error(`Download failed with HTTP ${response.statusCode}`));
-                        return;
-                    }
-                    total_bytes = parseInt(response.headers["content-length"] || "0", 10);
-                });
-                downloadRequest.on("data", function (chunk) {
-                    received_bytes += chunk.length;
-                    if (updateProgress && total_bytes > 0) {
-                        percent = Math.round((received_bytes * 100) / total_bytes);
-                        RxDownloader.updateDownloadUI(displayName, percent, received_bytes, total_bytes);
-                    }
-                });
-                downloadRequest.on("error", fail);
-                fileStream.on("error", fail);
-                fileStream.on("finish", function () {
-                    if (settled) return;
-                    settled = true;
-                    RxDownloader.activeDownloads.delete(abort);
-                    RxCollector.writeLog(`Download completed [displayname=${displayName}]`);
-                    RxFlyout.setProgress(0);
-                    resolve(true);
-                });
-                downloadRequest.pipe(fileStream);
-            }).catch(reject);
-        });
+        await RxDownloader.prepareUIToDownload(displayName);
+        await RxDownloader.abortable(signal => RxHttp.download(url, filePath, {
+            hashes,
+            signal,
+            onProgress: (received, total) => {
+                if (updateProgress && total > 0) {
+                    RxDownloader.updateDownloadUI(displayName, Math.round((received * 100) / total), received, total);
+                }
+            }
+        }));
+        RxCollector.writeLog(`Download completed [displayname=${displayName}]`);
+        RxFlyout.setProgress(0);
+        return true;
     }
 
     // Скачать файл в фоновом режиме
-    static quietDownloadFile = (url, filePath) => {
+    static quietDownloadFile = async (url, filePath) => {
         RxCollector.writeLog(`New quiet download [url=${url}]`);
-        let dirname = path.dirname(filePath);
-        if (!fs.existsSync(dirname)) {
-            fs.mkdirSync(dirname, {
-                recursive: true,
-            });
-        }
+        await RxHttp.download(url, filePath);
+        RxCollector.writeLog(`Quiet download completed`);
+        return true;
+    }
 
-        let received_bytes = 0;
-        let total_bytes = 0;
+    static RETRIES = 3;
 
-        return new Promise((resolve, reject) => {
-            request
-                .get(url)
-                .on("error", function (error) {
-                    reject(error);
-                })
-                .on("response", function (data) {
-                    total_bytes = parseInt(data.headers["content-length"]);
-                    data.pipe(fs.createWriteStream(filePath));
-                })
-                .on("data", function (chunk) {
-                    received_bytes += chunk.length;
-                })
-                .on("end", function () {
-                    RxCollector.writeLog(`Quiet download completed`);
-                    resolve(true);
-                });
-        })
+    // Скачать много файлов параллельно (файлы сборки): повтор при обрыве, проверка хеша, общий прогресс.
+    // items: [{url, path, hashes, size, displayName}]. Ошибка любого файла после всех попыток — ошибка всей загрузки
+    static downloadMany = async (items, title, concurrency = 6) => {
+        if (!items.length) return true;
+        const totalBytes = items.reduce((sum, item) => sum + (Number(item.size) || 0), 0);
+        const received = new Map();
+        let finished = 0;
+        let failure = null;
+        await RxDownloader.prepareUIToDownload(title);
+
+        const updateUI = () => {
+            const bytes = [...received.values()].reduce((sum, value) => sum + value, 0);
+            if (totalBytes > 0) {
+                const percent = Math.min(100, Math.round(bytes * 100 / totalBytes));
+                const {speed, eta} = RxDownloader.measure(`many:${title}`, bytes, totalBytes);
+                const parts = [`${finished} / ${items.length}`, `${RxUtils.humanFileSize(bytes)} / ${RxUtils.humanFileSize(totalBytes)}`];
+                if (speed > 0) parts.push(`${RxUtils.humanFileSize(speed)}/${MESSAGES.starter.sec}`);
+                if (RxDownloader.formatEta(eta)) parts.push(RxDownloader.formatEta(eta));
+                RxFlyout.setProgress(percent);
+                RxFlyout.setText(`${MESSAGES.commons.downloading} ${title}`, `${parts.join(" · ")} (${percent}%)`);
+            } else {
+                RxDownloader.updateDownloadUIText(title, Math.round(finished * 100 / items.length), finished, items.length);
+            }
+        };
+
+        const fetchOne = async (item, signal) => {
+            for (let attempt = 1; ; attempt++) {
+                try {
+                    received.set(item, 0);
+                    await RxHttp.download(item.url, item.path, {
+                        hashes: item.hashes, signal, onProgress: (bytes) => {
+                            received.set(item, bytes);
+                            updateUI();
+                        }
+                    });
+                    return;
+                } catch (error) {
+                    // Отмену и ответ 4xx (файла нет) повторять бесполезно
+                    if (signal.aborted || (error.status >= 400 && error.status < 500) || attempt >= RxDownloader.RETRIES) throw error;
+                    RxCollector.writeLog(`Download retry ${attempt} [file=${item.displayName || path.basename(item.path)}] [error=${error.message}]`);
+                    await new Promise(resolve => setTimeout(resolve, 700 * attempt));
+                }
+            }
+        };
+
+        await RxDownloader.abortable(async (signal) => {
+            const queue = [...items];
+            const worker = async () => {
+                while (queue.length && !failure && !signal.aborted) {
+                    const item = queue.shift();
+                    try {
+                        await fetchOne(item, signal);
+                        received.set(item, Number(item.size) || received.get(item) || 0);
+                        finished++;
+                        updateUI();
+                    } catch (error) {
+                        failure = failure || Object.assign(error, {file: item.displayName || path.basename(item.path)});
+                    }
+                }
+            };
+            await Promise.all(Array.from({length: Math.min(concurrency, items.length)}, worker));
+        });
+        RxFlyout.setProgress(0);
+        if (failure) throw failure;
+        return true;
     }
 }

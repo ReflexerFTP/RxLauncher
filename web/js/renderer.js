@@ -24,7 +24,6 @@ const lazyGlobal = (name, loader) => Object.defineProperty(window, name, {
         return value;
     }
 });
-lazyGlobal("request", () => require("request"));
 lazyGlobal("Client", () => require("minecraft-launcher-core").Client);
 lazyGlobal("Authenticator", () => require("minecraft-launcher-core").Authenticator);
 for (const loaderName of ["forge", "neoforge", "fabric", "quilt", "vanilla", "liner"]) {

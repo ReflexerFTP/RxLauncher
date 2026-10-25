@@ -1,8 +1,3 @@
-let packs_downloadList = [];
-let packs_promiseResolve;
-let packs_promise;
-let packs_currentDownloading = 0;
-
 class RxPacks {
     // Создать пак
     static createPack = (baseVersion, displayName) => {
@@ -99,64 +94,42 @@ class RxPacks {
         return RxPacks.getModpackManifest(modpackId).files;
     }
 
-    // Проверить и установить недостающие моды
-    static verifyAndInstall = (modpackId) => {
-        return packs_promise = new Promise((resolve) => {
-            packs_promiseResolve = resolve;
-            RxPacks.verifyFiles(modpackId).then(() => {
-                if (packs_downloadList.length === 0) {
-                    return resolve(true);
-                }
-                packs_currentDownloading = -1;
-                RxPacks.downloadNext();
-            })
-        });
-    }
-
-    // Скачать следующий мод из списка
-    static downloadNext = () => {
-        packs_currentDownloading++;
-        if (typeof packs_downloadList[packs_currentDownloading] === "undefined") {
-            return packs_promiseResolve(true);
+    // Проверить и докачать недостающие файлы сборки (параллельно, с проверкой хешей).
+    // false — что-то не скачалось: запуск с неполной сборкой всё равно бы упал
+    static verifyAndInstall = async (modpackId) => {
+        const missing = await RxPacks.verifyFiles(modpackId);
+        if (missing.length === 0) return true;
+        RxCollector.writeLog(`Packs: Downloading ${missing.length} file(s) [pack=${modpackId}]`);
+        try {
+            await RxDownloader.downloadMany(missing, RxPacks.getModpackManifest(modpackId)?.displayName || modpackId);
+            return true;
+        } catch (error) {
+            RxCollector.writeLog(`Packs: Download failed [pack=${modpackId}] [file=${error.file}] [error=${error.message}]`);
+            if (!/aborted|cancelled/i.test(error.message)) RxToasts.create(MESSAGES.packs.filesFailed, "error", error.file || error.message, "error");
+            return false;
         }
-        let filePath = packs_downloadList[packs_currentDownloading].path;
-        let url = packs_downloadList[packs_currentDownloading].url;
-        let displayName = packs_downloadList[packs_currentDownloading].displayName;
-        fs.mkdirSync(path.dirname(filePath), {recursive: true});
-        RxDownloader.downloadFile(url, filePath, displayName).then(() => {
-            RxPacks.downloadNext();
-        })
     }
 
-    // Проверить моды и составить список для скачивания
-    static verifyFiles = (modpackId) => {
-        packs_downloadList = [];
-        return new Promise(resolve => {
-            let filesList = RxPacks.getPackModlist(modpackId);
-            if (filesList === false || filesList.length === 0) {
-                return resolve(true, "emptyList");
-            }
-
-            filesList.forEach((item) => {
-                let filePath = path.join(GAME_DATA, "modpacks", modpackId, item.path);
-                if (!RxPacks.verifyPackFile(filePath, item.hashes || {})) {
-                    packs_downloadList.push({
-                        path: filePath,
-                        url: item.url,
-                        displayName: item.displayName
-                    })
+    // Файлы сборки, которых нет или которые не совпадают по хешу. Проверяем по 4 файла сразу, не блокируя окно
+    static verifyFiles = async (modpackId) => {
+        const filesList = RxPacks.getPackModlist(modpackId);
+        if (!Array.isArray(filesList) || filesList.length === 0) return [];
+        const root = path.resolve(GAME_DATA, "modpacks", modpackId);
+        const missing = [];
+        const queue = [...filesList];
+        const worker = async () => {
+            while (queue.length) {
+                const item = queue.shift();
+                const filePath = path.resolve(root, item.path || item.name || "");
+                // Путь из манифеста не должен выходить за папку сборки
+                if (!filePath.startsWith(root + path.sep) || !item.url) continue;
+                if (!(await RxHttp.isFileValid(filePath, item.hashes || {}))) {
+                    missing.push({path: filePath, url: item.url, hashes: item.hashes || {}, size: item.size, displayName: item.displayName});
                 }
-            });
-            return resolve(true);
-        })
-    }
-
-    static verifyPackFile = (filePath, hashes = {}) => {
-        if (!fs.existsSync(filePath)) return false;
-        const algorithm = hashes.sha512 ? "sha512" : (hashes.sha1 ? "sha1" : (hashes.md5 ? "md5" : false));
-        if (!algorithm) return fs.statSync(filePath).size > 0;
-        const actual = crypto.createHash(algorithm).update(fs.readFileSync(filePath)).digest("hex");
-        return actual.toLowerCase() === hashes[algorithm].toLowerCase();
+            }
+        };
+        await Promise.all([worker(), worker(), worker(), worker()]);
+        return missing;
     }
 
     // Получить список паков
@@ -214,18 +187,6 @@ class RxPacks {
         return versionData.files.find((file) => file.primary === true) || versionData.files[0];
     }
 
-    static verifyModrinthFile = (filePath, hashes = {}) => {
-        if (!fs.existsSync(filePath)) {
-            return false;
-        }
-        const hashType = hashes.sha512 ? "sha512" : (hashes.sha1 ? "sha1" : false);
-        if (!hashType) {
-            return fs.statSync(filePath).size > 0;
-        }
-        const actualHash = crypto.createHash(hashType).update(fs.readFileSync(filePath)).digest("hex");
-        return actualHash.toLowerCase() === hashes[hashType].toLowerCase();
-    }
-
     static downloadModrinthVersionFile = async (versionData, downloadDirectory) => {
         const fileItem = RxPacks.getPrimaryModrinthFile(versionData);
         if (!fileItem || typeof fileItem.filename !== "string" || path.basename(fileItem.filename) !== fileItem.filename) {
@@ -238,17 +199,12 @@ class RxPacks {
 
         fs.mkdirSync(downloadDirectory, {recursive: true});
         const fullDownloadPath = path.join(downloadDirectory, fileItem.filename);
-        if (RxPacks.verifyModrinthFile(fullDownloadPath, fileItem.hashes || {})) {
+        if (await RxHttp.isFileValid(fullDownloadPath, fileItem.hashes || {})) {
             return fullDownloadPath;
         }
 
-        await RxDownloader.downloadFile(fileItem.url, fullDownloadPath, fileItem.filename);
-        if (!RxPacks.verifyModrinthFile(fullDownloadPath, fileItem.hashes || {})) {
-            if (fs.existsSync(fullDownloadPath)) {
-                fs.unlinkSync(fullDownloadPath);
-            }
-            throw new Error(`Hash verification failed for ${fileItem.filename}`);
-        }
+        // Хеш проверяется до того, как файл окажется на месте
+        await RxDownloader.downloadFile(fileItem.url, fullDownloadPath, fileItem.filename, true, fileItem.hashes || {});
         return fullDownloadPath;
     }
 

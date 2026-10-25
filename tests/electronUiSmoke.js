@@ -147,7 +147,10 @@ app.whenReady().then(async () => {
         webPreferences: {nodeIntegration: true, contextIsolation: false}
     });
 
-    window.webContents.on("console-message", (_event, level, message) => {
+    // Electron 35+ передаёт уровень и текст в объекте события (level: "warning"/"error")
+    window.webContents.on("console-message", (event, details) => {
+        const {level: rawLevel, message} = details && typeof details === "object" ? details : event;
+        const level = {debug: 0, info: 1, warning: 2, error: 3}[rawLevel] ?? Number(rawLevel);
         const expectedGpuWarning = /THREE\.WebGLProgram: Program Info Log:[\s\S]*warning X4713: Sample Bias value is limited/i.test(message);
         if (level >= 2 && !/Autofill|DevTools/i.test(message) && !expectedGpuWarning) errors.push(message);
     });

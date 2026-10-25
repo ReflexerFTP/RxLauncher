@@ -20,6 +20,8 @@
     "verify-skins": "node ./tests/minecraftSkins.test.js",
     "verify-mods": "node ./tests/modsManager.test.js && node ./tests/modMeta.test.js",
     "verify-crash": "node ./tests/crashAnalyzer.test.js",
+    "verify-http": "node ./tests/http.test.js",
+    "ui-screenshots": "electron ./tests/uiScreenshots.js",
     "verify-branding": "node ./tests/launcherBranding.test.js",
     "smoke-ui": "electron ./tests/electronUiSmoke.js",
     "dev": "cross-env LAUNCHER_IN_DEV=yes electron .",
@@ -34,7 +36,7 @@
   "repository": "https://github.com/MaxRx/RxLauncher2",
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "electron": "^34.2.0",
+    "electron": "^44.9.3",
     "electron-builder": "^25.1.8",
     "electron-reloader": "^1.2.3"
   },
@@ -54,7 +56,6 @@
     "minecraft-launcher-core": "^3.18.2",
     "msmc": "^5.0.5",
     "open": "^8.4.2",
-    "request": "^2.88.2",
     "tomate-loaders": "^2.0.2",
     "toml": "^3.0.0",
     "tree-kill": "^1.2.2",

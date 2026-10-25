@@ -2,24 +2,11 @@ class RxRequests {
     static get = (url) => {
         try {
             const parsedUrl = new URL(url);
+            // Modrinth просит представляться своим User-Agent — браузерный запрос его не передаёт
             if (parsedUrl.hostname === "api.modrinth.com") {
-                return new Promise((resolve) => {
-                    request.get({
-                        url,
-                        json: true,
-                        gzip: true,
-                        timeout: 15000,
-                        headers: {
-                            "User-Agent": `MaxRx/RxLauncher/${LAUNCHER_VERSION} (${SITE_URL})`
-                        }
-                    }, (error, response, body) => {
-                        if (error || !response || response.statusCode < 200 || response.statusCode >= 300) {
-                            resolve([false, error || response]);
-                            return;
-                        }
-                        resolve([true, body]);
-                    });
-                });
+                return RxHttp.json(url, {timeout: 15000})
+                    .then(body => [true, body])
+                    .catch(error => [false, error]);
             }
         } catch (_) {}
 

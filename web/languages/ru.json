@@ -74,7 +74,12 @@
       "live": "Идёт игра",
       "profile": "Профиль",
       "allProfiles": "Все ники",
-      "period": { "all": "Всё время", "month": "30 дней", "week": "7 дней", "today": "Сегодня" },
+      "period": {
+        "all": "Всё время",
+        "month": "30 дней",
+        "week": "7 дней",
+        "today": "Сегодня"
+      },
       "migrationNote": "Старое игровое время уже перенесено в общий итог. Ники, серверы, миры и боевая статистика подробно собираются начиная с этого обновления.",
       "playtime": "Наиграно",
       "sessions": "игровых сессий",
@@ -110,7 +115,13 @@
       "interrupted": "Восстановлена после сбоя",
       "running": "Сейчас в игре",
       "completed": "Завершена",
-      "units": { "hours": "ч", "minutes": "мин", "seconds": "сек", "hoursShort": "ч", "minutesShort": "м" }
+      "units": {
+        "hours": "ч",
+        "minutes": "мин",
+        "seconds": "сек",
+        "hoursShort": "ч",
+        "minutesShort": "м"
+      }
     },
     "mods": {
       "title": "Моды",
@@ -332,7 +343,8 @@
         "installing": "Установка обновлений",
         "found": "Найдено: ",
         "update": "Обновить всё"
-      }
+      },
+      "filesFailed": "Не удалось скачать файлы сборки"
     },
     "servers": {
       "title": "Сервера",
@@ -644,7 +656,10 @@
       "loading": "Ищем скин",
       "loadingHint": "Проверяем профиль Mojang и загружаем текстуру",
       "previewHint": "Тяни мышью для вращения, колесо — масштаб",
-      "models": {"classic": "Классическая", "slim": "Тонкая"},
+      "models": {
+        "classic": "Классическая",
+        "slim": "Тонкая"
+      },
       "selectedSkin": "Выбранный скин",
       "cached": "Из кэша",
       "profileId": "UUID профиля",
@@ -917,7 +932,11 @@
       "findMod": "Найти на Modrinth",
       "openMods": "Открыть моды",
       "openSettings": "Открыть настройки",
-      "lastCrash": "Последний вылет"
+      "lastCrash": "Последний вылет",
+      "installMod": "Установить",
+      "installing": "Устанавливаем…",
+      "installed": "Установлено",
+      "installFailed": "Не удалось установить автоматически"
     },
     "instances": {
       "title": "Сборки",

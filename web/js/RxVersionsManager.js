@@ -192,38 +192,13 @@ class RxVersionsManager {
             return Promise.resolve(false);
         }
 
-        return new Promise((resolve) => {
-            try {
-                request.get({
-                    url,
-                    encoding: "utf8",
-                    gzip: true,
-                    timeout: OPTIFINE_REQUEST_TIMEOUT,
-                    followRedirect: true,
-                    maxRedirects: 3,
-                    headers: {
-                        "Accept": "text/html,application/xhtml+xml",
-                        "User-Agent": `RxLauncher/${typeof LAUNCHER_VERSION === "string" ? LAUNCHER_VERSION : "2"} (${typeof SITE_URL === "string" ? SITE_URL : "https://rxlauncher.ru"})`
-                    }
-                }, (error, response, body) => {
-                    const finalUrl = response?.request?.uri?.href || url;
-                    if (
-                        error ||
-                        !response ||
-                        response.statusCode < 200 ||
-                        response.statusCode >= 300 ||
-                        typeof body !== "string" ||
-                        !RxVersionsManager.isOfficialOptiFineUrl(finalUrl, allowedPaths)
-                    ) {
-                        resolve(false);
-                        return;
-                    }
-                    resolve(body);
-                });
-            } catch (_) {
-                resolve(false);
-            }
-        });
+        return RxHttp.text(url, {
+            timeout: OPTIFINE_REQUEST_TIMEOUT,
+            redirects: 3,
+            headers: {"Accept": "text/html,application/xhtml+xml"}
+        }).then(response => (
+            response.ok && RxVersionsManager.isOfficialOptiFineUrl(response.url, allowedPaths) ? response.body : false
+        )).catch(() => false);
     }
 
     static parseOptiFineDownloadsPage = (html) => {

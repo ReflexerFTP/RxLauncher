@@ -45,6 +45,22 @@ class RxCrashUI {
                 }
             }));
         }
+        if (finding.dependency && modsDir) {
+            const $install = RxCrashUI.actionButton("download", RxCrashUI.message("installMod", "Установить"), async () => {
+                $install.prop("disabled", true).find("span:last").text(RxCrashUI.message("installing", "Устанавливаем…"));
+                try {
+                    const files = await RxModrinthCatalog.installByName(finding.dependency, modsDir);
+                    $install.find(".material-symbols-outlined").text("check");
+                    $install.find("span:last").text(RxCrashUI.message("installed", "Установлено"));
+                    RxToasts.create(RxCrashUI.message("installed", "Установлено"), "download_done", files.reverse().join(", ") || finding.dependency, "success");
+                } catch (error) {
+                    RxCollector.writeLog(`Crash: Dependency install failed [dep=${finding.dependency}] [error=${error.message}]`);
+                    $install.prop("disabled", false).find("span:last").text(RxCrashUI.message("installMod", "Установить"));
+                    RxToasts.create(RxCrashUI.message("installFailed", "Не удалось установить автоматически"), "error", finding.dependency, "error");
+                }
+            });
+            $actions.append($install.removeClass("transparent"));
+        }
         if (finding.dependency) {
             $actions.append(RxCrashUI.actionButton("search", RxCrashUI.message("findMod", "Найти на Modrinth"), () => {
                 openExternal(`https://modrinth.com/mods?q=${encodeURIComponent(finding.dependency)}`);

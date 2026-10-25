@@ -11,22 +11,7 @@ class RxModrinthCatalog {
     static updates = [];
 
     // ---------- запросы ----------
-    static call = (method, apiPath, body = null) => new Promise((resolve, reject) => {
-        request({
-            method,
-            url: `${RxModrinthCatalog.API}${apiPath}`,
-            json: body || true,
-            gzip: true,
-            timeout: 20000,
-            headers: {"User-Agent": `MaxRx/RxLauncher/${LAUNCHER_VERSION} (${SITE_URL})`}
-        }, (error, response, data) => {
-            if (error || !response || response.statusCode < 200 || response.statusCode >= 300) {
-                reject(error || new Error(`Modrinth HTTP ${response?.statusCode}`));
-                return;
-            }
-            resolve(data);
-        });
-    });
+    static call = (method, apiPath, body = null) => RxHttp.json(`${RxModrinthCatalog.API}${apiPath}`, {method, body, timeout: 20000});
 
     // Загрузчик и версия игры для выбранной версии/сборки
     static target = () => {
@@ -217,34 +202,13 @@ class RxModrinthCatalog {
 
     static primaryFile = (version) => (version.files || []).find(file => file.primary) || (version.files || [])[0];
 
-    static download = (file, modsPath) => new Promise((resolve, reject) => {
+    // Файл проверяется по хешу из Modrinth, прежде чем лечь в моды
+    static download = async (file, modsPath) => {
         const fileName = path.basename(String(file.filename || ""));
-        if (!/\.jar$/i.test(fileName)) return reject(new Error("Not a jar file"));
-        const target = path.join(modsPath, fileName);
-        const temp = `${target}.rxdownload`;
-        const hash = crypto.createHash("sha1");
-        const stream = fs.createWriteStream(temp);
-        request.get({url: file.url, headers: {"User-Agent": `MaxRx/RxLauncher/${LAUNCHER_VERSION} (${SITE_URL})`}, timeout: 30000})
-            .on("response", (response) => {
-                if (response.statusCode !== 200) stream.destroy(new Error(`HTTP ${response.statusCode}`));
-            })
-            .on("data", chunk => hash.update(chunk))
-            .on("error", (error) => stream.destroy(error))
-            .pipe(stream);
-        stream.on("error", (error) => {
-            try { fs.unlinkSync(temp); } catch (_) {}
-            reject(error);
-        });
-        stream.on("finish", () => {
-            // Файл проверяем по хешу из Modrinth, прежде чем положить в моды
-            if (file.hashes?.sha1 && hash.digest("hex") !== file.hashes.sha1) {
-                try { fs.unlinkSync(temp); } catch (_) {}
-                return reject(new Error("Checksum mismatch"));
-            }
-            fs.renameSync(temp, target);
-            resolve(fileName);
-        });
-    });
+        if (!/\.jar$/i.test(fileName)) throw new Error("Not a jar file");
+        await RxHttp.download(file.url, path.join(modsPath, fileName), {hashes: file.hashes});
+        return fileName;
+    };
 
     // Мод + обязательные зависимости (рекурсивно), без повторов и уже установленного
     static installProject = async (projectId, target, modsPath, visited = new Set()) => {
@@ -267,6 +231,34 @@ class RxModrinthCatalog {
             files.push(await RxModrinthCatalog.download(file, modsPath));
             RxModrinthCatalog.installed.set(projectId, {file: path.join(modsPath, file.filename), versionId: version.id, sha1: file.hashes?.sha1});
         }
+        return files;
+    };
+
+    // Проект по id/slug, а если такого нет — лучший результат поиска под загрузчик и версию игры
+    static findProject = async (nameOrId, target) => {
+        const key = String(nameOrId || "").trim();
+        if (!key) return null;
+        const slug = key.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-|-$/g, "");
+        try {
+            const project = await RxModrinthCatalog.call("GET", `/project/${encodeURIComponent(slug)}`);
+            if (project?.project_type === "mod") return project.id;
+        } catch (_) {}
+        const facets = [["project_type:mod"], RxModrinthCatalog.loadersFor(target.loader).map(loader => `categories:${loader}`), [`versions:${target.game}`]];
+        const result = await RxModrinthCatalog.call("GET", `/search?${new URLSearchParams({query: key, facets: JSON.stringify(facets), limit: "1"})}`);
+        return result?.hits?.[0]?.project_id || null;
+    };
+
+    // Поставить мод по названию вместе с зависимостями (кнопка в окне разбора вылета)
+    static installByName = async (nameOrId, modsPath) => {
+        const target = RxModrinthCatalog.target();
+        if (!target?.loader || !target.game) throw new Error("noLoader");
+        const projectId = await RxModrinthCatalog.findProject(nameOrId, target);
+        if (!projectId) throw new Error("notFound");
+        await RxModrinthCatalog.loadInstalled(true);
+        RxModsManager.ensureDirectory(modsPath);
+        const files = await RxModrinthCatalog.installProject(projectId, target, modsPath);
+        RxModrinthCatalog.installedKey = "";
+        RxCollector.writeLog(`Modrinth: Installed by name [query=${nameOrId}] [project=${projectId}] [files=${files.join(", ")}]`);
         return files;
     };
 
