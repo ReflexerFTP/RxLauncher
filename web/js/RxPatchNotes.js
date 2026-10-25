@@ -1,6 +1,42 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.0.0-catalog-together",
+            version: "3.0.0",
+            date: "2026-10-27T12:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "3.0", en: "3.0"},
+            title: {ru: "Каталог, игра с друзьями и новая статистика", en: "Catalog, playing together and new statistics"},
+            summary: {
+                ru: "Готовые сборки ставятся в один клик, сборкой можно поделиться с другом кодом, миры сохраняются сами, а статистика стала понятнее.",
+                en: "Modpacks install in one click, instances can be shared with a friend by code, worlds back up by themselves, and statistics are clearer."
+            },
+            changes: {
+                ru: [
+                    "Раздел «Каталог»: сборки, моды, ресурспаки, шейдеры и датапаки с Modrinth. Подробности проекта, скриншоты и выбор версии.",
+                    "Сборка ставится одной кнопкой: лаунчер создаёт её, скачивает моды и выбирает для игры. Обновления сборок — кнопкой на карточке.",
+                    "Раздел «Играть вместе»: код сборки и приглашение на сервер для друга, экспорт в .mrpack.",
+                    "Копии миров сохраняются после игры, восстановить мир можно во вкладке «Миры и копии».",
+                    "Перед запуском лаунчер проверяет моды и предупреждает о недостающих зависимостях и модах не для той версии.",
+                    "В окне вылета появилась кнопка «Установить» для недостающего мода.",
+                    "Новая статистика: график со шкалой часов, календарь игры, рейтинги серверов, миров, версий и ников.",
+                    "Файлы сборок качаются параллельно и с проверкой хешей; запуск больше не зависает, если файл не скачался.",
+                    "Лаунчер переведён на Electron 44, устаревшая библиотека request убрана."
+                ],
+                en: [
+                    "Catalog: modpacks, mods, resource packs, shaders and data packs from Modrinth, with project details, screenshots and version choice.",
+                    "A modpack installs with one button: the launcher creates it, downloads the mods and selects it. Modpack updates are one button on the card.",
+                    "Play together: share an instance code or a server invite with a friend, export to .mrpack.",
+                    "Worlds are backed up after playing; restore them on the Worlds & backups tab.",
+                    "Before launch, the launcher checks mods and warns about missing dependencies and mods for another version.",
+                    "The crash window got an Install button for a missing mod.",
+                    "New statistics: a chart with an hour scale, a play calendar, rankings of servers, worlds, versions and nicknames.",
+                    "Instance files download in parallel with hash checks; launching no longer hangs when a file fails to download.",
+                    "The launcher moved to Electron 44, the outdated request library is gone."
+                ]
+            }
+        },
+        {
             id: "2.12.0-catalog-scroll",
             version: "2.12.0",
             date: "2026-10-26T21:00:00+03:00",
