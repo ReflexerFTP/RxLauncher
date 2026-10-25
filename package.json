@@ -32,8 +32,8 @@
   "author": "MaxRx",
   "license": "GPL-3.0",
   "homepage": "https://rxlauncher.ru",
-  "bugs": "https://github.com/MaxRx/RxLauncher2/issues",
-  "repository": "https://github.com/MaxRx/RxLauncher2",
+  "bugs": "https://github.com/Maksimrrrsrc/RxLauncher/issues",
+  "repository": "https://github.com/Maksimrrrsrc/RxLauncher",
   "devDependencies": {
     "cross-env": "^7.0.3",
     "electron": "^44.9.3",

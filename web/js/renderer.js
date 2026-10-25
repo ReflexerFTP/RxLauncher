@@ -42,7 +42,7 @@ global.CDN_URL = "https://cdn.rxlauncher.ru";
 global.SKINS_API_URL = "https://skins.rxlauncher.ru";
 global.STATS_URL = "https://statscol.rxlauncher.ru/save_fl?savedata=";
 global.AUTHLIB_INJECTOR_URL = CDN_URL + "/authlib-injector.jar";
-global.REPO_NAME = "MaxRx/RxLauncher2";
+global.REPO_NAME = "Maksimrrrsrc/RxLauncher";
 
 // Ссылка на Java
 global.JAVA_LIST_URL = "https://api.adoptium.net/v3/info/available_releases";
