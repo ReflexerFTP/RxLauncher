@@ -1,6 +1,28 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.4.0-rpc-avatar",
+            version: "3.4.0",
+            date: "2026-10-26T19:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "DISCORD", en: "DISCORD"},
+            title: {ru: "Новая аватарка в Discord", en: "A new Discord avatar"},
+            summary: {
+                ru: "В статусе Discord теперь новая 3D-анимация логотипа: стеклянная плитка, красное свечение и скользящие блики.",
+                en: "Your Discord status now shows a new animated 3D logo: a glass tile, a red glow and gliding highlights."
+            },
+            changes: {
+                ru: [
+                    "Новая анимированная аватарка RxLauncher в Discord: объёмный логотип, читаемый даже в маленьком размере.",
+                    "Картинка хранится на сайте rxlauncher.xyz, поэтому её можно обновлять без новой версии лаунчера."
+                ],
+                en: [
+                    "A new animated RxLauncher avatar in Discord: a 3D logo that stays readable even at small sizes.",
+                    "The image is hosted on rxlauncher.xyz, so it can be refreshed without a new launcher version."
+                ]
+            }
+        },
+        {
             id: "3.3.0-hardening",
             version: "3.3.0",
             date: "2026-10-26T10:00:00+03:00",

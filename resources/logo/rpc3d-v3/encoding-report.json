@@ -1,0 +1,23 @@
+{
+  "rxlaunch-rpc-animated-v3.webp": {
+    "bytes": 2931972,
+    "size": [
+      1024,
+      1024
+    ],
+    "frames": 120,
+    "duration_ms": 6000,
+    "loop": 0
+  },
+  "rxlaunch-rpc-animated-v3.gif": {
+    "bytes": 4810653,
+    "size": [
+      512,
+      512
+    ],
+    "frames": 120,
+    "duration_ms": 6000,
+    "loop": 0
+  },
+  "loop_endpoint_max_difference": 1
+}

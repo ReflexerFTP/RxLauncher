@@ -664,7 +664,7 @@ let verifiedUpdateReady = false;
 const DEFAULT_USER_AGENT = "RxLauncher/v" + pjson.version;
 const DISCORD_RPC_CLIENT_ID = process.env.RX_DISCORD_CLIENT_ID || "1531981667160555530";
 const DISCORD_RPC_LARGE_IMAGE_KEY = process.env.RX_DISCORD_RPC_LARGE_IMAGE_KEY
-    || "https://i.postimg.cc/8Pgp7Lzb/Rx-Launch-RPC-3D-v2.gif";
+    || "https://rxlauncher.xyz/assets/rpc/rxlauncher-rpc-3d-v3.gif";
 const DISCORD_RPC_TELEGRAM_URL = "https://t.me/rxlauncher";
 const DISCORD_RPC_DISCORD_URL = "https://discord.gg/bpRwXsXeuj";
 const DISCORD_RPC_RETRY_DELAY = 15000;
