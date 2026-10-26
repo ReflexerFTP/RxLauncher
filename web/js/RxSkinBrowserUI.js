@@ -1,21 +1,10 @@
 class RxSkinBrowserUI {
     static viewerScriptPromise = null;
 
-    static ensureViewerScript = () => {
-        if (typeof skinview3d !== "undefined") return Promise.resolve(true);
-        if (!RxSkinBrowserUI.viewerScriptPromise) {
-            RxSkinBrowserUI.viewerScriptPromise = new Promise((resolve, reject) => {
-                const script = document.createElement("script");
-                script.src = "./js/skinview3d.bundle.js";
-                script.onload = () => resolve(true);
-                script.onerror = () => reject(new Error("3D skin viewer failed to load"));
-                document.head.appendChild(script);
-            }).catch(() => {
-                RxSkinBrowserUI.viewerScriptPromise = null;
-                return false;
-            });
-        }
-        return RxSkinBrowserUI.viewerScriptPromise;
+    static ensureViewerScript = async () => {
+        if (typeof skinview3d !== "undefined") return true;
+        try { loadRxLibrary("skinview3d"); return typeof skinview3d !== "undefined"; }
+        catch (_) { return false; }
     };
     static CONFIG_KEY = "skinSearchHistory";
     static MAX_RECENT = 8;

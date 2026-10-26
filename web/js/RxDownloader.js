@@ -120,15 +120,27 @@ class RxDownloader {
     // Скачать много файлов параллельно (файлы сборки): повтор при обрыве, проверка хеша, общий прогресс.
     // items: [{url, path, hashes, size, displayName}]. Ошибка любого файла после всех попыток — ошибка всей загрузки
     static downloadMany = async (items, title, concurrency = 6) => {
+        if (!Array.isArray(items)) throw new TypeError("Download items must be an array");
+        if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error("Invalid download concurrency");
+        concurrency = Math.min(concurrency, 16);
         if (!items.length) return true;
         const totalBytes = items.reduce((sum, item) => sum + (Number(item.size) || 0), 0);
         const received = new Map();
+        let receivedBytes = 0;
+        let lastPaint = -Infinity;
+        const recordBytes = (item, bytes) => {
+            receivedBytes += bytes - (received.get(item) || 0);
+            received.set(item, bytes);
+        };
         let finished = 0;
         let failure = null;
         await RxDownloader.prepareUIToDownload(title);
 
-        const updateUI = () => {
-            const bytes = [...received.values()].reduce((sum, value) => sum + value, 0);
+        const updateUI = (force = false) => {
+            const now = Date.now();
+            if (!force && now - lastPaint < 100) return;
+            lastPaint = now;
+            const bytes = receivedBytes;
             if (totalBytes > 0) {
                 const percent = Math.min(100, Math.round(bytes * 100 / totalBytes));
                 const {speed, eta} = RxDownloader.measure(`many:${title}`, bytes, totalBytes);
@@ -145,10 +157,11 @@ class RxDownloader {
         const fetchOne = async (item, signal) => {
             for (let attempt = 1; ; attempt++) {
                 try {
-                    received.set(item, 0);
+                    if (signal.aborted) throw new Error("Download aborted");
+                    recordBytes(item, 0);
                     await RxHttp.download(item.url, item.path, {
-                        hashes: item.hashes, signal, onProgress: (bytes) => {
-                            received.set(item, bytes);
+                        hashes: item.hashes, signal, urlPolicy: item.urlPolicy, onProgress: (bytes) => {
+                            recordBytes(item, bytes);
                             updateUI();
                         }
                     });
@@ -157,29 +170,44 @@ class RxDownloader {
                     // Отмену и ответ 4xx (файла нет) повторять бесполезно
                     if (signal.aborted || (error.status >= 400 && error.status < 500) || attempt >= RxDownloader.RETRIES) throw error;
                     RxCollector.writeLog(`Download retry ${attempt} [file=${item.displayName || path.basename(item.path)}] [error=${error.message}]`);
-                    await new Promise(resolve => setTimeout(resolve, 700 * attempt));
+                    await new Promise((resolve, reject) => {
+                        const onAbort = () => {
+                            clearTimeout(timer);
+                            signal.removeEventListener("abort", onAbort);
+                            reject(new Error("Download aborted"));
+                        };
+                        const timer = setTimeout(() => {
+                            signal.removeEventListener("abort", onAbort);
+                            resolve();
+                        }, 700 * attempt);
+                        signal.addEventListener("abort", onAbort, {once: true});
+                        if (signal.aborted) onAbort();
+                    });
                 }
             }
         };
 
-        await RxDownloader.abortable(async (signal) => {
-            const queue = [...items];
+        try { await RxDownloader.abortable(async (signal) => {
+            let nextIndex = 0;
             const worker = async () => {
-                while (queue.length && !failure && !signal.aborted) {
-                    const item = queue.shift();
+                while (nextIndex < items.length && !failure && !signal.aborted) {
+                    const item = items[nextIndex++];
                     try {
                         await fetchOne(item, signal);
-                        received.set(item, Number(item.size) || received.get(item) || 0);
+                        recordBytes(item, Number(item.size) || received.get(item) || 0);
                         finished++;
-                        updateUI();
+                        updateUI(finished === items.length);
                     } catch (error) {
                         failure = failure || Object.assign(error, {file: item.displayName || path.basename(item.path)});
                     }
                 }
             };
             await Promise.all(Array.from({length: Math.min(concurrency, items.length)}, worker));
-        });
-        RxFlyout.setProgress(0);
+            if (signal.aborted) throw new Error("Download aborted");
+        }); } finally {
+            received.clear();
+            RxFlyout.setProgress(0);
+        }
         if (failure) throw failure;
         return true;
     }

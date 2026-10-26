@@ -92,10 +92,20 @@ class RxWorldBackups {
     };
 
     // Восстановить мир из копии. Текущее состояние мира сначала тоже сохраняется копией
+    static restoring = new Set();
+
     static restore = async (worldPath, backupFile) => {
+        worldPath = path.resolve(worldPath);
+        if (this.restoring.has(worldPath)) throw new Error("World restore already running");
+        this.restoring.add(worldPath);
+        try { return await this.restoreUnlocked(worldPath, backupFile); } finally { this.restoring.delete(worldPath); }
+    };
+
+    static restoreUnlocked = async (worldPath, backupFile) => {
         if (typeof gamePid !== "undefined" && gamePid !== false) throw new Error("Game is running");
         if (fs.existsSync(path.join(worldPath, "level.dat"))) await RxWorldBackups.backup(worldPath, "restore");
-        const stamp = RxWorldBackups.stamp();
+        const stamp = crypto.randomUUID();
+        let installed = false;
         const temp = `${worldPath}.rx-restore-${stamp}`;
         const old = `${worldPath}.rx-old-${stamp}`;
         try {
@@ -109,15 +119,23 @@ class RxWorldBackups {
             }
             if (fs.existsSync(worldPath)) fs.renameSync(worldPath, old);
             fs.renameSync(source, worldPath);
+            installed = true;
             RxCollector.writeLog(`WorldBackups: Restored ${path.basename(worldPath)} from ${path.basename(backupFile)}`);
             return true;
         } catch (error) {
             // Не получилось — возвращаем мир на место
-            if (!fs.existsSync(worldPath) && fs.existsSync(old)) fs.renameSync(old, worldPath);
+            if (!fs.existsSync(worldPath) && fs.existsSync(old)) {
+                try { fs.renameSync(old, worldPath); }
+                catch (rollbackError) {
+                    const recoveryError = new Error(`Restore failed; original world preserved at ${old}: ${rollbackError.message}`, {cause: error});
+                    recoveryError.recoveryPath = old;
+                    throw recoveryError;
+                }
+            }
             throw error;
         } finally {
             await fsPromises.rm(temp, {recursive: true, force: true}).catch(() => {});
-            await fsPromises.rm(old, {recursive: true, force: true}).catch(() => {});
+            if (installed) await fsPromises.rm(old, {recursive: true, force: true}).catch(() => {});
         }
     };
 

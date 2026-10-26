@@ -5,7 +5,7 @@
     <div class="line-spinner custom-select" id="versionSelectPlaceholder"></div>
 
     <div class="custom-select icon-and-description flyout-mode" id="versionSelect" data-mode="idle"
-         onclick="RxVersionsUI.open()" style="display: none">
+         data-rx-onclick="RxVersionsUI.open()" style="display: none">
         <img class="icon" style="display: none"/>
         <span class="title">{{commons.notSelected}}</span>
         <span class="description">{{flyout.version}}</span>
@@ -28,19 +28,19 @@
         <span class="title">{{loading.progress}}</span>
     </div>
     <!-- Кнопка запуска игры -->
-    <button id="playButton" onclick="RxFlyout.startSelectedVersion()">
+    <button id="playButton" data-rx-onclick="RxFlyout.startSelectedVersion()">
         <span class="material-symbols-outlined">play_arrow</span>
         <span>{{flyout.play}}</span>
     </button>
 
     <!-- Отмена запуска, пока идут загрузки -->
-    <button id="cancelLaunchButton" class="transparent" style="display: none" onclick="RxStarter.cancel()">
+    <button id="cancelLaunchButton" class="transparent" style="display: none" data-rx-onclick="RxStarter.cancel()">
         <span class="material-symbols-outlined">close</span>
         <span>{{flyout.cancel}}</span>
     </button>
 
     <!-- Кнопка завершения игры -->
-    <button id="stopGameButton" style="display: none" onclick="RxStarter.kill()">
+    <button id="stopGameButton" style="display: none" data-rx-onclick="RxStarter.kill()">
         <span class="material-symbols-outlined">stop_circle</span>
         <span>{{flyout.stop}}</span>
     </button>

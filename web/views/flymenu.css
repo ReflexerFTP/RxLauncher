@@ -16,16 +16,19 @@
 }
 
 .flymenu .menu-wrapped {
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    overflow: visible;
+    overflow-x: hidden;
     gap: 10px;
     flex-grow: 1;
 }
 
 .flymenu .item {
+    flex-shrink: 0;
     width: 46px;
     height: 46px;
     border-radius: 13px;
@@ -39,6 +42,11 @@
     color: var(--text-sub);
     cursor: pointer;
     transition: 0.18s;
+}
+
+@media (max-height: 780px) {
+    .flymenu .menu-wrapped { gap: 3px; }
+    .flymenu .item { height: 38px !important; }
 }
 
 .flymenu .item .material-symbols-outlined {

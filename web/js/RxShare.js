@@ -14,7 +14,7 @@ class RxShare {
         if (parsed.type === "pack") {
             const manifest = RxPacks.getModpackManifest(parsed.name);
             if (!manifest) throw new Error("noSource");
-            return {versionId, name: manifest.displayName, game: manifest.baseVersion.number, loader: manifest.baseVersion.type,
+            return {versionId, name: manifest.displayName, game: manifest.baseVersion.number, loader: manifest.baseVersion.type, loaderVersion: manifest.baseVersion.loaderVersion || "",
                 root: path.join(GAME_DATA, "modpacks", parsed.name)};
         }
         // Свою версию у друга не воспроизвести — у него нет этих файлов
@@ -56,16 +56,18 @@ class RxShare {
 
     // Код можно вставить вместе с текстом приглашения — ищем его внутри
     static decode = (text) => {
+        if (String(text || "").length > 65536) throw new Error("badCode");
         const match = String(text || "").match(/RX1-([A-Za-z0-9_-]{8,})/);
         if (!match) throw new Error("badCode");
         let data;
         try {
-            data = JSON.parse(require("zlib").inflateRawSync(Buffer.from(match[1], "base64url")).toString("utf8"));
+            data = JSON.parse(require("zlib").inflateRawSync(Buffer.from(match[1], "base64url"), {maxOutputLength: 128 * 1024}).toString("utf8"));
         } catch (_) {
             throw new Error("badCode");
         }
         const ids = value => Array.isArray(value) && value.length <= RxShare.MAX_FILES && value.every(id => /^[A-Za-z0-9]{8}$/.test(id));
         if (data?.v !== 1 || typeof data.n !== "string" || !/^[\w.\-]{1,32}$/.test(String(data.g)) || !RxShare.LOADERS.includes(data.l)
+            || [data.m, data.r, data.s].reduce((n, a) => n + (Array.isArray(a) ? a.length : 0), 0) > RxShare.MAX_FILES
             || !ids(data.m || []) || !ids(data.r || []) || !ids(data.s || [])) {
             throw new Error("badCode");
         }
@@ -79,6 +81,10 @@ class RxShare {
             s: data.s || [],
             by: typeof data.by === "string" ? data.by.replace(/[^\w.\-]/g, "").slice(0, 32) : ""
         };
+        if (data.lv !== undefined) {
+            if (typeof data.lv !== "string" || !/^[A-Za-z0-9][A-Za-z0-9_.+-]{0,79}$/.test(data.lv)) throw new Error("badCode");
+            clean.lv = data.lv;
+        }
         if (data.sv) {
             try {
                 clean.sv = RxMinecraftServers.normalizeAddress(String(data.sv));
@@ -101,6 +107,9 @@ class RxShare {
         const source = RxShare.describe(versionId);
         const collected = await RxShare.collect(source);
         const data = {v: 1, n: source.name.slice(0, 64), g: source.game, l: source.loader, m: collected.m, r: collected.r, s: collected.s, by: RxShare.nickname()};
+        const loaderVersion = source.loaderVersion || await RxShare.loaderVersion(source.loader, source.game);
+        if (source.loader !== "vanilla" && !loaderVersion) throw new Error("Cannot determine loader version");
+        if (loaderVersion) data.lv = loaderVersion;
         if (server) data.sv = RxMinecraftServers.normalizeAddress(server);
         const code = RxShare.encode(data);
         RxShare.remember({direction: "sent", code, name: data.n, server: data.sv || ""});
@@ -142,6 +151,7 @@ class RxShare {
     // Создать сборку по коду, скачать файлы и выбрать её. Возвращает ID сборки
     static install = async (data) => {
         const {files, missing} = await RxShare.resolveFiles(data);
+        if (missing.length) throw new Error(`Unavailable Modrinth files: ${missing.join(", ")}`);
         const id = RxInstancesUI.uniqueId(data.n);
         const root = path.join(GAME_DATA, "modpacks", id);
         ["mods", "config", "resourcepacks", "shaderpacks", "saves"].forEach(dir => fs.mkdirSync(path.join(root, dir), {recursive: true}));
@@ -149,7 +159,7 @@ class RxShare {
             id,
             uuid: crypto.randomUUID(),
             displayName: data.n,
-            baseVersion: {full: `${data.l}-${data.g}`, type: data.l, number: data.g},
+            baseVersion: {full: `${data.l}-${data.g}`, type: data.l, number: data.g, loaderVersion: data.lv || ""},
             files,
             icon: false,
             created: Date.now(),
@@ -163,7 +173,7 @@ class RxShare {
         RxVersionsManager.setActiveVersion(`pack-${id}`);
         await RxVersionsUI.loadVersions();
         try {
-            await RxPacks.verifyAndInstall(id);
+            if (await RxPacks.verifyAndInstall(id) === false) throw new Error("Modpack download incomplete; retry from the installed packs list");
         } finally {
             await RxFlyout.changeMode("idle");
         }
@@ -246,7 +256,8 @@ class RxShare {
         const dependencies = {minecraft: source.game};
         const loaderKey = RxShare.LOADER_KEYS[source.loader];
         if (loaderKey) {
-            const version = await RxShare.loaderVersion(source.loader, source.game);
+            const version = source.loaderVersion || await RxShare.loaderVersion(source.loader, source.game);
+            if (!version) throw new Error("Cannot determine loader version");
             if (version) dependencies[loaderKey] = version;
         }
         const index = {formatVersion: 1, game: "minecraft", versionId: "1.0.0", name: source.name, summary: `RxLauncher ${LAUNCHER_VERSION}`, files, dependencies};

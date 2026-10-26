@@ -13,6 +13,7 @@ const MODRINTH_GAME_VERSIONS_URL = `${MODRINTH_API_URL}/tag/game_version`;
 const MODRINTH_LOADERS_URL = `${MODRINTH_API_URL}/tag/loader`;
 
 class RxPacksUI {
+    static escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[char]));
     static setProvider = async (provider) => {
         packs_currentProvider = provider === "curseforge" ? "curseforge" : "modrinth";
         RxConfig.write("catalogProvider", packs_currentProvider);
@@ -136,7 +137,7 @@ class RxPacksUI {
                 let directoryRd = fs.readdirSync(scanPath);
                 // Все файлы добавляем в список
                 directoryRd.forEach((item) => {
-                    listResult[item] = {
+                    listResult[path.join(dir, item)] = {
                         file: item,
                         displayName: path.parse(item).name,
                         path: path.join(scanPath, item),
@@ -149,17 +150,20 @@ class RxPacksUI {
 
         // Если это модпак, то ищем DisplayName для каждого
         if (isModpack) {
-            let modpackFiles = RxPacks.getModpackManifest(modpackId).files;
+            let modpackFiles = RxPacks.getModpackManifest(modpackId)?.files || [];
             modpackFiles.forEach((file) => {
-                if (typeof listResult[file.name] !== "undefined") {
-                    listResult[file.name].displayName = file.displayName;
-                    listResult[file.name].inConfigOf = modpackId;
+                let relative;
+                try { relative = RxPacks.safety().safePackPath(file.path || file.name, {allowBackslashes: true}); }
+                catch (_) { return; }
+                if (typeof listResult[relative] !== "undefined") {
+                    listResult[relative].displayName = file.displayName;
+                    listResult[relative].inConfigOf = modpackId;
                 } else {
-                    listResult[file.name] = {
+                    listResult[relative] = {
                         file: file.name,
                         displayName: file.displayName,
-                        path: path.join(rootScanPath, file.name),
-                        type: file.name.split("/")[0],
+                        path: path.join(rootScanPath, relative),
+                        type: relative.split(path.sep)[0],
                         inConfigOf: modpackId
                     }
                 }
@@ -183,16 +187,15 @@ class RxPacksUI {
                     icon = "archive";
                     break;
             }
-            let onClickFunc = `RxPacks.deleteFileFromModpack('${mod.path}')`;
-            if (mod.inConfigOf !== false) {
-                onClickFunc = `RxPacks.deleteFileFromModpack('${mod.path}', true, '${mod.inConfigOf}')`;
-            }
-            onClickFunc = onClickFunc.replaceAll("\\", "/");
-            $installedList.append(`<div class="item" data-filename="${mod.file}">
-                    <span class="icon material-symbols-outlined">${icon}</span>
-                    <span class="name">${mod.displayName}</span>
-                    <button><span class="material-symbols-outlined" onclick="${onClickFunc}">delete</span></button>
-                </div>`);
+            const $row = $("<div>").addClass("item").attr("data-filename", mod.file);
+            $("<span>").addClass("icon material-symbols-outlined").text(icon).appendTo($row);
+            $("<span>").addClass("name").text(mod.displayName).appendTo($row);
+            $("<button>").append($("<span>").addClass("material-symbols-outlined").text("delete"))
+                .on("click", async () => {
+                    const ok = await RxPacks.deleteFileFromModpack(mod.path, mod.inConfigOf !== false, mod.inConfigOf);
+                    if (!ok) RxToasts.create(MESSAGES.packs.filesFailed, "error", mod.displayName, "error");
+                }).appendTo($row);
+            $installedList.append($row);
         })
         return listResult;
     }
@@ -588,17 +591,17 @@ class RxPacksUI {
             if (packData.id === selectedOption) {
                 isAnyActiveSet = true;
             }
-            $select.append(`<option value="${packData.id}" ${packData.id === selectedOption ? "selected" : ""}>${packData.displayName}</option>`);
+            $select.append(`<option value="${RxPacksUI.escapeHtml(packData.id)}" ${packData.id === selectedOption ? "selected" : ""}>${RxPacksUI.escapeHtml(packData.displayName)}</option>`);
             if (packData.icon === "pack") {
                 packData.icon = path.join(GAME_DATA, "modpacks", packData.id, "icon.png");
             }
             $packsList.append(`
-                        <div class="item" data-id="${packData.id}">
+                        <div class="item" data-id="${RxPacksUI.escapeHtml(packData.id)}">
                 <div class="img-wrap">
-                    <img src="${packData.icon || "assets/icon.png"}" />
+                    <img src="${RxPacksUI.escapeHtml(packData.icon || "assets/icon.png")}" />
                 </div>
-                <h2>${packData.displayName}</h2>
-                <span class="version">${RxVersionsManager.versionToDisplayName(packData.baseVersion.full)}</span>
+                <h2>${RxPacksUI.escapeHtml(packData.displayName)}</h2>
+                <span class="version">${RxPacksUI.escapeHtml(RxVersionsManager.versionToDisplayName(packData.baseVersion.full))}</span>
             </div>`)
         });
         $("#modal-packs .grid .item:not(.add)").click(function () {

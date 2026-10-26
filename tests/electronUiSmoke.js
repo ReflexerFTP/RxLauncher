@@ -137,6 +137,10 @@ ipcMain.on("smoke-redesign-ready", async (event, stage) => {
     }
 });
 
+const accountStore = require("../accountStore").createAccountStore(path.join(app.getPath("userData"), "accounts.json"), require("electron").safeStorage);
+ipcMain.on("renderer-template", event => { event.returnValue = require("../rendererTemplate")(); });
+ipcMain.on("accounts-read", event => { try { event.returnValue = {ok: true, accounts: accountStore.read()}; } catch (e) { event.returnValue = {ok: false, error: e.message}; } });
+ipcMain.on("accounts-write", (event, accounts) => { try { accountStore.write(accounts); event.returnValue = {ok: true}; } catch (e) { event.returnValue = {ok: false, error: e.message}; } });
 app.whenReady().then(async () => {
     const errors = [];
     ejs.listen();
@@ -144,9 +148,10 @@ app.whenReady().then(async () => {
         width: 1400,
         height: 900,
         show: false,
-        webPreferences: {nodeIntegration: true, contextIsolation: false}
+        webPreferences: {nodeIntegration: false, contextIsolation: true, sandbox: false, preload: path.join(__dirname, "..", "preload.js")}
     });
 
+    const evaluateIsolated = code => window.webContents.executeJavaScriptInIsolatedWorld(999, [{code}]);
     // Electron 35+ передаёт уровень и текст в объекте события (level: "warning"/"error")
     window.webContents.on("console-message", (event) => {
         const {message} = event;
@@ -165,7 +170,30 @@ app.whenReady().then(async () => {
     window.showInactive();
     await delay(250);
 
-    const result = await window.webContents.executeJavaScript(`(async () => {
+    const pageBoundary = await window.webContents.executeJavaScript(`({node: typeof require, process: typeof process, ipc: typeof ipcRenderer, loader: typeof loadRxLibrary, accounts: typeof RxAccountsManager})`);
+    if (Object.values(pageBoundary).some(value => value !== "undefined")) throw new Error("Privileged API leaked into the page world");
+    const metadataSafety = await evaluateIsolated(`(async () => {
+        const original = RxWorldsManager.savesFromDirectory;
+        const oldPack = packman__currentModpack;
+        const malicious = '<img src=x onerror="window.rxInjected=true">';
+        const packRoot = path.join(GAME_DATA, "modpacks", "security-fixture");
+        fs.mkdirSync(path.join(packRoot, "saves"), {recursive: true});
+        try {
+            packman__currentModpack = {id: "security-fixture", files: []};
+            RxWorldsManager.savesFromDirectory = async () => [{path: path.join(packRoot, "saves", "world"), name: malicious, icon: false, version: malicious, gamemode: 0, difficulty: 0}];
+            RxPackManagerUI.loadWorldsList();
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const list = document.querySelector("#modal-packManager .worlds-list");
+            return {literal: list.textContent.includes(malicious), executable: Boolean(list.querySelector("[onerror], script"))};
+        } finally {
+            RxWorldsManager.savesFromDirectory = original;
+            packman__currentModpack = oldPack;
+            fs.rmSync(packRoot, {recursive: true, force: true});
+        }
+    })()`);
+    if (!metadataSafety.literal || metadataSafety.executable) throw new Error("World metadata was interpreted as HTML");
+
+    const result = await evaluateIsolated(`(async () => {
         const captureRedesignStage = stage => new Promise((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error(\`Redesign screenshot timed out: \${stage}\`)), 5000);
             const listener = (_event, payload) => {
@@ -576,7 +604,7 @@ app.whenReady().then(async () => {
     if (serverStatusQueryCalls.some(call => call.options?.allowDirect !== false)) throw new Error(`Privacy mode allowed a direct query: ${JSON.stringify(serverStatusQueryCalls)}`);
     if (result.patchCards < 2) throw new Error(`Patch feed did not initialize: ${result.patchCards}`);
     if (!result.statsFileExists) throw new Error(`Statistics file was not written: ${result.statsFile}`);
-    const roomsRemoved = await window.webContents.executeJavaScript(`!document.querySelector("#modal-rooms") && !document.querySelector('.flymenu .item[data-modal="rooms"]')`);
+    const roomsRemoved = await evaluateIsolated(`!document.querySelector("#modal-rooms") && !document.querySelector('.flymenu .item[data-modal="rooms"]')`);
     if (!roomsRemoved) throw new Error("Rooms section must be removed");
     for (const [stage, screenshotPath] of Object.entries(redesignScreenshotPaths)) {
         if (!fs.existsSync(screenshotPath) || fs.statSync(screenshotPath).size < 1024) {
@@ -585,11 +613,11 @@ app.whenReady().then(async () => {
     }
     if (errors.length) throw new Error(`Renderer errors: ${errors.join(" | ")}`);
 
-    await window.webContents.executeJavaScript('RxModals.switchModal("servers")');
+    await evaluateIsolated('RxModals.switchModal("servers")');
 
     window.showInactive();
     await delay(350);
-    const paintState = await window.webContents.executeJavaScript(`(() => {
+    const paintState = await evaluateIsolated(`(() => {
         const node = document.querySelector("#modal-servers");
         const style = getComputedStyle(node);
         const rect = node.getBoundingClientRect();
@@ -613,6 +641,8 @@ app.whenReady().then(async () => {
     fs.writeFileSync(screenshotPath, await window.webContents.capturePage().then(image => image.toPNG()));
     fs.writeFileSync(path.join(tempRoot, "smoke-result.json"), JSON.stringify({
         passed: true,
+        pageBoundary,
+        metadataSafety,
         screenshotPath,
         skinsScreenshotPath,
         personalizationScreenshotPath,

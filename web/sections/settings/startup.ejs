@@ -9,7 +9,7 @@
         <div class="description">{{settings.startup.gameDirectory.description}}</div>
         <div class="flex flex-center flex-gap-8">
             <input type="text" class="lighter flex-grow" readonly id="gameDirectoryInput">
-            <button class="square small" onclick='changeGameDirectory()'>
+            <button class="square small" data-rx-onclick='changeGameDirectory()'>
                 <span class="material-symbols-outlined">folder</span>
             </button>
         </div>
@@ -120,7 +120,7 @@
     </label>
 </div>
 
-<script>
+<script type="application/x-rx-script">
     // Подсчёт данных
     let startup_maxMemory = RxUtils.round512(os.totalmem() / 1024 / 1024);
     let startup_minMemory = 512;

@@ -1,8 +1,27 @@
 class RxPacks {
+    static safety = () => require("../modrinthPackSafety");
+    static isSafePackId = id => typeof id === "string" && id.length > 0 && id.length <= 128
+        && /^[A-Za-z0-9_][A-Za-z0-9._+-]*$/.test(id) && !id.endsWith(".")
+        && !/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(id);
+    static assertSafePackTarget = (root, target) => {
+        const realRoot = fs.realpathSync(root);
+        const realParent = fs.realpathSync(path.dirname(root));
+        if (path.dirname(realRoot).toLowerCase() !== realParent.toLowerCase()) throw new Error("Linked modpack directory");
+        let existing = target;
+        while (!fs.existsSync(existing) && existing !== root) existing = path.dirname(existing);
+        const realExisting = fs.realpathSync(existing);
+        if (realExisting !== realRoot && !realExisting.startsWith(realRoot + path.sep)) {
+            throw new Error("Modpack file path leaves the pack directory");
+        }
+        if (fs.existsSync(target) && fs.lstatSync(target).isSymbolicLink()) throw new Error("Linked modpack file");
+    };
+
     // Создать пак
     static createPack = (baseVersion, displayName) => {
         displayName = RxUtils.translit(displayName);
-        let modpackId = displayName.replace(/\W/g, '_');
+        let modpackId = displayName.replace(/\W/g, '_').slice(0, 100);
+        if (!RxPacks.isSafePackId(modpackId)) modpackId = `pack_${crypto.randomUUID().slice(0, 8)}`;
+        if (fs.existsSync(path.join(GAME_DATA, "modpacks", modpackId))) modpackId += `_${crypto.randomUUID().slice(0, 8)}`;
         let modpackPath = path.join(GAME_DATA, "modpacks", modpackId);
 
         fs.mkdirSync(modpackPath, {recursive: true});
@@ -27,36 +46,61 @@ class RxPacks {
     // Получить манифест пака
     static getModpackManifest = (modpackId) => {
         if (RxPacks.isModpackExists(modpackId)) {
-            return JSON.parse(fs.readFileSync(path.join(GAME_DATA, "modpacks", modpackId, "manifest.json")))
+            try { return JSON.parse(fs.readFileSync(path.join(GAME_DATA, "modpacks", modpackId, "manifest.json"))); }
+            catch (error) { RxCollector.writeLog(`Packs: Invalid manifest [pack=${modpackId}] [error=${error.message}]`); }
         }
         return false;
     }
 
     // Сохранить манифест пака
     static writeModpackManifest = (modpackId, manifestData) => {
+        if (!RxPacks.isSafePackId(modpackId)) throw new Error("Invalid modpack ID");
         let modpackPath = path.join(GAME_DATA, "modpacks", modpackId);
         if (!fs.existsSync(modpackPath)) {
             fs.mkdirSync(modpackPath, {recursive: true});
         }
-        return fs.writeFileSync(path.join(modpackPath, "manifest.json"), JSON.stringify(manifestData, null, 4));
+        const target = path.join(modpackPath, "manifest.json");
+        const temporary = path.join(modpackPath, `.manifest-${crypto.randomUUID()}.tmp`);
+        try {
+            fs.writeFileSync(temporary, JSON.stringify(manifestData, null, 4));
+            fs.renameSync(temporary, target);
+            return true;
+        } finally {
+            if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+        }
     }
 
     // Существует ли такой пак
     static isModpackExists = (modpackId) => {
-        if (typeof modpackId !== "string") return false;
+        if (!RxPacks.isSafePackId(modpackId)) return false;
         return fs.existsSync(path.join(GAME_DATA, "modpacks", modpackId, "manifest.json"));
     }
 
     // Удалить файл из модпака
-    static deleteFileFromModpack = (filePath, fromModpack = false, modpackId = null) => {
+    static deleteFileFromModpack = async (filePath, fromModpack = false, modpackId = null) => {
         if (fromModpack === true && !RxPacks.isModpackExists(modpackId)) {
             return false;
         }
-
-        // Удаляем файл
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
+        const modpackData = fromModpack ? RxPacks.getModpackManifest(modpackId) : null;
+        if (fromModpack && (!modpackData || !Array.isArray(modpackData.files))) return false;
+        const root = path.resolve(GAME_DATA, ...(fromModpack ? ["modpacks", modpackId] : []));
+        if (typeof filePath !== "string" || !path.isAbsolute(filePath)) return false;
+        const resolved = path.resolve(filePath);
+        const relative = path.relative(root, resolved);
+        try {
+            RxPacks.safety().safePackPath(relative, {allowBackslashes: true});
+            const parts = relative.split(path.sep);
+            if (parts.length < 2 || !["mods", "resourcepacks", "shaderpacks"].includes(parts[0])) return false;
+            if (!resolved.startsWith(root + path.sep)) return false;
+            if (fs.existsSync(resolved)) {
+                if ((!fs.statSync(resolved).isFile() && !fs.statSync(resolved).isDirectory())
+                    || fs.lstatSync(resolved).isSymbolicLink()
+                    || !fs.realpathSync(resolved).startsWith(fs.realpathSync(root) + path.sep)) return false;
+            }
+        } catch (_) { return false; }
+        // Files and folder-based resource packs go to the recycle bin.
+        try { if (fs.existsSync(resolved)) await require("electron").shell.trashItem(resolved); }
+        catch (error) { RxCollector.writeLog(`Packs: Could not trash file [error=${error.message}]`); return false; }
 
         // Если это модпак - удаляем из конфига. Если нет - возвращаем true
         if (fromModpack === false) {
@@ -66,19 +110,13 @@ class RxPacks {
         }
 
         // Получаем манифест нужного пака
-        let modpackData = RxPacks.getModpackManifest(modpackId);
         let modpackFiles = modpackData.files;
-        let deletionIndex = -1;
-        // Ищем deletion index
-        modpackFiles.forEach((item, i) => {
-            if (item.name === path.basename(filePath)) {
-                deletionIndex = i;
-            }
-        })
-        // Удаляем из конфига, если нашли
-        if (deletionIndex !== -1) {
-            modpackFiles.splice(deletionIndex, 1);
-            modpackData.files = modpackFiles;
+        const remaining = modpackFiles.filter(item => {
+            const itemPath = path.normalize(item.path || item.name || "");
+            return itemPath !== relative && !itemPath.startsWith(relative + path.sep);
+        });
+        if (remaining.length !== modpackFiles.length) {
+            modpackData.files = remaining;
             RxPacks.writeModpackManifest(modpackId, modpackData);
         }
         // Перезагружаем список
@@ -97,21 +135,22 @@ class RxPacks {
     // Проверить и докачать недостающие файлы сборки (параллельно, с проверкой хешей).
     // false — что-то не скачалось: запуск с неполной сборкой всё равно бы упал
     static verifyAndInstall = async (modpackId) => {
-        const missing = await RxPacks.verifyFiles(modpackId);
-        if (missing.length === 0) return true;
-        RxCollector.writeLog(`Packs: Downloading ${missing.length} file(s) [pack=${modpackId}]`);
         try {
+            const missing = await RxPacks.verifyFiles(modpackId);
+            if (missing.length === 0) return true;
+            RxCollector.writeLog(`Packs: Downloading ${missing.length} file(s) [pack=${modpackId}]`);
             await RxDownloader.downloadMany(missing, RxPacks.getModpackManifest(modpackId)?.displayName || modpackId);
             return true;
         } catch (error) {
             RxCollector.writeLog(`Packs: Download failed [pack=${modpackId}] [file=${error.file}] [error=${error.message}]`);
-            if (!/aborted|cancelled/i.test(error.message)) RxToasts.create(MESSAGES.packs.filesFailed, "error", error.file || error.message, "error");
+            if (!/aborted|cancelled/i.test(error.message || "")) RxToasts.create(MESSAGES.packs.filesFailed, "error", error.file || error.message, "error");
             return false;
         }
     }
 
     // Файлы сборки, которых нет или которые не совпадают по хешу. Проверяем по 4 файла сразу, не блокируя окно
     static verifyFiles = async (modpackId) => {
+        if (!RxPacks.isSafePackId(modpackId)) throw new Error("Invalid modpack ID");
         const filesList = RxPacks.getPackModlist(modpackId);
         if (!Array.isArray(filesList) || filesList.length === 0) return [];
         const root = path.resolve(GAME_DATA, "modpacks", modpackId);
@@ -120,11 +159,15 @@ class RxPacks {
         const worker = async () => {
             while (queue.length) {
                 const item = queue.shift();
-                const filePath = path.resolve(root, item.path || item.name || "");
+                const relative = RxPacks.safety().safePackPath(item.path || item.name || "", {allowBackslashes: true});
+                const filePath = path.resolve(root, relative);
                 // Путь из манифеста не должен выходить за папку сборки
-                if (!filePath.startsWith(root + path.sep) || !item.url) continue;
+                if (!filePath.startsWith(root + path.sep)) throw new Error("Unsafe modpack file entry");
+                RxPacks.assertSafePackTarget(root, filePath);
+                const url = RxPacks.safety().safePackUrl(item.url);
                 if (!(await RxHttp.isFileValid(filePath, item.hashes || {}))) {
-                    missing.push({path: filePath, url: item.url, hashes: item.hashes || {}, size: item.size, displayName: item.displayName});
+                    missing.push({path: filePath, url, hashes: item.hashes || {}, size: item.size,
+                        displayName: item.displayName, urlPolicy: RxPacks.safety().safePackUrl});
                 }
             }
         };
@@ -146,7 +189,7 @@ class RxPacks {
 
         let validItems = [];
         rdPacks.forEach((item) => {
-            if (RxPacks.isModpackExists(item)) {
+            if (RxPacks.getModpackManifest(item)) {
                 validItems.push(item);
             }
         })
@@ -212,20 +255,30 @@ class RxPacks {
     static unpackModrinthPack = async (archivePath) => {
         const decompPath = path.join(GAME_DATA, "modpacks", `.rx-modrinth-${crypto.randomUUID()}`);
         fs.mkdirSync(decompPath, {recursive: true});
-        await RxUtils.unpackArchive(archivePath, decompPath);
-        const indexPath = path.join(decompPath, "modrinth.index.json");
-        if (!fs.existsSync(indexPath)) {
-            throw Object.assign(new Error("modrinth.index.json is missing"), {decompPath});
+        try {
+            await RxUtils.unpackArchive(archivePath, decompPath);
+            const indexPath = path.join(decompPath, "modrinth.index.json");
+            if (!fs.existsSync(indexPath) || fs.statSync(indexPath).size > 16 * 1024 * 1024) {
+                throw new Error("modrinth.index.json is missing or too large");
+            }
+            const index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
+            return {decompPath, indexPath, index, ...RxPacks.parseModrinthIndex(index)};
+        } catch (error) {
+            error.decompPath = decompPath;
+            throw error;
         }
-        const index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
-        return {decompPath, indexPath, index, ...RxPacks.parseModrinthIndex(index)};
     }
 
     // Базовая версия игры и список клиентских файлов из modrinth.index.json
     static parseModrinthIndex = (modrinthIndex) => {
-        if (!modrinthIndex.name || !modrinthIndex.versionId || !modrinthIndex.dependencies?.minecraft || !Array.isArray(modrinthIndex.files)) {
+        if (!modrinthIndex || typeof modrinthIndex !== "object" || typeof modrinthIndex.name !== "string"
+            || !modrinthIndex.name.trim() || typeof modrinthIndex.versionId !== "string"
+            || !modrinthIndex.versionId.trim() || !modrinthIndex.dependencies?.minecraft
+            || !Array.isArray(modrinthIndex.files) || modrinthIndex.files.length > 20000) {
             throw new Error("Invalid Modrinth pack index");
         }
+        const safe = RxPacks.safety();
+        const minecraftVersion = safe.safePackVersion(modrinthIndex.dependencies.minecraft);
 
         const dependencyKeys = Object.keys(modrinthIndex.dependencies || {});
         let baseVersionType = "vanilla";
@@ -235,20 +288,25 @@ class RxPacks {
         if (dependencyKeys.includes("quilt") || dependencyKeys.includes("quilt-loader")) baseVersionType = "quilt";
 
         const files = [];
+        const seenPaths = new Set();
         modrinthIndex.files.forEach((item) => {
             if (item?.env?.client && item.env.client !== "required") return;
-            const normalizedPath = path.normalize(item.path || "");
-            if (!normalizedPath || path.isAbsolute(normalizedPath) || normalizedPath === ".." || normalizedPath.startsWith(`..${path.sep}`)) {
-                throw new Error("Modrinth pack contains an unsafe file path");
-            }
-            if (!Array.isArray(item.downloads) || !item.downloads[0] || new URL(item.downloads[0]).protocol !== "https:") {
+            const normalizedPath = safe.safePackPath(item.path);
+            if (seenPaths.has(normalizedPath.toLowerCase())) throw new Error("Duplicate Modrinth pack file path");
+            seenPaths.add(normalizedPath.toLowerCase());
+            if (!Array.isArray(item.downloads) || !item.downloads[0]) {
                 throw new Error("Modrinth pack contains an invalid download URL");
             }
+            const url = safe.safePackUrl(item.downloads[0]);
+            const hashes = safe.safePackHashes(item.hashes);
+            if (!Number.isSafeInteger(item.fileSize) || item.fileSize < 0 || item.fileSize > 4 * 1024 ** 3) {
+                throw new Error("Modrinth pack file size is invalid");
+            }
             files.push({
-                hashes: item.hashes || {},
+                hashes,
                 path: normalizedPath,
                 name: path.basename(normalizedPath),
-                url: item.downloads[0],
+                url,
                 size: item.fileSize,
                 displayName: path.parse(normalizedPath).name
             });
@@ -257,9 +315,11 @@ class RxPacks {
         return {
             files,
             baseVersion: {
-                full: `${baseVersionType}-${modrinthIndex.dependencies.minecraft}`,
+                full: `${baseVersionType}-${minecraftVersion}`,
                 type: baseVersionType,
-                number: modrinthIndex.dependencies.minecraft
+                number: minecraftVersion,
+                loaderVersion: (modrinthIndex.dependencies[{fabric: "fabric-loader", quilt: "quilt-loader", forge: "forge", neoforge: "neoforge"}[baseVersionType]] || modrinthIndex.dependencies.quilt)
+                    ? safe.safePackVersion(modrinthIndex.dependencies[{fabric: "fabric-loader", quilt: "quilt-loader", forge: "forge", neoforge: "neoforge"}[baseVersionType]] || modrinthIndex.dependencies.quilt) : ""
             }
         };
     }
@@ -268,7 +328,23 @@ class RxPacks {
         for (const overridesDirectory of ["overrides", "client-overrides"]) {
             const sourcePath = path.join(decompPath, overridesDirectory);
             if (fs.existsSync(sourcePath)) {
-                await fsExtra.copy(sourcePath, modpackPath, {overwrite: true});
+                const realSourceRoot = fs.realpathSync(sourcePath);
+                await fsExtra.copy(sourcePath, modpackPath, {overwrite: true, filter: (source, destination) => {
+                    if (source === sourcePath) return true;
+                    const relative = path.relative(sourcePath, source);
+                    RxPacks.safety().safePackPath(relative, {allowBackslashes: true});
+                    if (fs.lstatSync(source).isSymbolicLink()) throw new Error("Pack override contains a link");
+                    const realSource = fs.realpathSync(source);
+                    if (!realSource.startsWith(realSourceRoot + path.sep)) throw new Error("Pack override escapes archive");
+                    let current = destination;
+                    while (current !== modpackPath && current.startsWith(modpackPath + path.sep)) {
+                        if (fs.existsSync(current) && fs.lstatSync(current).isSymbolicLink()) {
+                            throw new Error("Pack override targets a linked folder");
+                        }
+                        current = path.dirname(current);
+                    }
+                    return true;
+                }});
             }
         }
     }
@@ -292,7 +368,7 @@ class RxPacks {
 
             // Из каталога приходит название со страницы Modrinth: в самом .mrpack оно бывает техническим
             const displayName = extra.displayName || `${modrinthIndex.name} ${modrinthIndex.versionId}`;
-            const modpackId = RxPacks.modpackCleanID(RxUtils.translit(displayName)) || `modrinth_${Date.now()}`;
+            const modpackId = RxPacks.modpackCleanID(RxUtils.translit(displayName)).slice(0, 100) || `modrinth_${Date.now()}`;
             const modpackPath = path.join(modpacksPath, modpackId);
             if (fs.existsSync(modpackPath)) {
                 RxToasts.create(MESSAGES.packs.importFailed, "error", MESSAGES.packs.alreadyExists);
@@ -303,7 +379,6 @@ class RxPacks {
             createdModpackPath = modpackPath;
             await RxPacks.copyModrinthOverrides(decompPath, modpackPath);
 
-            const {displayName: _customName, ...extraFields} = extra;
             const manifestJson = {
                 id: modpackId,
                 uuid: crypto.randomUUID(),
@@ -312,7 +387,7 @@ class RxPacks {
                 files: unpacked.files,
                 icon: iconUrl,
                 created: Date.now(),
-                ...extraFields
+                ...(extra.source && typeof extra.source === "object" ? {source: extra.source} : {})
             };
             // Откуда сборка: по этим данным потом ищутся её обновления
             if (manifestJson.source) {
@@ -331,7 +406,9 @@ class RxPacks {
             RxToasts.create(MESSAGES.packs.importFailed, "error", error.message);
             return false;
         } finally {
-            if (decompPath) await fsPromises.rm(decompPath, {recursive: true, force: true});
+            if (decompPath) await fsPromises.rm(decompPath, {recursive: true, force: true}).catch(error => {
+                RxCollector.writeLog(`Packs: Temporary cleanup failed [error=${error}]`);
+            });
         }
     }
 
@@ -342,30 +419,69 @@ class RxPacks {
         if (!manifest) return false;
         const modpackPath = path.resolve(GAME_DATA, "modpacks", modpackId);
         let decompPath = false;
+        const movedFiles = [];
+        const changedFiles = new Map();
+        let rollbackRoot = false;
+        let rollbackFailed = false;
         try {
+            const realModpacksRoot = fs.realpathSync(path.join(GAME_DATA, "modpacks"));
+            if (path.dirname(fs.realpathSync(modpackPath)).toLowerCase() !== realModpacksRoot.toLowerCase()) {
+                throw new Error("Pack directory is linked outside the game data");
+            }
             const unpacked = await RxPacks.unpackModrinthPack(archivePath).catch(error => {
                 decompPath = error.decompPath || false;
                 throw error;
             });
             decompPath = unpacked.decompPath;
-
+            // Validate and merge both override trees before changing the installed pack.
+            const stagePath = path.join(decompPath, ".rx-staged-overrides");
+            fs.mkdirSync(stagePath, {recursive: true});
+            await RxPacks.copyModrinthOverrides(decompPath, stagePath);
+            rollbackRoot = path.join(decompPath, ".rx-rollback");
+            fs.mkdirSync(rollbackRoot, {recursive: true});
+            fs.copyFileSync(path.join(modpackPath, "manifest.json"), path.join(rollbackRoot, "manifest.json"));
+            const oldIndexPath = path.join(modpackPath, "modrinth.index.json");
+            if (fs.existsSync(oldIndexPath)) fs.copyFileSync(oldIndexPath, path.join(rollbackRoot, "modrinth.index.json"));
             const keep = new Set(unpacked.files.map(file => path.normalize(file.path).toLowerCase()));
-            const backupDir = path.join(modpackPath, "rx-mod-backups", new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-"));
+            const backupDir = path.join(modpackPath, "rx-mod-backups",
+                `${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}-${crypto.randomUUID().slice(0, 8)}`);
             let removed = 0;
             for (const oldFile of manifest.files || []) {
-                const relative = path.normalize(oldFile.path || "");
-                if (!relative || relative === "." || keep.has(relative.toLowerCase())) continue;
+                const relative = RxPacks.safety().safePackPath(oldFile.path || oldFile.name || "", {allowBackslashes: true});
+                if (keep.has(relative.toLowerCase())) continue;
                 const fullPath = path.resolve(modpackPath, relative);
-                if (!fullPath.startsWith(modpackPath + path.sep)) continue;
+                if (!fullPath.startsWith(modpackPath + path.sep)) throw new Error("Unsafe installed pack file path");
                 for (const candidate of [fullPath, `${fullPath}.disabled`]) {
                     if (!fs.existsSync(candidate)) continue;
+                    if (fs.lstatSync(candidate).isSymbolicLink()) throw new Error("Pack contains a linked file");
+                    RxPacks.assertSafePackTarget(modpackPath, candidate);
                     const target = path.join(backupDir, path.relative(modpackPath, candidate));
                     fs.mkdirSync(path.dirname(target), {recursive: true});
                     fs.renameSync(candidate, target);
+                    movedFiles.push({from: candidate, to: target});
                     removed++;
                 }
             }
-            await RxPacks.copyModrinthOverrides(decompPath, modpackPath);
+            await fsExtra.copy(stagePath, modpackPath, {overwrite: true, filter: (from, to) => {
+                if (from === stagePath) return true;
+                const relative = RxPacks.safety().safePackPath(path.relative(stagePath, from), {allowBackslashes: true});
+                let current = to;
+                while (current !== modpackPath && current.startsWith(modpackPath + path.sep)) {
+                    if (fs.existsSync(current) && fs.lstatSync(current).isSymbolicLink()) {
+                        throw new Error("Pack override targets a linked folder");
+                    }
+                    current = path.dirname(current);
+                }
+                if (fs.lstatSync(from).isFile() && !changedFiles.has(to)) {
+                    const original = fs.existsSync(to) ? path.join(rollbackRoot, "overrides", relative) : null;
+                    if (original) {
+                        fs.mkdirSync(path.dirname(original), {recursive: true});
+                        fs.copyFileSync(to, original);
+                    }
+                    changedFiles.set(to, original);
+                }
+                return true;
+            }});
 
             const oldSource = manifest.source || {};
             const newSource = {...oldSource, ...source, packName: unpacked.index.name, packVersion: unpacked.index.versionId};
@@ -383,10 +499,33 @@ class RxPacks {
             RxCollector.writeLog(`Packs: Updated ${modpackId} to ${unpacked.index.versionId} [movedToBackup=${removed}]`);
             return true;
         } catch (error) {
+            if (rollbackRoot) {
+                try {
+                    for (const [target, original] of changedFiles) {
+                        if (original) fs.copyFileSync(original, target);
+                        else if (fs.existsSync(target)) fs.unlinkSync(target);
+                    }
+                    for (const name of ["manifest.json", "modrinth.index.json"]) {
+                        const original = path.join(rollbackRoot, name);
+                        const target = path.join(modpackPath, name);
+                        if (fs.existsSync(original)) fs.copyFileSync(original, target);
+                        else if (name === "modrinth.index.json" && fs.existsSync(target)) fs.unlinkSync(target);
+                    }
+                    for (const item of movedFiles.reverse()) {
+                        fs.mkdirSync(path.dirname(item.from), {recursive: true});
+                        fs.renameSync(item.to, item.from);
+                    }
+                } catch (rollbackError) {
+                    rollbackFailed = true;
+                    RxCollector.writeLog(`Packs: Rollback failed [pack=${modpackId}] [recovery=${rollbackRoot}] [error=${rollbackError}]`);
+                }
+            }
             RxCollector.writeLog(`Packs: Update failed [pack=${modpackId}] [error=${error}]`);
             return false;
         } finally {
-            if (decompPath) await fsPromises.rm(decompPath, {recursive: true, force: true});
+            if (decompPath && !rollbackFailed) await fsPromises.rm(decompPath, {recursive: true, force: true}).catch(error => {
+                RxCollector.writeLog(`Packs: Temporary cleanup failed [error=${error}]`);
+            });
         }
     }
 

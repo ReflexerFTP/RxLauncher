@@ -1,61 +1,33 @@
 class RxElybyLoginUI {
-    static login = () => {
-        let login = $("#modal-elybyLogin input.login").val();
-        let password = $("#modal-elybyLogin input.password").val();
-        let totp = $("#modal-elybyLogin input.totp").val();
-
-        let $error = $("#modal-elybyLogin .error");
-
-        if (login !== "" && password !== "") {
-            $("#modal-elybyLogin .loginBtn").hide();
-            $error.hide();
-
-            RxElybyManager.loginAccount(login, password, totp).then((data) => {
-                $("#modal-elybyLogin .loginBtn").show();
-                $("#modal-elybyLogin input.totp").val("");
-
-                let isSuccess = data[0];
-                let clientToken = data[2];
-                data = data[1];
-
-                if (!isSuccess) {
-                    $error.show();
-                    // Показываем ошибку
-                    if (typeof MESSAGES.elyby[data] !== "undefined") {
-                        $error.text(MESSAGES.elyby[data]);
-                    } else {
-                        $error.text(data);
-                    }
-                    return false;
-                } else {
-                    if (RxAccountsManager.isAccountExistsByNickname(data.selectedProfile.name, "elyby")) {
-                        RxToasts.create(MESSAGES.accounts.alreadyExists);
-                        return false;
-                    }
-
-                    // Создаём аккаунт
-                    let accountData = {
-                        type: "elyby",
-                        nickname: data.selectedProfile.name,
-                        added: Date.now(),
-                        clientToken: clientToken,
-                        accessToken: data.accessToken,
-                        uuid: data.selectedProfile.id,
-                    }
-
-                    let accountsList = RxAccountsManager.getAccounts();
-                    accountsList[data.selectedProfile.id] = accountData;
-                    RxElybyManager.getHeadURLByPlayerNickname(data.selectedProfile.name).then(() => {
-                        RxAccountsManager.saveAccounts(accountsList);
-                    });
-
-                    $("#modal-elybyLogin input").val("");
-                    RxModals.hideModal("elybyLogin").then(() => {
-                        RxToasts.create(data.selectedProfile.name, "person", MESSAGES.commons.newAccountAdded);
-                    });
-                    return true;
-                }
-            });
+    static login = async () => {
+        const $modal = $("#modal-elybyLogin");
+        const login = $modal.find("input.login").val().trim();
+        const password = $modal.find("input.password").val();
+        if (!login || !password || this.busy) return false;
+        this.busy = true;
+        $modal.find(".loginBtn").hide();
+        $modal.find(".error").hide();
+        try {
+            const [ok, data, clientToken] = await RxElybyManager.loginAccount(login, password, $modal.find("input.totp").val());
+            if (!ok) throw new Error(MESSAGES.elyby[data] || data);
+            const accounts = RxAccountsManager.getAccounts();
+            const uuid = data.selectedProfile.id;
+            accounts[uuid] = {...accounts[uuid], type: "elyby", nickname: data.selectedProfile.name,
+                added: accounts[uuid]?.added || Date.now(), clientToken, accessToken: data.accessToken, uuid};
+            RxAccountsManager.saveAccounts(accounts);
+            // A missing skin must never prevent a successful login from being saved.
+            RxElybyManager.getHeadURLByPlayerNickname(data.selectedProfile.name).then(() => RxAccountsUI.reloadAccountsManager()).catch(() => {});
+            $modal.find("input").val("");
+            await RxModals.hideModal("elybyLogin");
+            RxToasts.create(data.selectedProfile.name, "person", MESSAGES.commons.newAccountAdded);
+            return true;
+        } catch (error) {
+            $modal.find(".error").text(error.message).show();
+            return false;
+        } finally {
+            this.busy = false;
+            $modal.find(".loginBtn").show();
+            $modal.find("input.totp").val("");
         }
-    }
+    };
 }

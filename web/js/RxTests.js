@@ -4,155 +4,127 @@ let currentTestingVersion = -1;
 let testVersionsList = [];
 
 class RxTests {
-    static startTest = (medVersionStartValue = -1) => {
-        RxVersionsManager.getPreparedVersions().then((prepared) => {
-            prepared.forEach((item) => {
-                if (item.type === "vanilla" || item.type === "forge" || item.type === "fabric") {
-                    if (medVersionStartValue === -1 || item.version.split(".")[1] <= medVersionStartValue) {
-                        testVersionsList.push(item);
-                    }
-                }
-            });
-            console.log(testVersionsList.length, "vs", prepared.length);
-            RxTests.nextTestingVersion();
-        });
+    static startTest = async () => {
+        currentTestingVersion = -1;
+        try {
+            // The diagnostic command tests existing installations only.
+            testVersionsList = RxVersionsManager.getInstalledVersionEntries()
+                .filter(item => ["vanilla", "forge", "fabric"].includes(item.type));
+            RxTests.writeToTestLog(`TEST: ${testVersionsList.length} installed versions selected`);
+            await RxTests.nextTestingVersion();
+        } catch (error) {
+            RxTests.writeToTestLog(`TEST FAILED: ${error.message || error}`);
+            RxFlyout.setText("TEST FAILED", String(error.message || error));
+        }
     }
 
     static writeToTestLog = (...data) => {
-        let logDate = new Date().toISOString();
-        let newPart = "\n" + "[" + logDate + "] " + data.join(" ")
-        console.log(data.join(" "));
-        fs.appendFileSync(path.join(USERDATA_PATH, "testLogs", "FULLTEST.log"), newPart);
+        const logDir = path.join(USERDATA_PATH, "testLogs");
+        fs.mkdirSync(logDir, {recursive: true});
+        const line = `[${new Date().toISOString()}] ${data.join(" ")}`;
+        console.log(line);
+        fs.appendFileSync(path.join(logDir, "FULLTEST.log"), `\n${line}`);
     }
 
     static writeVersionLog = (data, versionId) => {
-        fs.appendFileSync(path.join(USERDATA_PATH, "testLogs", versionId + ".log"), "\n" + data);
+        const logDir = path.join(USERDATA_PATH, "testLogs");
+        fs.mkdirSync(logDir, {recursive: true});
+        const safeId = String(versionId).replace(/[^\w.+-]/g, "_");
+        fs.appendFileSync(path.join(logDir, `${safeId}.log`), `\n${data}`);
     }
 
-    static nextTestingVersion = () => {
-        currentTestingVersion++;
-        if (typeof testVersionsList[currentTestingVersion] === "undefined") {
-            RxTests.writeToTestLog("TEST COMPLETED");
-            RxFlyout.setText("TEST COMPLETED", "Тестирование завершено");
-        }
-
-        let testingId = testVersionsList[currentTestingVersion].id;
-
-        RxTests.testVersion(testingId).then((testResult, exitCode) => {
-            if (testResult === true) {
-                RxTests.writeToTestLog("✓", testingId, "passed tests");
-            } else {
-                RxTests.writeToTestLog("X", testingId, "not passed tests, exit code:", exitCode);
+    static nextTestingVersion = async () => {
+        while (++currentTestingVersion < testVersionsList.length) {
+            const testingId = testVersionsList[currentTestingVersion].id;
+            try {
+                const {passed, exitCode} = await RxTests.testVersion(testingId);
+                RxTests.writeToTestLog(passed ? "✓" : "X", testingId,
+                    passed ? "passed tests" : `not passed tests, exit code: ${exitCode}`);
+            } catch (error) {
+                RxTests.writeToTestLog("X", testingId, `failed: ${error.message || error}`);
             }
-            RxTests.nextTestingVersion();
-        })
+        }
+        RxTests.writeToTestLog("TEST COMPLETED");
+        RxFlyout.setText("TEST COMPLETED", "Тестирование завершено");
     }
 
-    // Начать тестирование версии
-    static testVersion = (versionId) => {
+    static testVersion = async (versionId) => {
+        const config = await RxTests.prepareConfig(versionId);
+        RxTests.writeToTestLog("TEST: Starting version " + versionId);
+        await RxFlyout.changeMode("progress");
         return new Promise(resolve => {
-            RxTests.prepareConfig(versionId).then(config => {
-                let parsedVersion = RxVersionsManager.parseVersionID(versionId);
-                let starter = new RxStarter(versionId, parsedVersion.type, parsedVersion.name);
-                RxTests.writeToTestLog("TEST: Starting version " + versionId);
-                let useProgress = false;
-                // Готовим UI
-                RxFlyout.changeMode("progress").then(() => {
-                    RxTests.writeToTestLog(`Starter: UI preparation completed, starting game`);
-                    let launcher = new Client();
-                    launcher.launch(config);
-
-                    launcher.on('debug', (e) => {
-                        RxTests.writeVersionLog(e, versionId);
-                    });
-                    launcher.on('data', (e) => {
-                        RxTests.writeVersionLog(e, versionId);
-                        if (e.match(/Sound engine started/gim) !== null || e.match(/OpenAL initialized/gim) !== null || e.match(/Created\: 512x512 textures-atlas/gim) !== null) {
-                            RxFlyout.setText("Игра запущена", versionId);
-                            setTimeout(() => {
-                                exec("taskkill /F /T /IM java.exe");
-                            }, 6000);
-                        }
-                        if (e.match(/Stopping!/gim) !== null || e.match(/SoundSystem shutting down/gim) !== null) {
-                            RxFlyout.setText("Игра закрывается", versionId);
-                        }
-                    });
-                    launcher.on('close', (exitCode) => {
-                        RxTests.writeToTestLog("Game exit code: " + exitCode);
-                        if (exitCode > 0 && exitCode !== 1) {
-                            return resolve(false, exitCode);
-                        } else {
-                            return resolve(true, true);
-                        }
-                    });
-                    launcher.on("arguments", (e) => {
-                        gameStarting = true;
-                        RxFlyout.changeMode("spinner");
-                        RxFlyout.setText("Игра запускается", versionId);
-                    });
-                    launcher.on('progress', (e) => {
-                        if (e.type === "assets") {
-                            if (startAssetsInterval === 0) {
-                                startAssetsInterval = Date.now();
-                            }
-                            if (assetsVerifyOffset === 0 && (Date.now() - startAssetsInterval) > 1000) {
-                                assetsVerifyOffset = (e.task - 1);
-                            }
-                        }
-                        if (useProgress === true) {
-                            let taskOffset = e.task - assetsVerifyOffset;
-                            let totalOffset = e.total - assetsVerifyOffset;
-                            let percent = Math.round((taskOffset * 100) / totalOffset);
-                            RxDownloader.updateDownloadUIText(e.type, percent, taskOffset, totalOffset);
-                        }
-                    });
-                    launcher.on('download-status', (e) => {
-                        if ((e.total / 1024 / 1024) >= 4) {
-                            useProgress = false;
-                            let percent = Math.round((e.current * 100) / e.total);
-                            RxDownloader.updateDownloadUI(e.name, percent, e.current, e.total);
-                        } else {
-                            useProgress = true;
-                        }
-                    })
-                })
-            })
-        })
+            const launcher = new Client();
+            let ownedProcess = null;
+            let stopTimer = null;
+            let settled = false;
+            let launched = false;
+            let useProgress = false;
+            const finish = (passed, exitCode) => {
+                if (settled) return;
+                settled = true;
+                if (stopTimer) clearTimeout(stopTimer);
+                resolve({passed, exitCode});
+            };
+            launcher.on("debug", e => RxTests.writeVersionLog(e, versionId));
+            launcher.on("data", e => {
+                RxTests.writeVersionLog(e, versionId);
+                if (!launched && /Sound engine started|OpenAL initialized|Created: 512x512 textures-atlas/i.test(e)) {
+                    launched = true;
+                    RxFlyout.setText("Игра запущена", versionId);
+                    stopTimer = setTimeout(() => {
+                        // Terminate only the child started by this test, never other Java programs.
+                        if (Number.isSafeInteger(ownedProcess?.pid) && ownedProcess.pid > 0) treeKill(ownedProcess.pid);
+                    }, 6000);
+                }
+                if (/Stopping!|SoundSystem shutting down/i.test(e)) RxFlyout.setText("Игра закрывается", versionId);
+            });
+            launcher.on("close", exitCode => {
+                RxTests.writeToTestLog("Game exit code: " + exitCode);
+                finish(exitCode === 0 || (launched && exitCode === 1), exitCode);
+            });
+            launcher.on("arguments", () => {
+                gameStarting = true;
+                RxFlyout.changeMode("spinner");
+                RxFlyout.setText("Игра запускается", versionId);
+            });
+            launcher.on("progress", e => {
+                if (e.type === "assets") {
+                    if (startAssetsInterval === 0) startAssetsInterval = Date.now();
+                    if (assetsVerifyOffset === 0 && Date.now() - startAssetsInterval > 1000) assetsVerifyOffset = e.task - 1;
+                }
+                if (useProgress) {
+                    const taskOffset = e.task - assetsVerifyOffset;
+                    const totalOffset = e.total - assetsVerifyOffset;
+                    if (totalOffset > 0) RxDownloader.updateDownloadUIText(e.type,
+                        Math.round((taskOffset * 100) / totalOffset), taskOffset, totalOffset);
+                }
+            });
+            launcher.on("download-status", e => {
+                if (e.total / 1024 / 1024 >= 4) {
+                    useProgress = false;
+                    RxDownloader.updateDownloadUI(e.name, Math.round((e.current * 100) / e.total), e.current, e.total);
+                } else useProgress = true;
+            });
+            try {
+                Promise.resolve(launcher.launch(config)).then(child => { ownedProcess = child; },
+                    error => finish(false, error.message || "launch failed"));
+            } catch (error) {
+                finish(false, error.message || "launch failed");
+            }
+        });
     }
 
-    static prepareConfig = (versionId) => {
-        return new Promise((resolve, reject) => {
-            let parsedVersion = RxVersionsManager.parseVersionID(versionId);
-            // Готовим UI
-            RxTests.writeToTestLog(`Starter: Preparing UI to start / prepare()`);
-            let versionDisplayName = RxVersionsManager.versionToDisplayName();
-            // Получаем версию Java
-            RxJavaManager.gameVersionToJavaVersion(parsedVersion.name).then((javaVersion) => {
-                RxTests.writeToTestLog(`Starter: Using Java ${javaVersion}`);
-                if (javaVersion === false) {
-                    return reject(false);
-                }
-
-                javaVersion = javaVersion.toString();
-
-                RxTests.writeToTestLog(`Starter: Trying to install Java`);
-                // Скачиваем, если нужно
-                RxJavaManager.install(javaVersion, false).then(() => {
-                    // Установка Java завершена, получаем к ней путь
-                    let javaPath = RxJavaManager.getPath(javaVersion);
-                    if (javaPath === false) {
-                        return reject(false);
-                    }
-
-                    RxTests.writeToTestLog(`Starter: Java installation completed`);
-
-                    // Получаем конфигурацию
-                    RxLaunchConfigurator.createConfigForVersion(versionId, javaVersion).then((configuration) => {
-                        RxTests.writeToTestLog(`Starter: Configuration ready`);
-                        return resolve(configuration);
-                    });
-                });
-            });
-        })
+    static prepareConfig = async versionId => {
+        const parsedVersion = RxVersionsManager.parseVersionID(versionId);
+        RxTests.writeToTestLog("Starter: Preparing UI to start / prepare()");
+        const detectedJava = await RxJavaManager.gameVersionToJavaVersion(parsedVersion.name);
+        if (detectedJava === false) throw new Error("Could not determine Java version");
+        const javaVersion = String(detectedJava);
+        RxTests.writeToTestLog(`Starter: Using Java ${javaVersion}`);
+        await RxJavaManager.install(javaVersion, false);
+        if (!RxJavaManager.getPath(javaVersion)) throw new Error("Java installation failed");
+        const configuration = await RxLaunchConfigurator.createConfigForVersion(versionId, javaVersion);
+        RxTests.writeToTestLog("Starter: Configuration ready");
+        return configuration;
     }
 }

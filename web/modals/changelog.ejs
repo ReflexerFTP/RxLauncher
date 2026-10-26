@@ -3,7 +3,7 @@
 <div class="modal" id="modal-changelog" style="display: none;">
     <div class="changelog-shell">
         <header class="changelog-header">
-            <button class="square transparent small" onclick="RxChangelogUI.goBack()" title="{{commons.close}}">
+            <button class="square transparent small" data-rx-onclick="RxChangelogUI.goBack()" title="{{commons.close}}">
                 <span class="material-symbols-outlined">west</span>
             </button>
             <div class="changelog-header-icon"><span class="material-symbols-outlined">history</span></div>
@@ -51,4 +51,4 @@
     </div>
 </div>
 
-<script src="modals/changelog.js"></script>
+<script type="application/x-rx-script" src="modals/changelog.js"></script>

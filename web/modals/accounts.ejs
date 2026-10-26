@@ -18,21 +18,21 @@
     <div class="add-local">
         <span class="material-symbols-outlined add-local-icon">person_add</span>
         <input type="text" maxlength="16" spellcheck="false" placeholder="{{accounts.input}}"/>
-        <button class="add-local-button" onclick="RxAccountsUI.addLocalAccount()" title="{{accounts.add}}">
+        <button class="add-local-button" data-rx-onclick="RxAccountsUI.addLocalAccount()" title="{{accounts.add}}">
             <span class="material-symbols-outlined">arrow_forward</span>
         </button>
     </div>
 
     <div class="acc-footer">
         <span class="accounts-hint">{{accounts.offlineHint}}</span>
-        <button class="transparent acc-elyby" onclick="RxModals.hideCurrentOverlay(); RxModals.showModal('elybyLogin')">
+        <button class="transparent acc-elyby" data-rx-onclick="RxModals.hideCurrentOverlay(); RxModals.showModal('elybyLogin')">
             <img src="assets/elyby.webp" alt=""/>
             Ely.by
         </button>
     </div>
 </div>
 
-<script>
+<script type="application/x-rx-script">
     $(function () {
         $("#modal-accounts .add-local input").keydown(function (event) {
             if (event.key === "Enter") {

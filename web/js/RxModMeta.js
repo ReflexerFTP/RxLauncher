@@ -4,6 +4,8 @@ const yauzl = require("yauzl");
 
 class RxModMeta {
     static cache = new Map();          // fullPath -> {stamp, meta}
+    static MAX_CACHE_ENTRIES = 128;
+    static MAX_CACHE_BYTES = 16 * 1024 * 1024;
     static MAX_ENTRY_BYTES = 2 * 1024 * 1024;
     static MAX_NESTED_BYTES = 6 * 1024 * 1024;
     static MAX_ICON_BYTES = 256 * 1024;
@@ -25,14 +27,27 @@ class RxModMeta {
             : (cb) => yauzl.open(source, {lazyEntries: true, autoClose: true}, cb);
         open((error, zip) => {
             if (error || !zip) return resolve(result);
+            let retained = 0;
+            let scanned = 0;
             const finish = () => { try { zip.close(); } catch (_) {} resolve(result); };
             zip.on("entry", (entry) => {
+                if (++scanned > 50000) return finish();
                 if (!wanted(entry.fileName) || entry.uncompressedSize > maxBytes) return zip.readEntry();
+                if (retained + entry.uncompressedSize > maxBytes * 2) return zip.readEntry();
                 zip.openReadStream(entry, (streamError, stream) => {
                     if (streamError || !stream) return zip.readEntry();
                     const chunks = [];
-                    stream.on("data", (chunk) => chunks.push(chunk));
-                    stream.on("end", () => { result[entry.fileName] = Buffer.concat(chunks); zip.readEntry(); });
+                    let bytes = 0;
+                    stream.on("data", (chunk) => {
+                        bytes += chunk.length;
+                        if (bytes > maxBytes || retained + bytes > maxBytes * 2) stream.destroy(new Error("Metadata size limit"));
+                        else chunks.push(chunk);
+                    });
+                    stream.on("end", () => {
+                        retained += bytes;
+                        result[entry.fileName] = Buffer.concat(chunks, bytes);
+                        zip.readEntry();
+                    });
                     stream.on("error", () => zip.readEntry());
                 });
             });
@@ -169,10 +184,14 @@ class RxModMeta {
     // ---------- чтение одного мода ----------
     static read = async (fullPath) => {
         let stat;
-        try { stat = fs.statSync(fullPath); } catch (_) { return null; }
+        try { stat = fs.statSync(fullPath); } catch (_) { RxModMeta.cache.delete(fullPath); return null; }
         const stamp = `${stat.size}:${stat.mtimeMs}`;
         const cached = RxModMeta.cache.get(fullPath);
-        if (cached && cached.stamp === stamp) return cached.meta;
+        if (cached && cached.stamp === stamp) {
+            RxModMeta.cache.delete(fullPath);
+            RxModMeta.cache.set(fullPath, cached);
+            return cached.meta;
+        }
 
         const files = await RxModMeta.readEntries(fullPath, (name) => RxModMeta.METADATA_FILES.has(name));
         const parts = [];
@@ -212,7 +231,18 @@ class RxModMeta {
         meta.iconData = iconBuffer && iconBuffer.length <= RxModMeta.MAX_ICON_BYTES ? `data:image/png;base64,${iconBuffer.toString("base64")}` : "";
         delete meta.nested;
 
-        RxModMeta.cache.set(fullPath, {stamp, meta});
+        RxModMeta.cache.delete(fullPath);
+        const bytes = Buffer.byteLength(JSON.stringify(meta), "utf8");
+        if (bytes <= RxModMeta.MAX_CACHE_BYTES) {
+            RxModMeta.cache.set(fullPath, {stamp, meta, bytes});
+            let total = 0;
+            for (const value of RxModMeta.cache.values()) total += value.bytes || 0;
+            while (RxModMeta.cache.size > RxModMeta.MAX_CACHE_ENTRIES || total > RxModMeta.MAX_CACHE_BYTES) {
+                const oldest = RxModMeta.cache.keys().next().value;
+                total -= RxModMeta.cache.get(oldest).bytes || 0;
+                RxModMeta.cache.delete(oldest);
+            }
+        }
         return meta;
     };
 

@@ -465,7 +465,11 @@
           "description": "Disables background server pings and launcher stats. Direct play from the server tab is blocked; manual server joins still reveal your IP without a VPN/proxy."
         },
         "checkModsBeforeLaunch": "Check mods before launching the game",
-        "autoBackupWorlds": "Back up worlds after playing"
+        "autoBackupWorlds": "Back up worlds after playing",
+        "sendTechnicalStats": {
+          "title": "Send technical statistics",
+          "description": "Optional: Windows and launcher versions, CPU, memory and installed version counts. Uses a random identifier; disabled by default."
+        }
       },
       "java": {
         "auto": {

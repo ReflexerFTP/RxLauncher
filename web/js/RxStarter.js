@@ -95,6 +95,7 @@ class RxStarter {
             this.versionNumber = modpackData.baseVersion.number;
             this.versionId = modpackData.baseVersion.full;
             this.versionType = modpackData.baseVersion.type;
+            this.loaderVersion = modpackData.baseVersion.loaderVersion || "";
         }
 
         // Своя версия: Java и Discord берут номер базовой версии Minecraft
@@ -118,6 +119,7 @@ class RxStarter {
 
         // Получаем версию Java
         RxCollector.writeLog(`Starter: Gathering Java`);
+        const automaticJava = RxConfig.read("autoSelectJava", true) === true;
         let javaVersion = customJava || await RxJavaManager.gameVersionToJavaVersion(this.versionNumber);
         if (javaVersion === false) {
             return false;
@@ -126,18 +128,18 @@ class RxStarter {
         RxCollector.writeLog(`Starter: Trying to install Java`);
 
         // Скачиваем, если нужно
-        await RxJavaManager.install(javaVersion, false);
+        if (automaticJava) await RxJavaManager.install(javaVersion, false);
 
         // Установка Java завершена, получаем к ней путь
-        let javaPath = RxJavaManager.getPath(javaVersion);
-        if (javaPath === false) {
+        let javaPath = automaticJava ? RxJavaManager.getPath(javaVersion) : RxConfig.read("selectedJava", "");
+        if (!javaPath || !fs.existsSync(javaPath) || !fs.statSync(javaPath).isFile()) {
             RxCollector.writeLog(`Starter: Java installation failed! ${javaPath}`);
             return false;
         }
         RxCollector.writeLog(`Starter: Java installation completed`);
 
         // Получаем конфигурацию
-        let configuration = await RxLaunchConfigurator.createConfigForVersion(this.versionId, javaVersion);
+        let configuration = await RxLaunchConfigurator.createConfigForVersion(this.versionId, javaVersion, this.loaderVersion || "");
         if(!configuration){
             RxCollector.writeLog(`Starter: Error happend with launch config!`);
             return false;
@@ -155,9 +157,7 @@ class RxStarter {
             }
         }
 
-        if (IS_APP_IN_DEV) {
-            console.log(configuration);
-        }
+        // Launch configuration contains access tokens; never log it.
         return configuration;
     }
 

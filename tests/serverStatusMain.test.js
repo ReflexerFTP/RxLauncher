@@ -162,9 +162,9 @@ const runMockTests = async () => {
     assert(callsAfterForcedQuery > callsBeforeCacheCheck);
     assert.strictEqual(requestedUrls.length, callsAfterForcedQuery, "non-forced query must reuse the cached status");
 
-    assert.match(source, /ipcMain\.handle\("server-status-query", \(_event, address, force = false, options = \{\}\)/);
+    assert.match(source, /handleTrusted\("server-status-query", \(_event, address, force = false, options = \{\}\)/);
     assert.match(source, /queryMinecraftServerStatus\(address, force === true, options\)/);
-    assert.match(source, /ipcMain\.handle\("server-catalog-connectivity", \(\) => checkServerCatalogConnectivity\(\)\)/);
+    assert.match(source, /handleTrusted\("server-catalog-connectivity", \(\) => checkServerCatalogConnectivity\(\)\)/);
 
     const fastProbeService = createService({
         fetchImpl: async url => {

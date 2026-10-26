@@ -146,7 +146,7 @@ class RxScreenshotsUI {
             entries.filter(entry => entry.isIntersecting).forEach(async entry => {
                 const img = entry.target;
                 RxScreenshotsUI.observer.unobserve(img);
-                const thumb = await ipcRenderer.invoke("screenshot-thumbnail", img.dataset.file);
+                const thumb = await ipcRenderer.invoke("screenshot-thumbnail", img.dataset.file).catch(() => "");
                 if (thumb) img.src = thumb;
                 img.closest(".shots-tile")?.classList.add(thumb ? "loaded" : "broken");
             });
@@ -194,7 +194,7 @@ class RxScreenshotsUI {
             $button.addClass("confirm").find("span:last-child").text(MESSAGES.screenshots.deleteConfirm);
             return;
         }
-        const ok = await ipcRenderer.invoke("screenshot-action", {action, file: item.file});
+        const ok = await ipcRenderer.invoke("screenshot-action", {action, file: item.file}).catch(() => false);
         if (action === "copy" && ok) RxToasts.create(MESSAGES.screenshots.copied, "content_copy", item.name, "success");
         if (action === "delete") {
             $button.removeClass("confirm").find("span:last-child").text(MESSAGES.screenshots.delete);

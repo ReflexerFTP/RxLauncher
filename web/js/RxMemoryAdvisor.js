@@ -17,6 +17,11 @@ class RxMemoryAdvisor {
     };
 
     static recommend = ({totalMb, modsCount = 0, modded = false}) => {
+        totalMb = Number(totalMb);
+        if (!Number.isFinite(totalMb) || totalMb <= 0) totalMb = 4096;
+        modsCount = Number(modsCount);
+        if (!Number.isFinite(modsCount) || modsCount < 0) modsCount = 0;
+        modsCount = Math.floor(modsCount);
         let target = modded ? 3072 + Math.max(0, modsCount - 20) * 64 : 2048;
         if (modsCount > 150) target += 1024;
         // Системе и лаунчеру оставляем запас: на 8 ГБ — 2.5 ГБ, на больших — 4 ГБ
@@ -36,12 +41,23 @@ class RxMemoryAdvisor {
     };
 
     // Сколько памяти дать игре при запуске. У сборки может быть своя настройка
+    static normalizeManualMb = (value) => {
+        const requested = Number(value);
+        const total = RxMemoryAdvisor.totalMb();
+        // Manual settings may exceed the automatic 12 GiB target, but not physical RAM.
+        const cap = Number.isFinite(total) && total > 0
+            ? Math.max(RxMemoryAdvisor.MIN_MB, total - (total <= 8192 ? 1536 : 2048))
+            : RxMemoryAdvisor.MAX_MB;
+        const safe = Number.isFinite(requested) && requested >= RxMemoryAdvisor.MIN_MB ? requested : 2048;
+        return Math.max(RxMemoryAdvisor.MIN_MB, Math.floor(Math.min(safe, cap)));
+    };
+
     static launchMemoryMb = () => {
         const instance = typeof RxInstancesUI !== "undefined" ? RxInstancesUI.activeManifest() : null;
-        if (instance?.memory?.mode === "manual" && Number(instance.memory.mb) >= 1024) return Number(instance.memory.mb);
+        if (instance?.memory?.mode === "manual") return RxMemoryAdvisor.normalizeManualMb(instance.memory.mb);
         if (instance?.memory?.mode === "auto") return RxMemoryAdvisor.forActiveVersion().mb;
         return RxMemoryAdvisor.isEnabled()
             ? RxMemoryAdvisor.forActiveVersion().mb
-            : Number(RxConfig.read("xmxMemory", 2048)) || 2048;
+            : RxMemoryAdvisor.normalizeManualMb(RxConfig.read("xmxMemory", 2048));
     };
 }

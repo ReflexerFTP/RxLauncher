@@ -3,82 +3,82 @@
 <head>
     <meta charset="UTF-8"/>
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: file: https:; media-src 'self' data: blob: file:; font-src 'self' data: file:; connect-src 'self' https: http:; worker-src blob:;"/>
+          content="default-src 'self' file:; script-src 'none'; object-src 'none'; base-uri 'none'; frame-src 'none'; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: file: https:; media-src 'self' data: blob: file:; font-src 'self' data: file:; connect-src 'self' https: http:; worker-src blob:;"/>
 
     <!-- Скрпиты -->
-    <script src="./js/renderer.js"></script>
-    <script src="./js/RxHttp.js"></script>
-    <script src="./js/howler.min.js"></script>
-    <script src="./js/colors.js"></script>
-    <script src="./js/RxPatchNotes.js"></script>
-    <script src="./js/RxPatchFeed.js"></script>
-    <script src="./js/RxVersionArtwork.js"></script>
+    <script type="application/x-rx-script" src="./js/renderer.js"></script>
+    <script type="application/x-rx-script" src="./js/RxHttp.js"></script>
+    <script type="application/x-rx-script" src="./js/howler.min.js"></script>
+    <script type="application/x-rx-script" src="./js/colors.js"></script>
+    <script type="application/x-rx-script" src="./js/RxPatchNotes.js"></script>
+    <script type="application/x-rx-script" src="./js/RxPatchFeed.js"></script>
+    <script type="application/x-rx-script" src="./js/RxVersionArtwork.js"></script>
 
-    <script src="./js/RxConfig.js"></script>
-    <script src="./js/RxPrivacy.js"></script>
-    <script src="./js/RxBranding.js"></script>
-    <script src="./js/RxDiscordRpc.js"></script>
+    <script type="application/x-rx-script" src="./js/RxConfig.js"></script>
+    <script type="application/x-rx-script" src="./js/RxPrivacy.js"></script>
+    <script type="application/x-rx-script" src="./js/RxBranding.js"></script>
+    <script type="application/x-rx-script" src="./js/RxDiscordRpc.js"></script>
 
     <!-- Cтили -->
     <link href="./css/globals.css" rel="stylesheet">
     <link href="./css/animate.min.css" rel="stylesheet">
 
-    <script src="./js/RxConsoleUI.js"></script>
-    <script src="./js/RxCollector.js"></script>
-    <script src="./js/RxTranslator.js"></script>
-    <script>RxTranslator.loadCurrentLanguageToGlobalVariable()</script>
+    <script type="application/x-rx-script" src="./js/RxConsoleUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxCollector.js"></script>
+    <script type="application/x-rx-script" src="./js/RxTranslator.js"></script>
+    <script type="application/x-rx-script">RxTranslator.loadCurrentLanguageToGlobalVariable()</script>
 
-    <script src="./js/RxOptimizer.js"></script>
-    <script src="./js/RxAccountsManager.js"></script>
-    <script src="./js/RxAccountsUI.js"></script>
-    <script src="./js/RxAlerts.js"></script>
-    <script src="./js/RxAssets.js"></script>
-    <script src="./js/RxAssetsParsers.js"></script>
-    <script src="./js/RxDownloader.js"></script>
-    <script src="./js/RxCrashAnalyzer.js"></script>
-    <script src="./js/RxCrashUI.js"></script>
-    <script src="./js/RxElybyManager.js"></script>
-    <script src="./js/RxFlyout.js"></script>
-    <script src="./js/RxJavaManager.js"></script>
-    <script src="./js/RxLaunchConfigurator.js"></script>
-    <script src="./js/RxModals.js"></script>
-    <script src="./js/RxModMeta.js"></script>
-    <script src="./js/RxModsManager.js"></script>
-    <script src="./js/RxPackManagerUI.js"></script>
-    <script src="./js/RxModsUpdater.js"></script>
-    <script src="./js/RxPacks.js"></script>
-    <script src="./js/RxCurseForge.js"></script>
-    <script src="./js/RxPacksUI.js"></script>
-    <script src="./js/RxPlayStats.js"></script>
-    <script src="./js/RxStatisticsUI.js"></script>
-    <script src="./js/RxRequests.js"></script>
-    <script src="./js/RxMinecraftServers.js"></script>
-    <script src="./js/RxServersUI.js"></script>
-    <script src="./js/RxSkinBrowserUI.js"></script>
-    <script src="./js/RxStarter.js"></script>
-    <script src="./js/RxTests.js"></script>
-    <script src="./js/RxThemes.js"></script>
-    <script src="./js/RxToasts.js"></script>
-    <script src="./js/RxUtils.js"></script>
-    <script src="./js/RxUI.js"></script>
-    <script src="./js/RxUpdater.js"></script>
-    <script src="./js/RxVersionsManager.js"></script>
-    <script src="./js/RxCustomVersions.js"></script>
-    <script src="./js/RxSelect.js"></script>
-    <script src="./js/RxMemoryAdvisor.js"></script>
-    <script src="./js/RxScreenshotsUI.js"></script>
-    <script src="./js/RxModrinthCatalog.js"></script>
-    <script src="./js/RxInstancesUI.js"></script>
-    <script src="./js/RxTabs.js"></script>
-    <script src="./js/RxVersionsUI.js"></script>
-    <script src="./js/RxWorldsManager.js"></script>
-    <script src="./js/RxDialog.js"></script>
-    <script src="./js/RxCatalog.js"></script>
-    <script src="./js/RxLaunchCheck.js"></script>
-    <script src="./js/RxWorldBackups.js"></script>
-    <script src="./js/RxWorldsUI.js"></script>
-    <script src="./js/RxShare.js"></script>
-    <script src="./js/RxTogetherUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxOptimizer.js"></script>
+    <script type="application/x-rx-script" src="./js/RxAccountsManager.js"></script>
+    <script type="application/x-rx-script" src="./js/RxAccountsUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxAlerts.js"></script>
+    <script type="application/x-rx-script" src="./js/RxAssets.js"></script>
+    <script type="application/x-rx-script" src="./js/RxAssetsParsers.js"></script>
+    <script type="application/x-rx-script" src="./js/RxDownloader.js"></script>
+    <script type="application/x-rx-script" src="./js/RxCrashAnalyzer.js"></script>
+    <script type="application/x-rx-script" src="./js/RxCrashUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxElybyManager.js"></script>
+    <script type="application/x-rx-script" src="./js/RxFlyout.js"></script>
+    <script type="application/x-rx-script" src="./js/RxJavaManager.js"></script>
+    <script type="application/x-rx-script" src="./js/RxLaunchConfigurator.js"></script>
+    <script type="application/x-rx-script" src="./js/RxModals.js"></script>
+    <script type="application/x-rx-script" src="./js/RxModMeta.js"></script>
+    <script type="application/x-rx-script" src="./js/RxModsManager.js"></script>
+    <script type="application/x-rx-script" src="./js/RxPackManagerUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxModsUpdater.js"></script>
+    <script type="application/x-rx-script" src="./js/RxPacks.js"></script>
+    <script type="application/x-rx-script" src="./js/RxCurseForge.js"></script>
+    <script type="application/x-rx-script" src="./js/RxPacksUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxPlayStats.js"></script>
+    <script type="application/x-rx-script" src="./js/RxStatisticsUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxRequests.js"></script>
+    <script type="application/x-rx-script" src="./js/RxMinecraftServers.js"></script>
+    <script type="application/x-rx-script" src="./js/RxServersUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxSkinBrowserUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxStarter.js"></script>
+    <script type="application/x-rx-script" src="./js/RxTests.js"></script>
+    <script type="application/x-rx-script" src="./js/RxThemes.js"></script>
+    <script type="application/x-rx-script" src="./js/RxToasts.js"></script>
+    <script type="application/x-rx-script" src="./js/RxUtils.js"></script>
+    <script type="application/x-rx-script" src="./js/RxUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxUpdater.js"></script>
+    <script type="application/x-rx-script" src="./js/RxVersionsManager.js"></script>
+    <script type="application/x-rx-script" src="./js/RxCustomVersions.js"></script>
+    <script type="application/x-rx-script" src="./js/RxSelect.js"></script>
+    <script type="application/x-rx-script" src="./js/RxMemoryAdvisor.js"></script>
+    <script type="application/x-rx-script" src="./js/RxScreenshotsUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxModrinthCatalog.js"></script>
+    <script type="application/x-rx-script" src="./js/RxInstancesUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxTabs.js"></script>
+    <script type="application/x-rx-script" src="./js/RxVersionsUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxWorldsManager.js"></script>
+    <script type="application/x-rx-script" src="./js/RxDialog.js"></script>
+    <script type="application/x-rx-script" src="./js/RxCatalog.js"></script>
+    <script type="application/x-rx-script" src="./js/RxLaunchCheck.js"></script>
+    <script type="application/x-rx-script" src="./js/RxWorldBackups.js"></script>
+    <script type="application/x-rx-script" src="./js/RxWorldsUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxShare.js"></script>
+    <script type="application/x-rx-script" src="./js/RxTogetherUI.js"></script>
     <link href="./css/rx-dialog.css" rel="stylesheet">
 
     <title>RxLauncher</title>
@@ -135,7 +135,7 @@
 <%- include('modals/createPack'); %>
 </body>
 </html>
-<script>
+<script type="application/x-rx-script">
     let currentThemeData, loadedThemeData;
     let selectedServerFromList = false;
     $(async function () {
@@ -261,7 +261,7 @@
             RxFlyout.setUIStartMode(true);
             await RxFlyout.changeMode("spinner");
             RxFlyout.setText("Начинается тестирование");
-            RxTests.startTest(0);
+            RxTests.startTest();
         }
     })
 </script>

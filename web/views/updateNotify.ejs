@@ -7,11 +7,11 @@
         <span class="description">{{updater.downloading}}</span>
     </div>
     <button class="transparent pill small"
-            onclick="openExternal(`https://github.com/${REPO_NAME}/releases/latest`)">
+            data-rx-onclick="openExternal(`https://github.com/${REPO_NAME}/releases/latest`)">
         <div class="link">
             <span class="material-symbols-outlined">open_in_new</span>
             <span>{{updater.changelog}}</span>
         </div>
     </button>
-    <button class="pill small" style="display: none" onclick="RxUpdater.installUpdate()">{{updater.install}}</button>
+    <button class="pill small" style="display: none" data-rx-onclick="RxUpdater.installUpdate()">{{updater.install}}</button>
 </div>

@@ -2,8 +2,8 @@
     static RX_CLIENT_MIN_VERSION = "1.21.4";
     static RX_CLIENT_ALLOWED_LOADERS = ["fabric", "neoforge", "forge", "quilt"];
     static RX_CLIENT_FEATURED_MOD = "fancymenu";
-    static RX_CLIENT_TEMPLATE_DIR = path.join(__dirname, "..", "assets", "rxclient");
-    static RX_CLIENT_BUNDLED_MODS_DIR = path.join(__dirname, "..", "assets", "rxclient", "mods");
+    static RX_CLIENT_TEMPLATE_DIR = path.join(__dirname, "assets", "rxclient");
+    static RX_CLIENT_BUNDLED_MODS_DIR = path.join(__dirname, "assets", "rxclient", "mods");
     static RX_CLIENT_TEMPLATE_LAYOUT_FILES = ["title_screen_layout.txt"];
     static RX_CLIENT_LAYOUT_SOURCE_CANDIDATES = ["title_screen_layout.txt", "rx_title.txt"];
     static RX_CLIENT_STALE_LAYOUT_FILES = ["rx_title.txt", "rx_alt_manager.txt"];
@@ -11,7 +11,7 @@
     static ZIP_EOCD_SIGNATURE = [0x50, 0x4b, 0x05, 0x06];
     static ZIP64_EOCD_SIGNATURE = [0x50, 0x4b, 0x06, 0x06];
 
-    static createConfigForVersion = async (version, javaVersion) => {
+    static createConfigForVersion = async (version, javaVersion, loaderVersion = "") => {
         RxCollector.writeLog(`Config: Preparing launch config [version=${version}] [java=${javaVersion}]`);
         if (version.split("-").length < 2) {
             return false;
@@ -36,7 +36,7 @@
             return false;
         }
 
-        if (RxConfig.read("autoSelectJava") === true) {
+        if (RxConfig.read("autoSelectJava", true) === true) {
             resultConfig.javaPath = RxJavaManager.getPath(javaVersion);
         } else {
             resultConfig.javaPath = RxConfig.read("selectedJava");
@@ -44,7 +44,7 @@
 
         RxCollector.writeLog("Config: Prepared first version");
 
-        const moddedLaunchConfig = await RxLaunchConfigurator.getModdedLaunchConfig(rxClientMeta.launchType, versionParsed.name);
+        const moddedLaunchConfig = await RxLaunchConfigurator.getModdedLaunchConfig(rxClientMeta.launchType, versionParsed.name, loaderVersion);
         if (!moddedLaunchConfig || typeof moddedLaunchConfig !== "object") {
             RxCollector.writeLog("Config: Failed to get modded launch config");
             return false;
@@ -869,7 +869,7 @@ variable {
     }
 
     static drawRxClientRoundedRect = (Jimp, image, x, y, width, height, radius, color) => {
-        const layer = new Jimp(width, height, 0x00000000);
+        const layer = new Jimp({width, height, color: 0x00000000});
         layer.scan(0, 0, width, height, function (px, py) {
             const dx = px < radius ? radius - px : (px >= width - radius ? px - (width - radius - 1) : 0);
             const dy = py < radius ? radius - py : (py >= height - radius ? py - (height - radius - 1) : 0);
@@ -882,11 +882,12 @@ variable {
 
     static renderRxClientAltPanel = async (assetsTargetDir) => {
         try {
-            const Jimp = require("jimp");
-            const rgba = (r, g, b, a = 255) => Jimp.rgbaToInt(r, g, b, a);
-            const image = new Jimp(600, 440, 0x00000000);
-            const font32 = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
-            const font16 = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE);
+            const {Jimp, rgbaToInt, loadFont, HorizontalAlign} = require("jimp");
+            const {SANS_32_WHITE, SANS_16_WHITE} = require("jimp/fonts");
+            const rgba = (r, g, b, a = 255) => rgbaToInt(r, g, b, a);
+            const image = new Jimp({width: 600, height: 440, color: 0x00000000});
+            const font32 = await loadFont(SANS_32_WHITE);
+            const font16 = await loadFont(SANS_16_WHITE);
             const drawRounded = (x, y, width, height, radius, color) => {
                 RxLaunchConfigurator.drawRxClientRoundedRect(Jimp, image, x, y, width, height, radius, color);
             };
@@ -904,19 +905,19 @@ variable {
                 });
             }
 
-            image.print(font16, 42, 104, "Type your nickname and click Add", 380, 24);
-            image.print(font32, 0, 180, {
+            image.print({font: font16, x: 42, y: 104, text: "Type your nickname and click Add", maxWidth: 380, maxHeight: 24});
+            image.print({font: font32, x: 0, y: 180, text: {
                 text: "ALT manager",
-                alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER
-            }, 600, 40);
-            image.print(font16, 0, 222, {
+                alignmentX: HorizontalAlign.CENTER
+            }, maxWidth: 600, maxHeight: 40});
+            image.print({font: font16, x: 0, y: 222, text: {
                 text: "New nicknames are saved for this profile",
-                alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER
-            }, 600, 24);
-            image.print(font16, 42, 344, "Saved in ALT list variables", 500, 22);
+                alignmentX: HorizontalAlign.CENTER
+            }, maxWidth: 600, maxHeight: 24});
+            image.print({font: font16, x: 42, y: 344, text: "Saved in ALT list variables", maxWidth: 500, maxHeight: 22});
 
             fs.mkdirSync(assetsTargetDir, {recursive: true});
-            await image.writeAsync(path.join(assetsTargetDir, "alt_panel.png"));
+            await image.write(path.join(assetsTargetDir, "alt_panel.png"));
         } catch (e) {
             RxCollector.writeLog(`RxClient: Failed to render alt panel [error=${e}]`);
         }
@@ -1340,37 +1341,21 @@ variable {
         return removed;
     }
 
-    static getModdedLaunchConfig = (type, version) => {
-        return new Promise((resolve) => {
-            // Свои версии всегда лежат в общей папке versions; раздельным остаётся только игровой каталог
-            if (type === "custom") {
-                ipcRenderer.send("generate-mclc-config", {type, version, gameData: GAME_DATA});
-                ipcRenderer.once("get-mclc-config", (event, result) => {
-                    if (result && RxConfig.read("fullySeparatedStorage") === true) {
-                        result.overrides = {...(result.overrides || {}), gameDirectory: path.join(GAME_DATA, "home", `custom-${version}`)};
-                    }
-                    resolve(result);
-                });
-                return;
+    static getModdedLaunchConfig = async (type, version, loaderVersion = "") => {
+        const separated = RxConfig.read("fullySeparatedStorage") === true;
+        // Custom manifests remain in the shared versions folder.
+        const gameData = type !== "custom" && separated
+            ? path.join(GAME_DATA, "home", `${type}-${version}`) : GAME_DATA;
+        try {
+            const result = await ipcRenderer.invoke("generate-mclc-config", {type, version, loaderVersion, gameData});
+            if (result && type === "custom" && separated) {
+                result.overrides = {...(result.overrides || {}), gameDirectory: path.join(GAME_DATA, "home", `custom-${version}`)};
             }
-            if (RxConfig.read("fullySeparatedStorage") === true) {
-                ipcRenderer.send("generate-mclc-config", {
-                    type: type,
-                    version: version,
-                    gameData: path.join(GAME_DATA, "home", `${type}-${version}`)
-                });
-            } else {
-                ipcRenderer.send("generate-mclc-config", {
-                    type: type,
-                    version: version,
-                    gameData: GAME_DATA
-                });
-            }
-
-            ipcRenderer.once("get-mclc-config", (event, result) => {
-                RxCollector.writeLog("Config: We got modded launch config");
-                resolve(result);
-            });
-        });
+            RxCollector.writeLog("Config: We got modded launch config");
+            return result;
+        } catch (error) {
+            RxCollector.writeLog(`Config: Modded launch config failed [error=${error.message}]`);
+            return false;
+        }
     }
 }

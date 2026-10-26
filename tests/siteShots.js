@@ -43,6 +43,10 @@ const STAGES = [
     ["versions", `(RxDialog.close(), RxVersionsUI.open())`, 1200]
 ];
 
+const accountStore = require("../accountStore").createAccountStore(path.join(app.getPath("userData"), "accounts.json"), require("electron").safeStorage);
+ipcMain.on("renderer-template", event => { event.returnValue = require("../rendererTemplate")(); });
+ipcMain.on("accounts-read", event => { try { event.returnValue = {ok: true, accounts: accountStore.read()}; } catch (e) { event.returnValue = {ok: false, error: e.message}; } });
+ipcMain.on("accounts-write", (event, accounts) => { try { accountStore.write(accounts); event.returnValue = {ok: true}; } catch (e) { event.returnValue = {ok: false, error: e.message}; } });
 app.whenReady().then(async () => {
     ejs.listen();
     // Рисуем вне экрана (пользователь окно не видит), а размер и плотность задаём через протокол отладки Chromium:
@@ -50,13 +54,14 @@ app.whenReady().then(async () => {
     // Окно показано, но стоит за пределами экрана и не принимает клики — пользователь его не видит и не заденет
     const window = new BrowserWindow({
         width: 1400, height: 900, x: -6000, y: -6000, show: false, frame: false, focusable: false, skipTaskbar: true,
-        webPreferences: {nodeIntegration: true, contextIsolation: false, backgroundThrottling: false}
+        webPreferences: {nodeIntegration: false, contextIsolation: true, sandbox: false, preload: path.join(__dirname, "..", "preload.js"), backgroundThrottling: false}
     });
     window.setIgnoreMouseEvents(true);
     window.showInactive();
     window.setPosition(-6000, -6000);
     const cdp = window.webContents.debugger;
     const capture = async () => Buffer.from((await cdp.sendCommand("Page.captureScreenshot", {format: "png", fromSurface: true})).data, "base64");
+    const evaluateIsolated = code => window.webContents.executeJavaScriptInIsolatedWorld(999, [{code}]);
     await window.loadURL(`file://${path.join(__dirname, "..", "web", "index.ejs").replace(/\\/g, "/")}`);
     await Promise.race([ready, delay(15000)]);
     console.log("loaded");
@@ -64,7 +69,7 @@ app.whenReady().then(async () => {
     await cdp.sendCommand("Emulation.setDeviceMetricsOverride", {width: 1400, height: 900, deviceScaleFactor: SCALE, mobile: false});
     console.log("emulated");
     await delay(1500);
-    await window.webContents.executeJavaScript(`(() => {
+    await evaluateIsolated(`(() => {
         RxConfig.write("activeVersion", "fabric-1.21.4");
         RxAccountsManager.addLocalAccount("Steve");
         RxAccountsManager.setActiveAccount(Object.keys(RxAccountsManager.getAccounts())[0]);
@@ -126,9 +131,9 @@ app.whenReady().then(async () => {
 
     for (const [name, code, wait] of STAGES) {
         try {
-            await window.webContents.executeJavaScript(`(async () => { await (${code}); RxToasts.removeAll(); })()`);
+            await evaluateIsolated(`(async () => { await (${code}); RxToasts.removeAll(); })()`);
             await delay(wait);
-            await window.webContents.executeJavaScript(`RxToasts.removeAll()`);
+            await evaluateIsolated(`RxToasts.removeAll()`);
             fs.writeFileSync(path.join(outDir, `${name}.png`), await capture());
             console.log(`shot ${name}`);
         } catch (error) {

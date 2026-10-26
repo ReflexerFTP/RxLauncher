@@ -4,32 +4,9 @@ const NICKNAME_REGEX = /^[a-zA-Z0-9_]{2,16}$/;
 class RxAccountsManager {
     // Load accounts and keep only supported account types.
     static getAccounts = () => {
-        if (!fs.existsSync(accountsFilePath)) {
-            return this.cleanAccountsList();
-        }
-
-        try {
-            const accounts = JSON.parse(fs.readFileSync(accountsFilePath, "utf8"));
-            if (!accounts || typeof accounts !== "object" || Array.isArray(accounts)) {
-                throw new Error("Accounts root must be an object");
-            }
-            return this.filterSupportedAccounts(accounts);
-        } catch (error) {
-            const backupPath = path.join(
-                path.dirname(accountsFilePath),
-                `accounts.corrupt-${Date.now()}.json`
-            );
-
-            try {
-                fs.copyFileSync(accountsFilePath, backupPath);
-                RxCollector.writeLog(`Accounts: Corrupted file backed up to ${backupPath}`);
-            } catch (backupError) {
-                RxCollector.writeLog(`Accounts: Failed to back up corrupted file [error=${backupError.message}]`);
-            }
-
-            RxCollector.writeLog(`Accounts: Failed to read account storage [error=${error.message}]`);
-            return this.cleanAccountsList();
-        }
+        const result = ipcRenderer.sendSync("accounts-read");
+        if (!result?.ok) throw new Error(result?.error || "Account storage is unavailable");
+        return this.filterSupportedAccounts(result.accounts);
     }
 
     // Keep only local and Ely.by accounts.
@@ -56,7 +33,7 @@ class RxAccountsManager {
         });
 
         if (wasChanged) {
-            fs.writeFileSync(accountsFilePath, JSON.stringify(filteredAccounts, null, "\t"));
+            this.saveAccounts(filteredAccounts, false);
             RxCollector.writeLog("Accounts: Removed unsupported account types");
 
             let activeAccount = RxConfig.read("activeAccount", "none");
@@ -69,9 +46,8 @@ class RxAccountsManager {
     }
 
     static saveAccounts = (accounts, reloadUI = true) => {
-        const tmpPath = `${accountsFilePath}.tmp`;
-        fs.writeFileSync(tmpPath, JSON.stringify(accounts, null, "\t"), "utf8");
-        fs.renameSync(tmpPath, accountsFilePath);
+        const result = ipcRenderer.sendSync("accounts-write", accounts);
+        if (!result?.ok) throw new Error(result?.error || "Account storage could not be saved");
         RxCollector.writeLog("Accounts: Saved successfully");
         if (reloadUI) {
             RxAccountsUI.reloadAccountSelect();

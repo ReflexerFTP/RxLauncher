@@ -27,7 +27,9 @@ const {createLauncherBranding} = require("./launcherBranding");
 const {createMinecraftSkinService} = require("./minecraftSkinService");
 require('console-stamp')(console);
 const userDataPath = app.getPath("userData");
+const accountStore = require("./accountStore").createAccountStore(path.join(userDataPath, "accounts.json"), safeStorage);
 const launcherConfigPath = path.join(userDataPath, "config.json");
+const gameFileSafety = require("./gameFileSafety").createGameFileSafety(launcherConfigPath);
 const launcherBranding = createLauncherBranding({app, shell, nativeImage});
 const initialLauncherAvatarId = launcherBranding.readSelectedAvatarId(launcherConfigPath);
 launcherBranding.applyAppUserModelId();
@@ -125,12 +127,12 @@ const writeAccountLauncherSkin = async (accountUuid, profile) => {
 
     try {
         fs.copyFileSync(profile.texturePath, textureTemporary);
-        const Jimp = getJimp();
+        const {Jimp, ResizeStrategy} = getJimp();
         const skinImage = await Jimp.read(profile.texturePath);
-        const head = skinImage.clone().crop(8, 8, 8, 8);
-        const hat = skinImage.clone().crop(40, 8, 8, 8);
-        head.composite(hat, 0, 0).resize(128, 128, Jimp.RESIZE_NEAREST_NEIGHBOR);
-        await head.writeAsync(headTemporary);
+        const head = skinImage.clone().crop({x: 8, y: 8, w: 8, h: 8});
+        const hat = skinImage.clone().crop({x: 40, y: 8, w: 8, h: 8});
+        head.composite(hat, 0, 0).resize({w: 128, h: 128, mode: ResizeStrategy.NEAREST_NEIGHBOR});
+        fs.writeFileSync(headTemporary, await head.getBuffer("image/png"));
         replaceFile(textureTemporary, textureTarget);
         replaceFile(headTemporary, headTarget);
 
@@ -144,8 +146,11 @@ const writeAccountLauncherSkin = async (accountUuid, profile) => {
             sha256: profile.sha256,
             updatedAt: Date.now()
         };
-        accounts[accountUuid] = account;
-        fs.writeFileSync(accountsTemporary, JSON.stringify(accounts, null, "\t"), {encoding: "utf8", flag: "w"});
+        // The account may have refreshed its token while the skin was decoded.
+        const latestAccounts = JSON.parse(fs.readFileSync(accountsPath, "utf8"));
+        if (!latestAccounts[accountUuid]) return {success: false, error: "no_active_account"};
+        latestAccounts[accountUuid] = {...latestAccounts[accountUuid], launcherSkin: account.launcherSkin};
+        fs.writeFileSync(accountsTemporary, JSON.stringify(latestAccounts, null, "\t"), {encoding: "utf8", flag: "w"});
         replaceFile(accountsTemporary, accountsPath);
         return {success: true, path: textureTarget, headPath: headTarget};
     } catch (error) {
@@ -599,15 +604,17 @@ const buildLocalMclcConfig = (type, version, gameData) => {
 
 // Своя версия: versions/<имя>/<имя>.json. С inheritsFrom MCLC берёт базовую версию и накладывает поверх
 const buildCustomMclcConfig = (name, gameData) => {
-    if (!/^[\w.+\-]+$/.test(String(name))) return false;
+    if (!/^[A-Za-z0-9][A-Za-z0-9._+-]{0,79}$/.test(String(name))) return false;
     let manifest;
     try {
         manifest = JSON.parse(fs.readFileSync(path.join(gameData, "versions", name, `${name}.json`), "utf8"));
     } catch (_) {
         return false;
     }
-    const type = typeof manifest.type === "string" ? manifest.type : "release";
+    if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) return false;
+    const type = ["release", "snapshot", "old_alpha", "old_beta"].includes(manifest.type) ? manifest.type : "release";
     if (typeof manifest.inheritsFrom === "string" && manifest.inheritsFrom) {
+        if (!/^[A-Za-z0-9][A-Za-z0-9._+-]{0,79}$/.test(manifest.inheritsFrom)) return false;
         return {root: gameData, version: {number: manifest.inheritsFrom, type, custom: name}};
     }
     // Самостоятельный манифест — запускаем как обычную версию из своей папки
@@ -619,6 +626,7 @@ let lastLogBack;
 
 // Создаём глобальные переменные для хранения BrowserWindow
 let mainWindowObject;
+const {onTrusted, handleTrusted} = require("./ipcSecurity").createTrustedIpc(ipcMain, () => mainWindowObject, path.join(__dirname, "web", "index.ejs"));
 let gameTray = null;
 const showLauncherWindow = () => {
     if (!mainWindowObject || mainWindowObject.isDestroyed()) return;
@@ -1088,7 +1096,7 @@ app.whenReady().then(() => {
 
     // Создаём главное окно
     const initialAvatarPaths = launcherBranding.resolveAvatarPaths(initialLauncherAvatarId);
-    mainWindow.create({icon: initialAvatarPaths.pngPath}, function (winObj) {
+    mainWindowObject = mainWindow.create({icon: initialAvatarPaths.pngPath}, function (winObj) {
         mainWindowObject = winObj;
         mainWindowObject.webContents.userAgent = DEFAULT_USER_AGENT;
         launcherBranding.applyBranding(mainWindowObject, initialLauncherAvatarId);
@@ -1154,7 +1162,7 @@ app.whenReady().then(() => {
         console.log(colors.yellow("Update download was cancelled"));
     });
 
-    ipcMain.on("install-update", (event) => {
+    onTrusted("install-update", (event) => {
         const trustedSender = mainWindowObject
             && !mainWindowObject.isDestroyed()
             && event.sender === mainWindowObject.webContents
@@ -1181,37 +1189,46 @@ app.whenReady().then(() => {
     });
 
     // Получить userdataPath
-    ipcMain.on("get-userdata-path", (e) => {
+    onTrusted("renderer-template", event => { event.returnValue = require("./rendererTemplate")(); });
+    onTrusted("accounts-read", event => {
+        try { event.returnValue = {ok: true, accounts: accountStore.read()}; }
+        catch (error) { event.returnValue = {ok: false, error: error.message}; }
+    });
+    onTrusted("accounts-write", (event, accounts) => {
+        try { accountStore.write(accounts); event.returnValue = {ok: true}; }
+        catch (error) { event.returnValue = {ok: false, error: error.message}; }
+    });
+    onTrusted("get-userdata-path", (e) => {
         e.returnValue = userDataPath;
     });
 
     // Получить isInDev
-    ipcMain.on("isAppInDev", (e) => {
+    onTrusted("isAppInDev", (e) => {
         e.returnValue = isAppInDev;
     });
 
     // Получить isInTest
-    ipcMain.on("isAppInTest", (e) => {
+    onTrusted("isAppInTest", (e) => {
         e.returnValue = isAppInTest;
     });
 
-    ipcMain.on("discord-rpc-game-start", (e, payload = {}) => {
+    onTrusted("discord-rpc-game-start", (e, payload = {}) => {
         setDiscordGamePresence(payload).then();
     });
 
-    ipcMain.on("discord-rpc-game-update", (e, payload = {}) => {
+    onTrusted("discord-rpc-game-update", (e, payload = {}) => {
         updateDiscordGamePresence(payload).then();
     });
 
-    ipcMain.on("discord-rpc-game-stop", () => {
+    onTrusted("discord-rpc-game-stop", () => {
         clearDiscordGamePresence().then();
     });
 
-    ipcMain.on("discord-rpc-settings", (e, settings = {}) => {
+    onTrusted("discord-rpc-settings", (e, settings = {}) => {
         applyDiscordRpcSettings(settings).then();
     });
 
-    ipcMain.on("game-process-state", (_event, payload = {}) => {
+    onTrusted("game-process-state", (_event, payload = {}) => {
         const incomingPid = Number(payload.pid);
         if (payload.active === true && Number.isInteger(incomingPid) && incomingPid > 0) {
             minecraftGameActive = true;
@@ -1241,7 +1258,7 @@ app.whenReady().then(() => {
         }
     });
 
-    ipcMain.handle("discord-rpc-status", () => ({
+    handleTrusted("discord-rpc-status", () => ({
         clientId: DISCORD_RPC_CLIENT_ID,
         ready: discordRpcReady,
         mode: discordPresenceMode,
@@ -1251,14 +1268,14 @@ app.whenReady().then(() => {
         presence: discordLastPresence ? {...discordLastPresence} : null
     }));
 
-    ipcMain.handle("server-status-query", (_event, address, force = false, options = {}) => (
+    handleTrusted("server-status-query", (_event, address, force = false, options = {}) => (
         queryMinecraftServerStatus(address, force === true, options)
     ));
 
-    ipcMain.handle("server-catalog-connectivity", () => checkServerCatalogConnectivity());
-    ipcMain.handle("network-compatibility-check", () => checkOfficialNetworkConnectivity());
+    handleTrusted("server-catalog-connectivity", () => checkServerCatalogConnectivity());
+    handleTrusted("network-compatibility-check", () => checkOfficialNetworkConnectivity());
 
-    ipcMain.handle("minecraft-skin-lookup", async (event, nickname) => {
+    handleTrusted("minecraft-skin-lookup", async (event, nickname) => {
         const trustedSender = mainWindowObject
             && !mainWindowObject.isDestroyed()
             && event.sender === mainWindowObject.webContents
@@ -1293,7 +1310,7 @@ app.whenReady().then(() => {
         };
     });
 
-    ipcMain.handle("minecraft-skin-export", async (event, payload = {}) => {
+    handleTrusted("minecraft-skin-export", async (event, payload = {}) => {
         const trustedSender = mainWindowObject
             && !mainWindowObject.isDestroyed()
             && event.sender === mainWindowObject.webContents
@@ -1318,7 +1335,7 @@ app.whenReady().then(() => {
             : {success: false, error: normalizeMinecraftSkinError(exported.error?.code, "export_failed")};
     });
 
-    ipcMain.handle("minecraft-skin-apply", async (event, payload = {}) => {
+    handleTrusted("minecraft-skin-apply", async (event, payload = {}) => {
         const trustedSender = mainWindowObject
             && !mainWindowObject.isDestroyed()
             && event.sender === mainWindowObject.webContents
@@ -1336,7 +1353,7 @@ app.whenReady().then(() => {
     });
 
     // Запуск лаунчера завершён
-    ipcMain.on("launcher-ready", (e, settings = {}) => {
+    onTrusted("launcher-ready", (e, settings = {}) => {
         applyDiscordMainProfile(settings);
         discordRpcSettings = normalizeDiscordSettings(settings);
         if (discordRpcSettings.enabled) {
@@ -1349,7 +1366,7 @@ app.whenReady().then(() => {
     });
 
     // Закрыть окно лаунчера
-    ipcMain.on("close-main-window", () => {
+    onTrusted("close-main-window", () => {
         if (mainWindowObject && !mainWindowObject.isDestroyed()) {
             mainWindowObject.close();
         } else {
@@ -1358,17 +1375,17 @@ app.whenReady().then(() => {
     });
 
     // Свернуть окно лаунчера
-    ipcMain.on("hide-main-window", () => {
+    onTrusted("hide-main-window", () => {
         mainWindowObject.minimize();
     });
 
     // Перезагрузить окно лаунчера
-    ipcMain.on("reload-main-window", () => {
+    onTrusted("reload-main-window", () => {
         mainWindowObject.webContents.reload();
     });
 
     // Развернуть на весь экран окно лаунчера
-    ipcMain.on("maximize-main-window", () => {
+    onTrusted("maximize-main-window", () => {
         if (mainWindowObject.isMaximized()) {
             mainWindowObject.unmaximize();
         } else {
@@ -1377,33 +1394,30 @@ app.whenReady().then(() => {
     });
 
     // Полностью скрыть окно лаунчера
-    ipcMain.on("disappear-main-window", () => {
+    onTrusted("disappear-main-window", () => {
         hideLauncherWindow();
     });
 
     // Показать окно лаунчера
-    ipcMain.on("appear-main-window", () => {
+    onTrusted("appear-main-window", () => {
         showLauncherWindow();
     });
 
     // Фикс для сраного Электрона?
-    ipcMain.on("focus-fix", () => {
+    onTrusted("focus-fix", () => {
         mainWindowObject.blur();
         mainWindowObject.focus();
     });
 
     // ===== Скриншоты: только картинки внутри папок screenshots =====
-    const isScreenshotFile = (file) => typeof file === "string"
-        && /\.(png|jpe?g)$/i.test(file)
-        && path.basename(path.dirname(file)).toLowerCase() === "screenshots"
-        && fs.existsSync(file);
     const screenshotThumbs = new Map();
 
-    ipcMain.handle("screenshot-thumbnail", async (event, file) => {
-        if (!isScreenshotFile(file)) return "";
-        const key = `${file}|${fs.statSync(file).mtimeMs}`;
-        if (screenshotThumbs.has(key)) return screenshotThumbs.get(key);
+    handleTrusted("screenshot-thumbnail", async (event, file) => {
+        file = gameFileSafety.screenshot(file);
+        if (!file) return "";
         try {
+            const key = `${file}|${fs.statSync(file).mtimeMs}`;
+            if (screenshotThumbs.has(key)) return screenshotThumbs.get(key);
             const image = nativeImage.createFromPath(file);
             if (image.isEmpty()) return "";
             const thumb = `data:image/jpeg;base64,${image.resize({width: 384, quality: "good"}).toJPEG(78).toString("base64")}`;
@@ -1416,46 +1430,44 @@ app.whenReady().then(() => {
         }
     });
 
-    ipcMain.handle("screenshot-action", async (event, payload = {}) => {
-        const file = payload.file;
-        if (!isScreenshotFile(file)) return false;
-        switch (payload.action) {
-            case "copy":
-                clipboard.writeImage(nativeImage.createFromPath(file));
-                return true;
-            case "reveal":
-                shell.showItemInFolder(file);
-                return true;
-            case "delete":
-                await shell.trashItem(file);
-                return true;
-            default:
-                return false;
-        }
+    handleTrusted("screenshot-action", async (event, payload = {}) => {
+        const file = gameFileSafety.screenshot(payload.file);
+        if (!file) return false;
+        try {
+            switch (payload.action) {
+                case "copy":
+                    clipboard.writeImage(nativeImage.createFromPath(file));
+                    return true;
+                case "reveal":
+                    shell.showItemInFolder(file);
+                    return true;
+                case "delete":
+                    await shell.trashItem(file);
+                    return true;
+                default:
+                    return false;
+            }
+        } catch (_) { return false; }
     });
 
     // Сборка → в корзину. Только папка modpacks/<id> с manifest.json
-    ipcMain.handle("trash-instance-folder", async (event, payload = {}) => {
-        const id = String(payload.id || "");
-        if (!/^[\w.\-]+$/.test(id) || typeof payload.root !== "string") return false;
-        const target = path.join(payload.root, "modpacks", id);
-        if (!fs.existsSync(path.join(target, "manifest.json"))) return false;
+    handleTrusted("trash-instance-folder", async (event, payload = {}) => {
+        const target = gameFileSafety.folder(payload.root, "modpacks", payload.id, "manifest.json");
+        if (!target) return false;
         await shell.trashItem(target);
         return true;
     });
 
     // Своя версия → в корзину. Только папка версии с манифестом внутри versions/
-    ipcMain.handle("trash-version-folder", async (event, payload = {}) => {
-        const name = String(payload.name || "");
-        if (!/^[\w.+\-]+$/.test(name) || typeof payload.root !== "string") return false;
-        const target = path.join(payload.root, "versions", name);
-        if (!fs.existsSync(path.join(target, `${name}.json`))) return false;
+    handleTrusted("trash-version-folder", async (event, payload = {}) => {
+        const target = gameFileSafety.folder(payload.root, "versions", payload.name, `${payload.name}.json`);
+        if (!target) return false;
         await shell.trashItem(target);
         return true;
     });
 
     // Диалог открытия файлов
-    ipcMain.handle("open-dialog", async (event, options) => {
+    handleTrusted("open-dialog", async (event, options) => {
         let result = await dialog.showOpenDialog(options);
         if (result.canceled === true) {
             return false;
@@ -1464,7 +1476,7 @@ app.whenReady().then(() => {
     });
 
     // Диалог сохранения файлов
-    ipcMain.handle("save-dialog", async (event, options) => {
+    handleTrusted("save-dialog", async (event, options) => {
         let result = await dialog.showSaveDialog(options);
         if (result.canceled === true) {
             return false;
@@ -1472,13 +1484,13 @@ app.whenReady().then(() => {
         return result.filePath;
     });
 
-    ipcMain.handle("curseforge-key-status", () => ({
+    handleTrusted("curseforge-key-status", () => ({
         configured: readCurseForgeApiKey().length > 0,
         managedByEnvironment: (process.env.RX_CURSEFORGE_API_KEY || "").trim().length > 0,
         secureStorageAvailable: safeStorage.isEncryptionAvailable()
     }));
 
-    ipcMain.handle("set-curseforge-api-key", async (_event, rawKey) => {
+    handleTrusted("set-curseforge-api-key", async (_event, rawKey) => {
         const apiKey = typeof rawKey === "string" ? rawKey.trim() : "";
         if (apiKey.length < 16 || apiKey.length > 512) {
             return {success: false, error: "invalid_key_format"};
@@ -1500,7 +1512,7 @@ app.whenReady().then(() => {
         }
     });
 
-    ipcMain.handle("clear-curseforge-api-key", () => {
+    handleTrusted("clear-curseforge-api-key", () => {
         if ((process.env.RX_CURSEFORGE_API_KEY || "").trim()) {
             return {success: false, error: "managed_by_environment"};
         }
@@ -1512,7 +1524,7 @@ app.whenReady().then(() => {
         }
     });
 
-    ipcMain.handle("curseforge-request", async (_event, payload = {}) => {
+    handleTrusted("curseforge-request", async (_event, payload = {}) => {
         const endpoint = typeof payload.endpoint === "string" ? payload.endpoint : "";
         const method = payload.method === "POST" ? "POST" : "GET";
         const body = method === "POST" && payload.body && typeof payload.body === "object" ? payload.body : null;
@@ -1520,29 +1532,44 @@ app.whenReady().then(() => {
     });
 
     // Получить конфиг для MCLC
-    ipcMain.on("generate-mclc-config", (event, data) => {
-        let type = data.type;
-        let version = data.version;
-        let gameData = data.gameData;
-        const reply = (result) => {
-            if (!event.sender.isDestroyed()) event.sender.send("get-mclc-config", result);
-        };
+    handleTrusted("generate-mclc-config", async (_event, data) => {
+        const type = data?.type;
+        const version = data?.version;
+        const gameData = data?.gameData;
+        const validVersion = value => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._+-]{0,79}$/.test(value);
+        const root = gameFileSafety.configuredRoot();
+        const allowedRoot = path.resolve(root);
+        const allowedHome = typeof gameData === "string" && validVersion(version)
+            && path.resolve(gameData) === path.join(allowedRoot, "home", `${type}-${version}`);
+        if (!["vanilla", "custom", "forge", "forgeOptiFine", "neoforge", "fabric", "quilt"].includes(type)
+            || !validVersion(version) || (data?.loaderVersion && !validVersion(data.loaderVersion))
+            || typeof gameData !== "string" || !path.isAbsolute(gameData)
+            || (path.resolve(gameData).toLowerCase() !== allowedRoot.toLowerCase() && !allowedHome)) {
+            return false;
+        }
 
         if (type === "vanilla") {
-            return reply({
+            return {
                 version: {
                     type: "release",
                     number: version,
                 },
                 root: gameData
-            });
+            };
         }
 
-        if (type === "custom") return reply(buildCustomMclcConfig(version, gameData));
+        if (type === "custom") return buildCustomMclcConfig(version, gameData);
+        if (data.loaderVersion) {
+            try { return await require("./pinnedLoader").getPinnedLoaderConfig(data); }
+            catch (error) {
+                console.warn("Pinned loader setup failed:", error.message);
+                return false;
+            }
+        }
 
         const loaders = {forge, forgeOptiFine: forge, neoforge, fabric, quilt};
         const loader = loaders[type];
-        if (!loader) return reply(false);
+        if (!loader) return false;
 
         // Если версия уже установлена — при недоступной сети запускаем её с диска
         const localConfig = buildLocalMclcConfig(type, version, gameData);
@@ -1550,12 +1577,13 @@ app.whenReady().then(() => {
         const timeout = new Promise((_, reject) => {
             timer = setTimeout(() => reject(new Error("Loader metadata timeout")), localConfig ? 8000 : 90000);
         });
-        Promise.race([loader.getMCLCLaunchConfig({gameVersion: version, rootPath: gameData}), timeout])
-            .then(reply)
-            .catch((error) => {
-                console.warn(`MCLC config: ${type}-${version} online setup failed (${error?.message || error}), local=${Boolean(localConfig)}`);
-                reply(localConfig || false);
-            })
-            .finally(() => clearTimeout(timer));
+        try {
+            return await Promise.race([Promise.resolve().then(() => loader.getMCLCLaunchConfig({gameVersion: version, rootPath: gameData})), timeout]);
+        } catch (error) {
+            console.warn(`MCLC config: ${type}-${version} online setup failed (${error?.message || error}), local=${Boolean(localConfig)}`);
+            return localConfig || false;
+        } finally {
+            clearTimeout(timer);
+        }
     })
 });

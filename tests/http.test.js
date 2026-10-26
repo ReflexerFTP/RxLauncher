@@ -41,6 +41,10 @@ const server = http.createServer((request, response) => {
         response.writeHead(404);
         return response.end("nope");
     }
+    if (url.pathname === "/stream") {
+        response.writeHead(200);
+        return response.end(payload);
+    }
     if (url.pathname.startsWith("/file")) {
         // /file-flaky отвечает ошибкой на первую попытку
         if (url.pathname === "/file-flaky" && hits[url.pathname] === 1) {
@@ -83,6 +87,9 @@ server.listen(0, "127.0.0.1", async () => {
         const redirected = await RxHttp.text(`${base}/redirect`);
         assert.strictEqual(redirected.url, `${base}/json`, "final URL must be reported after redirects");
         await assert.rejects(RxHttp.text(`${base}/loop`), /Too many redirects/);
+        await assert.rejects(RxHttp.text(`${base}/redirect`, {
+            urlPolicy: url => { if (url.endsWith('/json')) throw new Error('redirect blocked'); }
+        }), /redirect blocked/);
 
         assert.strictEqual(JSON.stringify(await RxHttp.json(`${base}/echo`, {method: "POST", body: {hashes: ["a"]}})), '{"hashes":["a"]}');
         await assert.rejects(RxHttp.json(`${base}/missing`), error => error.status === 404);
@@ -98,6 +105,10 @@ server.listen(0, "127.0.0.1", async () => {
         const bad = path.join(tempRoot, "mods", "bad.jar");
         await assert.rejects(RxHttp.download(`${base}/file`, bad, {hashes: {sha1: "0".repeat(40)}}), /Checksum mismatch/);
         assert.ok(!fs.existsSync(bad) && !fs.existsSync(`${bad}.rxdownload`), "a file with the wrong hash must not stay on disk");
+        const oversized = path.join(tempRoot, "mods", "oversized.jar");
+        await assert.rejects(RxHttp.download(`${base}/file`, oversized, {maxBytes: 1024}), /size limit/);
+        await assert.rejects(RxHttp.download(`${base}/stream`, oversized, {maxBytes: 1024}), /size limit/);
+        assert.ok(!fs.existsSync(oversized), "an oversized download must not replace the target");
 
         const controller = new AbortController();
         const slowTarget = path.join(tempRoot, "slow.bin");

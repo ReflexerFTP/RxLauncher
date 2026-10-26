@@ -7,13 +7,15 @@ class RxHttp {
 
     // Открыть ответ (следуя редиректам). Возвращает {status, headers, url, stream}
     static open = (url, options = {}) => new Promise((resolve, reject) => {
-        const {method = "GET", headers = {}, body = null, timeout = 20000, signal = null, redirects = RxHttp.MAX_REDIRECTS, compress = true} = options;
+        const {method = "GET", headers = {}, body = null, timeout = 20000, signal = null,
+            redirects = RxHttp.MAX_REDIRECTS, compress = true, urlPolicy = null} = options;
         let parsed;
         try {
             parsed = new URL(url);
         } catch (error) {
             return reject(error);
         }
+        try { urlPolicy?.(parsed.toString()); } catch (error) { return reject(error); }
         const client = {"https:": require("https"), "http:": require("http")}[parsed.protocol];
         if (!client) return reject(new Error(`Unsupported protocol ${parsed.protocol}`));
         if (signal?.aborted) return reject(new Error("Request aborted"));
@@ -32,14 +34,27 @@ class RxHttp {
             }
         }, (response) => {
             signal?.removeEventListener("abort", onAbort);
+            try {
             const status = response.statusCode || 0;
             if (status >= 300 && status < 400 && response.headers.location) {
-                response.resume();
+                const destination = new URL(response.headers.location, parsed);
+                if (parsed.protocol === "https:" && destination.protocol !== "https:") { response.resume(); return reject(new Error("Insecure redirect")); }
+                const forwardedHeaders = {...headers};
+                if (destination.origin !== parsed.origin) {
+                    for (const key of Object.keys(forwardedHeaders)) if (/^(authorization|cookie|proxy-authorization)$/i.test(key)) delete forwardedHeaders[key];
+                    if (body !== null && (status === 307 || status === 308)) { response.resume(); return reject(new Error("Cross-origin body redirect")); }
+                }
+                response.destroy();
                 if (redirects <= 0) return reject(new Error("Too many redirects"));
                 // 307/308 сохраняют метод и тело, остальные редиректы превращают запрос в GET
                 const keep = status === 307 || status === 308;
+                if (!keep) {
+                    for (const key of Object.keys(forwardedHeaders)) {
+                        if (/^(content-length|content-type|transfer-encoding)$/i.test(key)) delete forwardedHeaders[key];
+                    }
+                }
                 return resolve(RxHttp.open(new URL(response.headers.location, parsed).toString(), {
-                    ...options, method: keep ? method : "GET", body: keep ? body : null, redirects: redirects - 1
+                    ...options, headers: forwardedHeaders, method: keep ? method : "GET", body: keep ? body : null, redirects: redirects - 1
                 }));
             }
             const zlib = require("zlib");
@@ -48,9 +63,26 @@ class RxHttp {
             if (decoder) {
                 stream = response.pipe(decoder());
                 response.on("error", error => stream.destroy(error));
+                response.on("aborted", () => stream.destroy(new Error("Incomplete response")));
             }
-            if (signal) signal.addEventListener("abort", () => stream.destroy(new Error("Request aborted")), {once: true});
+            const abortStream = () => stream.destroy(new Error("Request aborted"));
+            const cleanup = () => signal?.removeEventListener("abort", abortStream);
+            stream.once("end", cleanup);
+            stream.once("error", cleanup);
+            stream.once("close", () => {
+                cleanup();
+                // Stopping a decompressor must also close the upstream socket.
+                if (!response.complete) response.destroy();
+            });
+            if (signal) {
+                signal.addEventListener("abort", abortStream, {once: true});
+                if (signal.aborted) abortStream();
+            }
             resolve({status, headers: response.headers, url: parsed.toString(), stream, ok: status >= 200 && status < 300});
+            } catch (error) {
+                response.destroy();
+                reject(error);
+            }
         });
         const onAbort = () => request.destroy(new Error("Request aborted"));
         signal?.addEventListener("abort", onAbort, {once: true});
@@ -63,17 +95,27 @@ class RxHttp {
         request.end();
     });
 
-    static readAll = (stream) => new Promise((resolve, reject) => {
+    static readAll = async (stream, maxBytes = 16 * 1024 * 1024) => {
         const chunks = [];
-        stream.on("data", chunk => chunks.push(chunk));
-        stream.on("end", () => resolve(Buffer.concat(chunks)));
-        stream.on("error", reject);
-    });
+        let size = 0;
+        try {
+            if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw new Error("Invalid response size limit");
+            for await (const chunk of stream) {
+                size += chunk.length;
+                if (size > maxBytes) throw new Error("Response too large");
+                chunks.push(chunk);
+            }
+            return Buffer.concat(chunks, size);
+        } finally {
+            chunks.length = 0;
+            if (!stream.destroyed) stream.destroy();
+        }
+    };
 
     // Текст ответа любого статуса: {ok, status, url, headers, body}
     static text = async (url, options = {}) => {
         const response = await RxHttp.open(url, options);
-        const body = (await RxHttp.readAll(response.stream)).toString("utf8");
+        const body = (await RxHttp.readAll(response.stream, options.maxBytes)).toString("utf8");
         return {ok: response.ok, status: response.status, url: response.url, headers: response.headers, body};
     };
 
@@ -117,48 +159,46 @@ class RxHttp {
     };
 
     // Скачать во временный файл, проверить хеш и только потом положить на место
-    static download = async (url, filePath, {hashes = {}, signal = null, timeout = 30000, onProgress = null} = {}) => {
+    static download = async (url, filePath, {hashes = {}, signal = null, timeout = 30000,
+        onProgress = null, maxBytes = 4 * 1024 ** 3, urlPolicy = null} = {}) => {
+        if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw new Error("Invalid download size limit");
         fs.mkdirSync(path.dirname(filePath), {recursive: true});
-        const temp = `${filePath}.rxdownload`;
+        const temp = `${filePath}.${crypto.randomUUID()}.rxdownload`;
         const expected = RxHttp.pickHash(hashes);
-        const response = await RxHttp.open(url, {signal, timeout, compress: false});
+        const response = await RxHttp.open(url, {signal, timeout, compress: false, urlPolicy});
         if (!response.ok) {
-            response.stream.resume();
+            response.stream.destroy();
             const error = new Error(`Download failed with HTTP ${response.status}`);
             error.status = response.status;
             throw error;
         }
         const total = parseInt(response.headers["content-length"] || "0", 10) || 0;
+        if (total > maxBytes) {
+            response.stream.destroy();
+            throw new Error("Download exceeds size limit");
+        }
         const hash = expected ? crypto.createHash(expected.algorithm) : null;
         let received = 0;
-        await new Promise((resolve, reject) => {
-            const file = fs.createWriteStream(temp);
-            let failed = false;
-            const fail = (error) => {
-                if (failed) return;
-                failed = true;
-                response.stream.destroy();
-                file.destroy();
-                file.once("close", () => {
-                    try { fs.unlinkSync(temp); } catch (_) {}
-                    reject(error);
-                });
-            };
-            response.stream.on("data", (chunk) => {
-                received += chunk.length;
-                hash?.update(chunk);
-                if (onProgress) onProgress(received, total);
-            });
-            response.stream.on("error", fail);
-            file.on("error", fail);
-            file.on("finish", resolve);
-            response.stream.pipe(file);
-        });
-        if (hash && hash.digest("hex") !== expected.value) {
+        try {
+            const {Transform} = require("node:stream");
+            const {pipeline} = require("node:stream/promises");
+            const meter = new Transform({transform(chunk, _encoding, callback) {
+                try {
+                    received += chunk.length;
+                    if (received > maxBytes) throw new Error("Download exceeds size limit");
+                    hash?.update(chunk);
+                    if (onProgress) onProgress(received, total);
+                    callback(null, chunk);
+                } catch (error) { callback(error); }
+            }});
+            await pipeline(response.stream, meter, fs.createWriteStream(temp));
+            if (signal?.aborted) throw new Error("Request aborted");
+            if (total && received !== total) throw new Error("Incomplete download");
+            if (hash && hash.digest("hex") !== expected.value) throw new Error(`Checksum mismatch for ${path.basename(filePath)}`);
+            fs.renameSync(temp, filePath);
+            return {bytes: received, path: filePath};
+        } finally {
             try { fs.unlinkSync(temp); } catch (_) {}
-            throw new Error(`Checksum mismatch for ${path.basename(filePath)}`);
         }
-        fs.renameSync(temp, filePath);
-        return {bytes: received, path: filePath};
     };
 }

@@ -125,39 +125,22 @@ class RxWorldsManager {
     }
 
     // Установить мир из zip-архива
-    static installFromZip = (savesDirectory, zipPath) => {
-        return new Promise(resolve => {
-            if (!fs.existsSync(savesDirectory) || !fs.existsSync(zipPath)) {
-                return resolve(false);
+    static installFromZip = async (savesDirectory, zipPath) => {
+        if (!fs.existsSync(savesDirectory) || !fs.existsSync(zipPath)) return false;
+        const target = path.join(savesDirectory, path.parse(zipPath).name);
+        if (fs.existsSync(target)) throw new Error("A world with this name already exists");
+        const temp = fs.mkdtempSync(path.join(savesDirectory, ".rx-import-"));
+        try {
+            await RxUtils.unpackArchive(zipPath, temp);
+            let source = temp;
+            if (!fs.existsSync(path.join(source, "level.dat"))) {
+                const worlds = fs.readdirSync(temp).map(name => path.join(temp, name)).filter(dir => fs.existsSync(path.join(dir, "level.dat")));
+                if (worlds.length !== 1) throw new Error("Archive must contain exactly one Minecraft world");
+                source = worlds[0];
             }
-
-            let zipName = path.parse(zipPath).name;
-            let tempDir = path.join(savesDirectory, "tmptmptmp_fl");
-            let worldDir = path.join(savesDirectory, zipName);
-            fs.mkdirSync(worldDir, {recursive: true});
-
-            RxUtils.unpackArchive(zipPath, tempDir).then(() => {
-                // Читаем папку
-                let rdTemp = fs.readdirSync(tempDir);
-                if (rdTemp.length === 1 && fs.lstatSync(path.join(tempDir, rdTemp[0])).isDirectory()) {
-                    // Если внутри ещё одна папка - перемещаем все файлы из неё
-                    let rdInner = fs.readdirSync(path.join(tempDir, rdTemp[0]));
-                    rdInner.forEach(item => {
-                        let oldPath = path.join(tempDir, rdTemp[0], item);
-                        let newPath = path.join(worldDir, item);
-                        if (!fs.existsSync(path.dirname(newPath))) {
-                            fs.mkdirSync(path.dirname(newPath), {recursive: true});
-                        }
-                        fsExtra.moveSync(oldPath, newPath);
-                    })
-                    fs.rmdirSync(tempDir, {recursive: true});
-                    return resolve(true);
-                } else {
-                    // Если внутри сразу мир, то просто переименовываем папку
-                    fs.renameSync(tempDir, worldDir);
-                    return resolve(true);
-                }
-            });
-        })
-    }
+            if (fs.existsSync(target)) throw new Error("Destination already exists");
+            fs.renameSync(source, target);
+            return true;
+        } finally { await fsPromises.rm(temp, {recursive: true, force: true}).catch(() => {}); }
+    };
 }

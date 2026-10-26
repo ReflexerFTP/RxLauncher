@@ -131,6 +131,7 @@ class RxUtils {
         if (path.extname(archivePath) === ".tar.gz" || path.extname(archivePath) === ".tgz") {
             archiveType = "tgz";
         }
+        if (archiveType === "zip") await require("../archiveSafety").validateZip(archivePath, unpackPath);
         return await compressing[archiveType].uncompress(archivePath, unpackPath);
     }
 

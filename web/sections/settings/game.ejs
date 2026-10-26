@@ -144,12 +144,12 @@
         <span class="name">{{settings.startup.multiplayerFix.title}}</span>
         <div class="description">{{settings.startup.multiplayerFix.description}}<br/>{{settings.startup.multiplayerFix.dependenciesNote}}</div>
         <button class="button pill small network-help" type="button"
-                onclick="openExternal('https://account.xbox.com/settings')">
+                data-rx-onclick="openExternal('https://account.xbox.com/settings')">
             <span class="material-symbols-outlined">open_in_new</span>
             <span>{{settings.startup.multiplayerFix.openSettings}}</span>
         </button>
         <div class="flex flex-center flex-gap-8 network-check-row">
-            <button class="button pill small network-check" type="button" onclick="checkNetworkCompatibility()">
+            <button class="button pill small network-check" type="button" data-rx-onclick="checkNetworkCompatibility()">
                 <span class="material-symbols-outlined">network_check</span>
                 <span>{{settings.startup.multiplayerFix.checkConnection}}</span>
             </button>
@@ -209,3 +209,12 @@
         font-size: 16px;
     }
 </style>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon"><span class="material-symbols-outlined">privacy_tip</span></div>
+    <div class="flex-grow">
+        <span class="name">{{settings.game.sendTechnicalStats.title}}</span>
+        <div class="description">{{settings.game.sendTechnicalStats.description}}</div>
+    </div>
+    <label class="switch" data-setting="sendTechnicalStats"><input type="checkbox"><span class="inner"></span></label>
+</div>

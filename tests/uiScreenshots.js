@@ -99,22 +99,28 @@ const STAGES = [
     ["palette", `RxModals.hideCurrentOverlay().then(() => typeof RxCommandPalette !== "undefined" && RxCommandPalette.open())`]
 ];
 
+const accountStore = require("../accountStore").createAccountStore(path.join(app.getPath("userData"), "accounts.json"), require("electron").safeStorage);
+ipcMain.on("renderer-template", event => { event.returnValue = require("../rendererTemplate")(); });
+ipcMain.on("accounts-read", event => { try { event.returnValue = {ok: true, accounts: accountStore.read()}; } catch (e) { event.returnValue = {ok: false, error: e.message}; } });
+ipcMain.on("accounts-write", (event, accounts) => { try { accountStore.write(accounts); event.returnValue = {ok: true}; } catch (e) { event.returnValue = {ok: false, error: e.message}; } });
 app.whenReady().then(async () => {
     ejs.listen();
     // Окно за пределами экрана и без кликов — не мешает пользователю
     const window = new BrowserWindow({width, height, x: -6000, y: -6000, show: false, frame: false, focusable: false, skipTaskbar: true,
-        webPreferences: {nodeIntegration: true, contextIsolation: false, backgroundThrottling: false}});
+        webPreferences: {nodeIntegration: false, contextIsolation: true, sandbox: false, preload: path.join(__dirname, "..", "preload.js"), backgroundThrottling: false}});
     window.setIgnoreMouseEvents(true);
+    if (process.env.RX_SHOT_ZOOM) window.webContents.setZoomFactor(Number(process.env.RX_SHOT_ZOOM));
     const errors = [];
     window.webContents.on("console-message", (event) => {
         if (["warning", "error"].includes(event.level) && !/Autofill|DevTools|THREE\.WebGLProgram/i.test(event.message)) errors.push(event.message);
     });
+    const evaluateIsolated = code => window.webContents.executeJavaScriptInIsolatedWorld(999, [{code}]);
     await window.loadURL(`file://${path.join(__dirname, "..", "web", "index.ejs").replace(/\\/g, "/")}`);
     await Promise.race([ready, delay(15000)]);
     window.showInactive();
     window.setPosition(-6000, -6000);
     await delay(1500);
-    await window.webContents.executeJavaScript(`(() => {
+    await evaluateIsolated(`(() => {
         RxConfig.write("activeVersion", "fabric-1.21.4");
         RxAccountsManager.addLocalAccount("Steve");
         // Пример сборки для экрана «Сборки»
@@ -128,8 +134,9 @@ app.whenReady().then(async () => {
     await delay(800);
 
     for (const [name, code] of STAGES) {
+        if (process.env.RX_SHOT_STAGES && !process.env.RX_SHOT_STAGES.split(",").includes(name)) continue;
         try {
-            const exists = await window.webContents.executeJavaScript(`(async () => {
+            const exists = await evaluateIsolated(`(async () => {
                 const name = ${JSON.stringify(name)};
                 const modal = (${JSON.stringify(code)}.match(/switchModal\\("(\\w+)"\\)/) || [])[1];
                 if (modal && !document.querySelector("#modal-" + modal)) return false;

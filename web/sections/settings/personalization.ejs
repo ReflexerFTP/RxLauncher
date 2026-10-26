@@ -191,7 +191,7 @@
         <span class="name flex-grow">{{settings.personalization.language}}</span>
     </div>
     <div class="checksList" id="languages-list" style="width: 100%;">
-        <div class="item placeholder" style="display: none;" onclick="RxTranslator.setCurrentLanguage('$4')"
+        <div class="item placeholder" style="display: none;" data-rx-language="$4"
              data-lang="$4">
             <img class="icon" src="assets/flags/$4.svg" loading="lazy"/>
             <div class="text" style="display: flex; justify-content: center; flex-direction: column">
@@ -203,7 +203,7 @@
     </div>
 </div>
 
-<script>
+<script type="application/x-rx-script">
     var fontPicker = {
         fonts: [],
         active: "Manrope",

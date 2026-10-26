@@ -32,7 +32,7 @@
                        placeholder="{{packs.curseforge.apiKeyPlaceholder}}"/>
                 <button class="button pill small curseforge-auth__save" type="button">{{packs.curseforge.saveKey}}</button>
                 <button class="button pill small transparent" type="button"
-                        onclick="openExternal('https://console.curseforge.com')">{{packs.curseforge.getKey}}</button>
+                        data-rx-onclick="openExternal('https://console.curseforge.com')">{{packs.curseforge.getKey}}</button>
             </div>
             <div class="curseforge-auth__ready" style="display: none;">
                 <span class="material-symbols-outlined">verified_user</span>
@@ -80,4 +80,4 @@
     </div>
 </div>
 
-<script src="modals/installMods.js"></script>
+<script type="application/x-rx-script" src="modals/installMods.js"></script>

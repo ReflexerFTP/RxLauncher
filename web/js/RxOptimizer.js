@@ -5,6 +5,8 @@
 class RxOptimizer {
     static _freeTimer = null;
     static _released = false;
+    static _gcTimer = null;
+    static _initialized = false;
 
     // Выгрузить тяжёлое, пока окно скрыто
     static releaseHiddenResources() {
@@ -12,13 +14,19 @@ class RxOptimizer {
         RxOptimizer._released = true;
         // Картинки обоев и обложки выгружаются CSS-правилом html.rx-memory-saver
         document.documentElement.classList.add("rx-memory-saver");
-        if (typeof RxSkinBrowserUI !== "undefined" && RxSkinBrowserUI.viewer) RxSkinBrowserUI.disposeViewer();
+        try {
+            if (typeof RxSkinBrowserUI !== "undefined" && RxSkinBrowserUI.viewer) RxSkinBrowserUI.disposeViewer();
+        } catch (_) {}
+        if (typeof RxModMeta !== "undefined") RxModMeta.cache.clear();
         try {
             require("electron").webFrame.clearCache();
         } catch (_) {}
         // Сборка мусора доступна благодаря --expose-gc; UI скрыт, так что пауза незаметна
         if (typeof window.gc === "function") {
-            setTimeout(() => { if (document.hidden) window.gc(); }, 500);
+            RxOptimizer._gcTimer = setTimeout(() => {
+                RxOptimizer._gcTimer = null;
+                if (document.hidden) window.gc();
+            }, 500);
         }
         try {
             RxCollector.writeLog("Optimizer: Hidden window resources released");
@@ -28,11 +36,18 @@ class RxOptimizer {
 
     // Вернуть всё, когда окно снова видно
     static restoreResources() {
+        if (RxOptimizer._gcTimer !== null) {
+            clearTimeout(RxOptimizer._gcTimer);
+            RxOptimizer._gcTimer = null;
+        }
         if (!RxOptimizer._released) return false;
         RxOptimizer._released = false;
         document.documentElement.classList.remove("rx-memory-saver");
         if (typeof RxSkinBrowserUI !== "undefined" && RxSkinBrowserUI.visible && !RxSkinBrowserUI.viewer) {
-            RxSkinBrowserUI.mountViewer(RxSkinBrowserUI.currentProfile || RxSkinBrowserUI.createDefaultProfile());
+            try {
+                const mounted = RxSkinBrowserUI.mountViewer(RxSkinBrowserUI.currentProfile || RxSkinBrowserUI.createDefaultProfile());
+                mounted?.catch?.(() => {});
+            } catch (_) {}
         }
         return true;
     }
@@ -51,6 +66,8 @@ class RxOptimizer {
     }
 
     static init() {
+        if (RxOptimizer._initialized) return;
+        RxOptimizer._initialized = true;
         document.addEventListener("visibilitychange", () => {
             document.documentElement.classList.toggle("rx-in-background", document.hidden);
             if (document.hidden) {
@@ -66,6 +83,10 @@ class RxOptimizer {
         });
 
         window.addEventListener("beforeunload", () => {
+            if (RxOptimizer._gcTimer !== null) {
+                clearTimeout(RxOptimizer._gcTimer);
+                RxOptimizer._gcTimer = null;
+            }
             if (RxOptimizer._freeTimer !== null) {
                 clearTimeout(RxOptimizer._freeTimer);
                 RxOptimizer._freeTimer = null;

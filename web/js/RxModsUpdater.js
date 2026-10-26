@@ -1,147 +1,169 @@
-let mods__packList = [];
-let mods__currentChecking = 0;
-let mods__promise;
-let mods__promiseResolve;
 let mods__resultList = [];
-let mods__currentModpackId;
+let mods__currentModpackId = null;
 
 class RxModsUpdater {
-    // Проверить доступные обновления модов в паках
-    static checkPackUpdatesAvailable = (modpackId) => {
+    static checkPackUpdatesAvailable = async modpackId => {
         mods__currentModpackId = modpackId;
         mods__resultList = [];
-        mods__packList = [];
-        mods__currentChecking = 0;
-
-        $("#modal-packManager .updateTab .selectMode").hide();
-        $("#modal-packManager .updateTab .updateMode").show();
-        mods__promise = new Promise(resolve => {
-            let modpackManifest = RxPacks.getModpackManifest(mods__currentModpackId);
-            if (modpackManifest === false) {
-                return resolve(false);
+        const $tab = $("#modal-packManager .updateTab");
+        $tab.find(".selectMode").hide();
+        $tab.find(".updateMode").show();
+        const manifest = RxPacks.getModpackManifest(modpackId);
+        if (!manifest || !Array.isArray(manifest.files)) return [];
+        const files = manifest.files.filter(item => typeof item?.path === "string"
+            && item.path.replaceAll("\\", "/").startsWith("mods/"));
+        for (let index = 0; index < files.length; index++) {
+            const item = files[index];
+            $tab.find(".updateMode .text").text(`${MESSAGES.packs.updatePackM.checking} (${index + 1}/${files.length})`);
+            try {
+                const relative = RxPacks.safety().safePackPath(item.path, {allowBackslashes: true});
+                const localPath = path.resolve(GAME_DATA, "modpacks", modpackId, relative);
+                if (!fs.existsSync(localPath)) continue;
+                const url = new URL(RxPacks.safety().safePackUrl(item.url));
+                const parts = url.pathname.split("/");
+                if (url.hostname !== "cdn.modrinth.com" || parts[1] !== "data" || !/^[A-Za-z0-9]+$/.test(parts[2] || "")) continue;
+                const local = await RxAssetsParsers.readModInfo(localPath);
+                if (!local || !local.version) continue;
+                $tab.find(".updateMode .mod").text(local.name || item.name);
+                const gameVersions = encodeURIComponent(JSON.stringify([manifest.baseVersion.number]));
+                const loaders = encodeURIComponent(JSON.stringify([manifest.baseVersion.type]));
+                const [ok, response] = await RxRequests.get(`https://api.modrinth.com/v2/project/${parts[2]}/version?game_versions=${gameVersions}&loaders=${loaders}`);
+                if (!ok || !Array.isArray(response)) continue;
+                const release = response.find(version => version.version_type === "release" && Array.isArray(version.files) && version.files.length);
+                if (!release || local.version === release.version_number) continue;
+                const file = release.files.find(candidate => candidate.primary) || release.files[0];
+                if (!file || typeof file.filename !== "string" || path.basename(file.filename) !== file.filename) continue;
+                RxPacks.safety().safePackPath(`mods/${file.filename}`);
+                RxPacks.safety().safePackUrl(file.url);
+                RxPacks.safety().safePackHashes(file.hashes);
+                mods__resultList.push({
+                    projectId: parts[2], projectName: local.name || item.name,
+                    current: local.version, currentFileName: item.name,
+                    currentPath: relative, latest: {version: release.version_number, file, name: release.name},
+                    icon: local.icon
+                });
+            } catch (error) {
+                RxCollector.writeLog(`Mods: Update check skipped [file=${item.name}] [error=${error.message}]`);
             }
-
-            mods__packList = Object.fromEntries(
-                Object.entries(modpackManifest.files).filter(([key, value]) => value.path.split("/")[0] === "mods"));
-            mods__promiseResolve = resolve;
-            RxModsUpdater.checkNextModUpdates(modpackManifest.baseVersion.number, modpackManifest.baseVersion.type);
-        })
-        return mods__promise;
+        }
+        return mods__resultList;
     }
 
-    // Проверить следующий мод из списка
-    static checkNextModUpdates(mcVersion, mcLoader) {
-        mods__currentChecking++;
-        if (typeof mods__packList[mods__currentChecking] === "undefined") {
-            return mods__promiseResolve(mods__resultList);
-        }
-
-        let fullPath = path.join(GAME_DATA, "modpacks", mods__currentModpackId, mods__packList[mods__currentChecking].path);
-        if (!fs.existsSync(fullPath)) {
-            return RxModsUpdater.checkNextModUpdates(mcVersion, mcLoader);
-        }
-
-        $("#modal-packManager .updateTab .updateMode .text").text(`${MESSAGES.packs.updatePackM.checking} (${mods__currentChecking}/${Object.values(mods__packList).length})`);
-        RxAssetsParsers.readModInfo(fullPath).then(resultLocal => {
-            if (resultLocal === false || mods__packList[mods__currentChecking].url.match(/https:\/\/cdn\.modrinth\.com\//mig) === null) {
-                return RxModsUpdater.checkNextModUpdates(mcVersion, mcLoader);
-            }
-            $("#modal-packManager .updateTab .updateMode .mod").text(resultLocal.name);
-            let projectId = mods__packList[mods__currentChecking].url.split("/")[4];
-            let currentVersion = resultLocal.version;
-            let latestVersion = false;
-            RxRequests.get(`https://api.modrinth.com/v2/project/${projectId}/version?game_versions=[%22${mcVersion}%22]&loaders=[%22${mcLoader}%22]`).then(result => {
-                let [isSuccess, response] = result;
-                if(!isSuccess){
-                    return RxModsUpdater.checkNextModUpdates(mcVersion, mcLoader);
-                }
-
-                response.forEach((item) => {
-                    if (item.version_type === "release" && latestVersion === false) {
-                        latestVersion = {
-                            version: item.version_number,
-                            file: item.files[0],
-                            name: item.name
-                        };
-                    }
-                })
-                if (currentVersion !== latestVersion.version && currentVersion !== false && latestVersion !== false) {
-                    mods__resultList.push({
-                        projectId: projectId,
-                        mcVersion: mcVersion,
-                        projectName: resultLocal.name,
-                        current: currentVersion,
-                        currentFileName: mods__packList[mods__currentChecking].name,
-                        latest: latestVersion,
-                        icon: resultLocal.icon
-                    })
-                }
-                setTimeout(() => {
-                    RxModsUpdater.checkNextModUpdates(mcVersion, mcLoader);
-                }, 650);
-            })
-        });
-    }
-
-    // Обновить все моды из списка обновлений
     static updateAllFromList = async () => {
-        $("#modal-packManager .updateTab .foundUpdateMode").hide();
-        $("#modal-packManager .updateTab .foundUpdateMode .updatesList").html("");
-        $("#modal-packManager .updateTab .updateMode .mod").text("");
-        $("#modal-packManager .updateTab .updateMode .text").text(MESSAGES.packs.updatePackM.installing);
-        $("#modal-packManager .updateTab .updateMode").show();
-
-        let modpackManifest = RxPacks.getModpackManifest(mods__currentModpackId);
-        if (modpackManifest === false) {
-            return false;
-        }
-        modpackManifest.files.forEach((filesItem, manifestIndex) => {
-            // Ищем нужный файл в списке
-            let filename = filesItem.name;
-            let modItemIndex = -1;
-            // Ищем ID мода в списке
-            mods__resultList.forEach((modItem, index) => {
-                if (modItem.currentFileName === filename) {
-                    modItemIndex = index;
-                }
-            })
-            if (modItemIndex !== -1) {
-                // Удаляем старый мод и обновляем конфиг
-                let fullModPath = path.join(GAME_DATA, "modpacks", mods__currentModpackId, modpackManifest.files[manifestIndex].path);
-                if (fs.existsSync(fullModPath)) {
-                    fs.unlinkSync(fullModPath);
-                }
-                modpackManifest.files[manifestIndex].hashes = mods__resultList[modItemIndex].latest.file.hashes;
-                modpackManifest.files[manifestIndex].url = mods__resultList[modItemIndex].latest.file.url;
-                modpackManifest.files[manifestIndex].name = mods__resultList[modItemIndex].latest.file.filename;
-                modpackManifest.files[manifestIndex].size = mods__resultList[modItemIndex].latest.file.size;
-                modpackManifest.files[manifestIndex].path = "mods/" + mods__resultList[modItemIndex].latest.file.filename;
-                modpackManifest.files[manifestIndex].displayName = path.parse(mods__resultList[modItemIndex].latest.file.filename).base;
+        const $tab = $("#modal-packManager .updateTab");
+        $tab.find(".foundUpdateMode").hide();
+        $tab.find(".updateMode .mod").text("");
+        $tab.find(".updateMode .text").text(MESSAGES.packs.updatePackM.installing);
+        $tab.find(".updateMode").show();
+        const packId = mods__currentModpackId;
+        const manifest = RxPacks.getModpackManifest(packId);
+        const stageRoot = path.join(GAME_DATA, "cache", "mod-updates", crypto.randomUUID());
+        const oldFiles = [];
+        const copiedFiles = [];
+        let manifestBackup = null;
+        let rollbackFailed = false;
+        try {
+            if (!manifest || !Array.isArray(manifest.files) || !RxPacks.isSafePackId(packId)) throw new Error("Invalid modpack");
+            const packRoot = path.resolve(GAME_DATA, "modpacks", packId);
+            const realPackRoot = fs.realpathSync(packRoot);
+            if (path.dirname(realPackRoot).toLowerCase() !== fs.realpathSync(path.join(GAME_DATA, "modpacks")).toLowerCase()) {
+                throw new Error("Pack directory is linked outside the game data");
             }
-        });
-        // Записываем изменения
-        RxPacks.writeModpackManifest(mods__currentModpackId, modpackManifest);
-        // Запускаем проверку модов
-        await RxPacks.verifyAndInstall(mods__currentModpackId);
-        $("#modal-packManager .updateTab .updateMode").hide();
-        $("#modal-packManager .updateTab .selectMode").show();
-        await RxFlyout.changeMode("idle");
-        RxFlyout.setUIStartMode(false);
-        return true;
+            const safe = RxPacks.safety();
+            const updates = mods__resultList.map((item, index) => {
+                const relativeOld = safe.safePackPath(item.currentPath, {allowBackslashes: true});
+                const relativeNew = safe.safePackPath(`mods/${item.latest.file.filename}`);
+                const oldPath = path.resolve(packRoot, relativeOld);
+                const newPath = path.resolve(packRoot, relativeNew);
+                if (!oldPath.startsWith(packRoot + path.sep) || !newPath.startsWith(packRoot + path.sep)
+                    || !fs.statSync(oldPath).isFile() || fs.lstatSync(oldPath).isSymbolicLink()
+                    || !fs.realpathSync(oldPath).startsWith(realPackRoot + path.sep)
+                    || !fs.realpathSync(path.dirname(newPath)).startsWith(realPackRoot + path.sep)
+                    || (newPath !== oldPath && fs.existsSync(newPath))) {
+                    throw new Error("Mod update conflicts with an existing file");
+                }
+                return {
+                    item, oldPath, newPath, relativeNew,
+                    stagePath: path.join(stageRoot, `${index}-${crypto.randomUUID()}.jar`),
+                    url: safe.safePackUrl(item.latest.file.url),
+                    hashes: safe.safePackHashes(item.latest.file.hashes)
+                };
+            });
+            if (!updates.length) return false;
+            if (new Set(updates.map(item => item.newPath.toLowerCase())).size !== updates.length) {
+                throw new Error("Two mods have the same update filename");
+            }
+            fs.mkdirSync(stageRoot, {recursive: true});
+            await RxDownloader.downloadMany(updates.map(update => ({
+                url: update.url, path: update.stagePath, hashes: update.hashes,
+                size: update.item.latest.file.size, displayName: update.item.latest.file.filename,
+                urlPolicy: safe.safePackUrl
+            })), MESSAGES.packs.updatePackM.installing, 3);
+            manifestBackup = path.join(stageRoot, "manifest.backup.json");
+            fs.copyFileSync(path.join(packRoot, "manifest.json"), manifestBackup);
+            const backupDir = path.join(packRoot, "rx-mod-backups", `mod-update-${crypto.randomUUID()}`);
+            const nextManifest = JSON.parse(JSON.stringify(manifest));
+            for (const update of updates) {
+                const backup = path.join(backupDir, path.relative(packRoot, update.oldPath));
+                fs.mkdirSync(path.dirname(backup), {recursive: true});
+                fs.renameSync(update.oldPath, backup);
+                oldFiles.push({from: update.oldPath, backup});
+                fs.mkdirSync(path.dirname(update.newPath), {recursive: true});
+                copiedFiles.push(update.newPath);
+                fs.copyFileSync(update.stagePath, update.newPath);
+                const entry = nextManifest.files.find(file => {
+                    try { return safe.safePackPath(file.path, {allowBackslashes: true}) === update.item.currentPath; }
+                    catch (_) { return false; }
+                });
+                if (!entry) throw new Error("Mod manifest changed during update");
+                Object.assign(entry, {
+                    hashes: update.hashes, url: update.url, name: update.item.latest.file.filename,
+                    size: update.item.latest.file.size, path: update.relativeNew,
+                    displayName: path.parse(update.item.latest.file.filename).name
+                });
+            }
+            RxPacks.writeModpackManifest(packId, nextManifest);
+            mods__resultList = [];
+            return true;
+        } catch (error) {
+            try {
+                for (const file of copiedFiles.reverse()) if (fs.existsSync(file)) fs.unlinkSync(file);
+                for (const file of oldFiles.reverse()) fs.renameSync(file.backup, file.from);
+                if (manifestBackup) fs.copyFileSync(manifestBackup, path.join(GAME_DATA, "modpacks", packId, "manifest.json"));
+            } catch (rollbackError) {
+                rollbackFailed = true;
+                RxCollector.writeLog(`Mods: Update rollback failed [pack=${packId}] [recovery=${stageRoot}] [error=${rollbackError.message}]`);
+            }
+            RxCollector.writeLog(`Mods: Update failed [pack=${packId}] [error=${error.message}]`);
+            RxToasts.create(MESSAGES.packs.filesFailed, "error", error.message, "error");
+            return false;
+        } finally {
+            if (!rollbackFailed) await fsPromises.rm(stageRoot, {recursive: true, force: true}).catch(() => {});
+            $tab.find(".updateMode").hide();
+            $tab.find(".selectMode").show();
+            await RxFlyout.changeMode("idle");
+            RxFlyout.setUIStartMode(false);
+        }
     }
 
-    // Начать проверку обновлений
     static checkUpdates = async () => {
-        let updatesList = await RxModsUpdater.checkPackUpdatesAvailable(packman__currentModpack.id);
-        $("#modal-packManager .updateTab .foundUpdateMode .updatesList").html("");
-        $("#modal-packManager .updateTab .foundUpdateMode").show();
-        $("#modal-packManager .updateTab .updateMode").hide();
-        updatesList.forEach((item) => {
-            $("#modal-packManager .updateTab .updates-list").append(`<div class='item custom-select icon-and-description'>
-                    <img class="icon" src="data:image/png;base64,${item.icon}" />
-                    <span class="title">${item.projectName}</span>
-                    <div class="flex flex-align-center flex-gap-4 description"><span>${item.current}</span> <span class="material-symbols-outlined">arrow_forward</span> <span>${item.latest.version}</span></div>
-                    </div>`);
+        const updates = await RxModsUpdater.checkPackUpdatesAvailable(packman__currentModpack.id);
+        const $tab = $("#modal-packManager .updateTab");
+        const $list = $tab.find(".updates-list").empty();
+        $tab.find(".foundUpdateMode").show();
+        $tab.find(".updateMode").hide();
+        updates.forEach(item => {
+            const $row = $("<div>").addClass("item custom-select icon-and-description");
+            const $icon = $("<img>").addClass("icon");
+            if (typeof item.icon === "string" && /^[A-Za-z0-9+/=]{1,100000}$/.test(item.icon)) {
+                $icon.attr("src", `data:image/png;base64,${item.icon}`);
+            }
+            $row.append($icon, $("<span>").addClass("title").text(item.projectName));
+            const $description = $("<div>").addClass("flex flex-align-center flex-gap-4 description");
+            $description.append($("<span>").text(item.current),
+                $("<span>").addClass("material-symbols-outlined").text("arrow_forward"),
+                $("<span>").text(item.latest.version));
+            $list.append($row.append($description));
         });
     }
 }

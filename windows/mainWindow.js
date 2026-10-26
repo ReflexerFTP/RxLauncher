@@ -5,8 +5,8 @@ const ejs = require('ejs-electron');
 const MW_OPTIONS = {
     width: 1400,
     height: 900,
-    minWidth: 1150,
-    minHeight: 750,
+    minWidth: 1024,
+    minHeight: 680,
     show: false,
     icon: path.join(__dirname, "../web/assets/icon.png"),
     resizable: true,
@@ -18,8 +18,10 @@ const MW_OPTIONS = {
     transparent: false,
     backgroundColor: "#091012",
     webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: false,
+        preload: path.join(__dirname, "../preload.js"),
         // Проверка орфографии лаунчеру не нужна, а словари занимают память
         spellcheck: false,
     },
@@ -37,6 +39,10 @@ exports.create = (options, cb) => {
     }
     let winObj = new BrowserWindow(windowOptions);
 
+    winObj.webContents.setWindowOpenHandler(() => ({action: "deny"}));
+    winObj.webContents.on("will-navigate", event => event.preventDefault());
+    winObj.webContents.on("will-attach-webview", event => event.preventDefault());
+    winObj.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     ejs.listen();
     winObj.loadURL("file://" + __dirname + "/../web/index.ejs");
 
@@ -44,4 +50,5 @@ exports.create = (options, cb) => {
         winObj.show();
         cb(winObj);
     });
+    return winObj;
 };

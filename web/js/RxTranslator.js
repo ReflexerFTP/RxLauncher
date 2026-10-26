@@ -47,6 +47,7 @@ class RxTranslator {
                 let translated = RxTranslator.translateText(currentLangData, itemText);
                 if (translated !== false) {
                     $element.data("text", translated);
+                    if ($element.closest(".flymenu").length) $element.attr({title: translated, "aria-label": translated, tabindex: "0", role: "button"});
                 }
             }
         }

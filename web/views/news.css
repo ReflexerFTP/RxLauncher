@@ -156,6 +156,7 @@
 }
 
 .patch-row {
+    flex-shrink: 0;
     position: relative;
     width: 100% !important;
     height: 38px !important;

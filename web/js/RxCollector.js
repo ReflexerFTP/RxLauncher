@@ -53,7 +53,7 @@ class RxCollector {
 
     static writeLog = (...data) => {
         let logDate = new Date().toISOString();
-        let line = data.join(" ");
+        let line = data.join(" ").replace(/((?:access[_-]?token|client[_-]?token|authorization|password)["\s:=]+)([^"\s,}]+)/gi, "$1[REDACTED]");
         if (typeof RxPrivacy !== "undefined") line = RxPrivacy.maskIfParanoid(line);
         let newPart = "\n" + "[" + logDate + "] " + line
         global.LAST_LOG = global.LAST_LOG + newPart;
@@ -68,6 +68,7 @@ class RxCollector {
     }
 
     static collectAndSendStats = async () => {
+        if (RxConfig.read("sendTechnicalStats", false) !== true) return false;
         if (RxConfig.read("serverPrivacyMode", false) === true) {
             RxCollector.writeLog("Stats skipped: server privacy mode enabled");
             return false;

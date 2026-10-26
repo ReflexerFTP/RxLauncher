@@ -13,13 +13,33 @@ class RxJavaManager {
         await RxFlyout.changeMode("spinner");
         // Получаем информацию
         let info = RxJavaManager.getByVersion(version);
+        if (!info) throw new Error("Unsupported Java platform");
         // Скачиваем
         await RxDownloader.downloadFile(info.url, info.downloadPath, `Java ${version}`);
         // Меняем UI
         await RxFlyout.changeMode("spinner");
         RxFlyout.setText(`${MESSAGES.java.unpacking} ${version}`);
-        // Распаковываем
-        await RxUtils.unpackArchive(info.downloadPath, info.unpackPath);
+        // Publish only a complete runtime. A failed extraction must not look installed.
+        const destination = path.resolve(info.unpackPath);
+        const staging = fs.mkdtempSync(path.join(javaInstallationDirectory, ".java-install-"));
+        const previous = destination + ".previous-" + crypto.randomUUID();
+        let installed = false;
+        try {
+            await RxUtils.unpackArchive(info.downloadPath, staging);
+            if (!RxJavaManager.findJava(staging)) throw new Error("Java executable is missing from the archive");
+            if (fs.existsSync(destination)) fs.renameSync(destination, previous);
+            fs.renameSync(staging, destination);
+            installed = true;
+        } catch (error) {
+            if (fs.existsSync(previous) && !fs.existsSync(destination)) {
+                try { fs.renameSync(previous, destination); }
+                catch (_) { error.message += `; previous runtime preserved at ${previous}`; }
+            }
+            throw error;
+        } finally {
+            await fsPromises.rm(staging, {recursive: true, force: true}).catch(() => {});
+            if (installed) await fsPromises.rm(previous, {recursive: true, force: true}).catch(() => {});
+        }
         // Удаляем temp файлы
         fs.unlinkSync(info.downloadPath);
         if (restoreStartMode) {
@@ -38,14 +58,14 @@ class RxJavaManager {
 
     // Получить локально установленные версии Java
     static getLocal = () => {
-        let rdResult = fs.readdirSync(javaInstallationDirectory);
-        rdResult = rdResult.filter(entry => fs.lstatSync(path.join(javaInstallationDirectory, entry)).isDirectory());
+        let rdResult = fs.existsSync(javaInstallationDirectory) ? fs.readdirSync(javaInstallationDirectory) : [];
+        rdResult = rdResult.filter(entry => /^\d+$/.test(entry) && RxJavaManager.isInstalled(entry));
         return rdResult;
     }
 
     // Проверить, скачана ли требуемая версия Java
     static isInstalled = (version) => {
-        return this.getLocal().includes(version);
+        return Boolean(this.getPath(String(version)));
     }
 
     // Получить информацию о Java по версии
@@ -118,13 +138,17 @@ class RxJavaManager {
 
     // Получить путь к скачанной версии Java (возвращает false, если версия не существует)
     static getPath = (javaVersion) => {
-        let javaDirPath = path.join(javaInstallationDirectory, javaVersion);
+        if (!/^\d+$/.test(String(javaVersion))) return false;
+        return this.findJava(path.join(javaInstallationDirectory, String(javaVersion)));
+    }
+
+    static findJava = (javaDirPath) => {
         let javaSearchPath1 = path.join(javaDirPath, "bin", "java");
         if (process.platform === "win32") {
             javaSearchPath1 += ".exe";
         }
         if (fs.existsSync(javaDirPath) && fs.lstatSync(javaDirPath).isDirectory()) {
-            if (fs.existsSync(javaSearchPath1)) {
+            if (fs.existsSync(javaSearchPath1) && fs.statSync(javaSearchPath1).isFile()) {
                 return javaSearchPath1;
             } else {
                 let javaReaddir = fs.readdirSync(javaDirPath);
@@ -133,7 +157,7 @@ class RxJavaManager {
                     if (process.platform === "win32") {
                         javaChkPath += ".exe";
                     }
-                    if (fs.existsSync(javaChkPath)) {
+                    if (fs.existsSync(javaChkPath) && fs.statSync(javaChkPath).isFile()) {
                         return javaChkPath;
                     }
                 }

@@ -7,8 +7,21 @@ const {pathToFileURL} = require("url");
 const os = require("os");
 const {ipcRenderer} = require("electron");
 const crypto = require("crypto");
-const openExternal = require("open");
-const machineUuid = require("machine-uuid");
+const openExternal = async value => {
+    try {
+        const {kind, target} = require("../externalTargets").classifyExternalTarget(value);
+        const shell = require("electron").shell;
+        return kind === "url" ? await shell.openExternal(target) : await shell.openPath(target);
+    } catch (error) {
+        RxCollector.writeLog("External link rejected: " + error.message);
+        return false;
+    }
+};
+const machineUuid = async () => {
+    let id = RxConfig.read("anonymousInstallId", "");
+    if (!id) { id = crypto.randomUUID(); RxConfig.write("anonymousInstallId", id); }
+    return id;
+};
 const packageJson = require("./../package.json");
 const treeKill = require("tree-kill");
 const {exec} = require('node:child_process');
@@ -29,7 +42,7 @@ lazyGlobal("Authenticator", () => require("minecraft-launcher-core").Authenticat
 for (const loaderName of ["forge", "neoforge", "fabric", "quilt", "vanilla", "liner"]) {
     lazyGlobal(loaderName, () => require("tomate-loaders")[loaderName]);
 }
-lazyGlobal("Jimp", () => require("jimp"));
+lazyGlobal("Jimp", () => require("jimp").Jimp);
 lazyGlobal("compressing", () => require("compressing"));
 lazyGlobal("NBT", () => require("mcnbt"));
 
@@ -42,7 +55,7 @@ global.CDN_URL = "https://cdn.rxlauncher.ru";
 global.SKINS_API_URL = "https://skins.rxlauncher.ru";
 global.STATS_URL = "https://statscol.rxlauncher.ru/save_fl?savedata=";
 global.AUTHLIB_INJECTOR_URL = CDN_URL + "/authlib-injector.jar";
-global.REPO_NAME = "Maksimrrrsrc/RxLauncher";
+global.REPO_NAME = "ReflexerFTP/RxLauncher";
 
 // Ссылка на Java
 global.JAVA_LIST_URL = "https://api.adoptium.net/v3/info/available_releases";

@@ -1,9 +1,41 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.3.0-hardening",
+            version: "3.3.0",
+            date: "2026-10-26T10:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
+            title: {ru: "Безопасность и надёжность", en: "Security and reliability"},
+            summary: {
+                ru: "Лаунчер стал защищённее: изолированный интерфейс, зашифрованные токены Ely.by и проверка архивов и модпаков перед установкой.",
+                en: "The launcher is more secure: an isolated interface, encrypted Ely.by tokens and checks for archives and modpacks before installing."
+            },
+            changes: {
+                ru: [
+                    "Интерфейс лаунчера работает в изолированном окружении без прямого доступа к системе.",
+                    "Токены аккаунтов Ely.by шифруются средствами Windows.",
+                    "ZIP-архивы и модпаки Modrinth проверяются перед распаковкой: опасные пути и слишком большие архивы отклоняются.",
+                    "Внешние ссылки и папки открываются только после проверки.",
+                    "Техническая статистика отправляется только по желанию: переключатель в Настройки → Игра, по умолчанию выключен.",
+                    "Окно лаунчера можно уменьшить до 1024×680.",
+                    "Обновлены зависимости, добавлены новые автотесты."
+                ],
+                en: [
+                    "The launcher interface runs in an isolated environment without direct system access.",
+                    "Ely.by account tokens are encrypted with Windows' built-in protection.",
+                    "ZIP archives and Modrinth modpacks are checked before extraction: unsafe paths and oversized archives are rejected.",
+                    "External links and folders open only after validation.",
+                    "Technical statistics are opt-in: a toggle in Settings → Game, off by default.",
+                    "The launcher window can be shrunk down to 1024×680.",
+                    "Dependencies updated, new automated tests added."
+                ]
+            }
+        },
+        {
             id: "3.2.0-community",
             version: "3.2.0",
-            date: "2026-10-28T12:00:00+03:00",
+            date: "2026-10-26T01:00:00+03:00",
             image: "assets/version-heroes/1.21.png",
             tag: {ru: "СООБЩЕСТВО", en: "COMMUNITY"},
             title: {ru: "Новые Discord, Telegram и сайт", en: "New Discord, Telegram and website"},
@@ -15,7 +47,7 @@ class RxPatchNotes {
                 ru: [
                     "Настройки → «О лаунчере»: новый блок «Сообщество» с Discord, Telegram, GitHub и сайтом.",
                     "Новый Discord: discord.gg/bpRwXsXeuj, новый Telegram: t.me/rxlauncher.",
-                    "Исходный код лаунчера теперь на GitHub: Maksimrrrsrc/RxLauncher.",
+                    "Исходный код лаунчера теперь на GitHub: ReflexerFTP/RxLauncher.",
                     "Сайт лаунчера: rxlauncher.xyz.",
                     "В статусе Discord две кнопки — Discord и Telegram RxLaunch.",
                     "Ссылки на главном экране RxClient в игре тоже обновлены."
@@ -23,7 +55,7 @@ class RxPatchNotes {
                 en: [
                     "Settings → About: a new Community block with Discord, Telegram, GitHub and the website.",
                     "New Discord: discord.gg/bpRwXsXeuj, new Telegram: t.me/rxlauncher.",
-                    "The launcher source code now lives on GitHub: Maksimrrrsrc/RxLauncher.",
+                    "The launcher source code now lives on GitHub: ReflexerFTP/RxLauncher.",
                     "Launcher website: rxlauncher.xyz.",
                     "Discord status shows two buttons — RxLaunch Discord and Telegram.",
                     "Links on the in-game RxClient title screen are updated too."
@@ -33,7 +65,7 @@ class RxPatchNotes {
         {
             id: "3.1.0-pale-garden",
             version: "3.1.0",
-            date: "2026-10-27T18:00:00+03:00",
+            date: "2026-10-26T00:45:00+03:00",
             image: "assets/version-heroes/1.21.png",
             tag: {ru: "ДИЗАЙН", en: "DESIGN"},
             title: {ru: "Скрипун — новый фон по умолчанию", en: "The Creaking is the new default wallpaper"},
@@ -57,7 +89,7 @@ class RxPatchNotes {
         {
             id: "3.0.0-catalog-together",
             version: "3.0.0",
-            date: "2026-10-27T12:00:00+03:00",
+            date: "2026-10-26T00:30:00+03:00",
             image: "assets/version-heroes/1.21.png",
             tag: {ru: "3.0", en: "3.0"},
             title: {ru: "Каталог, игра с друзьями и новая статистика", en: "Catalog, playing together and new statistics"},

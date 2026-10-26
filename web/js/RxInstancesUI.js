@@ -166,6 +166,8 @@ class RxInstancesUI {
 
         if (RxInstancesUI.editingId) {
             const id = RxInstancesUI.editingId;
+            const previous = RxPacks.getModpackManifest(id);
+            if (previous.baseVersion?.full === versionId && previous.baseVersion.loaderVersion) fields.baseVersion.loaderVersion = previous.baseVersion.loaderVersion;
             RxPacks.writeModpackManifest(id, {...RxPacks.getModpackManifest(id), ...fields});
             RxToasts.create(MESSAGES.instances.saved, "check", name, "success");
         } else {

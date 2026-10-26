@@ -1,7 +1,10 @@
 let packman__currentMode = "mods";
 let packman__currentModpack = "";
 
+const packManagerEscape = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[char]));
 $(function () {
+    $("#modal-packManager").on("click", "[data-pack-remove]", function () { RxPackManagerUI.removeFile(this); });
+    $("#modal-packManager").on("change", "[data-pack-toggle]", function () { RxPackManagerUI.toggleMod(this); });
     $("#modal-packManager .tabs .tab").click(function () {
         if (!$(this).hasClass("active")) {
             $("#modal-packManager .tabs .tab.active").removeClass("active");
@@ -81,7 +84,7 @@ $(function () {
                         RxToasts.create(fileName, "download_done", MESSAGES.packManager.successWorld);
                     }
                     return RxPackManagerUI.loadWorldsList();
-                })
+                }).catch(error => RxToasts.create(fileName, "error", error.message));
             }
         })
     })
@@ -131,11 +134,11 @@ class RxPackManagerUI {
                             icon = "data:image/png;base64," + result.icon;
                             description = RxUtils.removeColorsFromString(result.mcmeta.description);
                         }
-                        $rpList.append(`<div data-filename="${rpList[currentRp]}" class='item custom-select icon-and-description'>
-                    <img class="icon" src="${icon}" />
-                    <span class="title">${path.parse(rpList[currentRp]).base}</span>
-                    ${description !== "" ? `<span class="description">${description}</span>` : ""}
-                    <button class="square small button" onclick="RxPackManagerUI.removeFile(this)">
+                        $rpList.append(`<div data-filename="${packManagerEscape(rpList[currentRp])}" class='item custom-select icon-and-description'>
+                    <img class="icon" src="${packManagerEscape(icon)}" />
+                    <span class="title">${packManagerEscape(path.parse(rpList[currentRp]).base)}</span>
+                    ${description !== "" ? `<span class="description">${packManagerEscape(description)}</span>` : ""}
+                    <button class="square small button" data-pack-remove>
                         <span class="material-symbols-outlined">delete</span>
                     </button>
                     </div>`);
@@ -153,14 +156,14 @@ class RxPackManagerUI {
         if (!fs.existsSync(modsPath)) {
             return false;
         }
-        let modList = packman__currentModpack.files;
+        let modList = (packman__currentModpack.files || []).filter(file => file.path?.startsWith("mods/"));
         let modsPathFull = path.join(GAME_DATA, "modpacks", packman__currentModpack.id, "mods");
         if (!fs.existsSync(modsPathFull)) {
             return false;
         }
         let modList2 = fs.readdirSync(modsPathFull);
         modList2.forEach((item) => {
-            modList.push({path: "mods/" + item});
+            if (!modList.some(file => file.path === "mods/" + item)) modList.push({path: "mods/" + item});
         })
         let currentMod = -1;
 
@@ -172,10 +175,10 @@ class RxPackManagerUI {
             if (typeof modList[currentMod] !== "undefined" && modList[currentMod].path.indexOf("mods/") !== -1) {
                 let modFullPath = path.join(modsPath, modList[currentMod].path);
                 if (!fs.existsSync(modFullPath)) {
-                    $modsList.append(`<div data-filename="${modList[currentMod].path}" class='item custom-select icon-and-description'>
+                    $modsList.append(`<div data-filename="${packManagerEscape(modList[currentMod].path)}" class='item custom-select icon-and-description'>
                     <img class="icon" src="assets/modIcon.webp" />
                     <div class="title flex flex-gap-4 flex-align-center">
-                        <span>${path.basename(modList[currentMod].path)}</span>
+                        <span>${packManagerEscape(path.basename(modList[currentMod].path))}</span>
                     </div>
                     </div>`);
                     return loadNextMod();
@@ -187,7 +190,7 @@ class RxPackManagerUI {
                         let title = path.parse(modList[currentMod].path).base;
                         let titleChips = "";
                         let $switch = `<label class="switch">
-        <input type="checkbox" checked onchange="RxPackManagerUI.toggleMod(this)">
+        <input type="checkbox" checked data-pack-toggle>
         <span class="inner"></span>
     </label>`;
                         if (path.parse(modFullPath).ext === ".dis") {
@@ -211,18 +214,18 @@ class RxPackManagerUI {
                             }
                             authorsList.length === 0 ? authorsList = "" : authorsList;
 
-                            titleChips = `<div class="chip small">${result.version}</div>
-                            <div class="chip small">${authorsList}</div>`;
+                            titleChips = `<div class="chip small">${packManagerEscape(result.version)}</div>
+                            <div class="chip small">${packManagerEscape(authorsList)}</div>`;
                         }
-                        $modsList.append(`<div data-filename="${modList[currentMod].path}" class='item custom-select icon-and-description'>
-                    <img class="icon" src="${icon}" />
+                        $modsList.append(`<div data-filename="${packManagerEscape(modList[currentMod].path)}" class='item custom-select icon-and-description'>
+                    <img class="icon" src="${packManagerEscape(icon)}" />
                     ${$switch}
                     <div class="title flex flex-gap-4 flex-align-center">
-                        <span>${title}</span>
+                        <span>${packManagerEscape(title)}</span>
                         ${titleChips}
                     </div>
-                    ${description !== "" ? `<span class="description">${description}</span>` : ""}
-                    <button class="square small button" onclick="RxPackManagerUI.removeFile(this)">
+                    ${description !== "" ? `<span class="description">${packManagerEscape(description)}</span>` : ""}
+                    <button class="square small button" data-pack-remove>
                         <span class="material-symbols-outlined">delete</span>
                     </button>
                     </div>`);
@@ -250,17 +253,17 @@ class RxPackManagerUI {
                     if (item.icon !== false) {
                         icon = item.icon;
                     }
-                    $worldsList.append(`<div data-filename="${item.path}" class='item custom-select icon-and-description'>
-                    <img class="icon" src="${icon}" />
-                    <span class="title">${item.name}</span>
+                    $worldsList.append(`<div data-filename="${packManagerEscape(item.path)}" class='item custom-select icon-and-description'>
+                    <img class="icon" src="${packManagerEscape(icon)}" />
+                    <span class="title">${packManagerEscape(item.name)}</span>
                     <div class="description flex flex-align-center flex-gap-8">
-                        <span>${MESSAGES.packManager.gamemodes[item.gamemode]}</span>
+                        <span>${packManagerEscape(MESSAGES.packManager.gamemodes[item.gamemode])}</span>
                         <div class="microdot"><div class="dot"></div></div>
-                        <span>${MESSAGES.packManager.difficulty[item.difficulty]}</span>
+                        <span>${packManagerEscape(MESSAGES.packManager.difficulty[item.difficulty])}</span>
                         <div class="microdot"><div class="dot"></div></div>
-                        <span>${item.version}</span>
+                        <span>${packManagerEscape(item.version)}</span>
                     </div>
-                    <button class="square small button" onclick="RxPackManagerUI.removeFile(this)">
+                    <button class="square small button" data-pack-remove>
                         <span class="material-symbols-outlined">delete</span>
                     </button>
                     </div>`);
@@ -279,10 +282,10 @@ class RxPackManagerUI {
         let shadersList = fs.readdirSync(shadersPath);
         $list.html("");
         shadersList.forEach(item => {
-            $list.append(`<div data-filename="${item}" class='item custom-select icon-and-description'>
+            $list.append(`<div data-filename="${packManagerEscape(item)}" class='item custom-select icon-and-description'>
                     <img class="icon" src="assets/modIcon.webp" />
-                    <span class="title">${path.parse(item).base}</span>
-                    <button class="square small button" onclick="RxPackManagerUI.removeFile(this)">
+                    <span class="title">${packManagerEscape(path.parse(item).base)}</span>
+                    <button class="square small button" data-pack-remove>
                         <span class="material-symbols-outlined">delete</span>
                     </button>
                     </div>`);
@@ -354,16 +357,14 @@ class RxPackManagerUI {
 
     // Удалить файл по кнопке
     static removeFile = (elem) => {
-        let filename = $(elem).parent().data("filename");
+        const filename = String($(elem).parent().data("filename") || "");
+        const directory = path.resolve(GAME_DATA, "modpacks", packman__currentModpack.id, packman__currentMode === "worlds" ? "saves" : packman__currentMode);
+        const fullPath = path.resolve(directory, packman__currentMode === "worlds" ? filename : path.basename(filename));
+        if (!fullPath.startsWith(directory + path.sep)) return false;
         if (packman__currentMode === "worlds") {
-            $(elem).parent().remove();
-            fsExtra.remove(filename, (err) => {
-                if (err) return console.error(err);
-                RxFlyout.changeMode("idle");
-                RxToasts.create(MESSAGES.packManager.worldDeleted, "delete", path.basename(filename));
-            });
+            fsExtra.remove(fullPath).then(() => { $(elem).parent().remove(); RxToasts.create(MESSAGES.packManager.worldDeleted, "delete", path.basename(fullPath)); }).catch(error => RxToasts.create(error.message, "error"));
+            return;
         }
-        let fullPath = path.join(GAME_DATA, "modpacks", packman__currentModpack.id, packman__currentMode, filename);
         let fullPathDis = fullPath + ".dis";
         if (fs.existsSync(fullPath)) {
             fs.unlinkSync(fullPath);
@@ -378,7 +379,7 @@ class RxPackManagerUI {
     static toggleMod = (elem) => {
         let filename = $(elem).parent().parent().data("filename");
 
-        let fullPath = path.join(GAME_DATA, "modpacks", packman__currentModpack.id, packman__currentMode, filename.replace(".dis", ""));
+        let fullPath = path.join(GAME_DATA, "modpacks", packman__currentModpack.id, packman__currentMode, path.basename(filename).replace(/\.dis$/, ""));
         let fullPathDis = fullPath + ".dis";
         if ($(elem).is(":checked") && fs.existsSync(fullPathDis)) {
             fs.renameSync(fullPathDis, fullPath);
