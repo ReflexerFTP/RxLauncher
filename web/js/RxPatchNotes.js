@@ -1,6 +1,34 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.6.0-command-history-anti-theft",
+            version: "3.6.0",
+            date: "2026-10-28T00:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "ЗАЩИТА", en: "PROTECTION"},
+            title: {ru: "Анти-кража истории команд", en: "Command history anti-theft"},
+            summary: {
+                ru: "Пароли от серверов больше не лежат в command_history.txt: файл прячется, пока вы не играете, а команды входа в него не попадают.",
+                en: "Server passwords no longer sit in command_history.txt: the file is hidden while you are not playing, and login commands never stay in it."
+            },
+            changes: {
+                ru: [
+                    "Настройки → Игровой процесс → «Анти-кража истории команд» (включена сразу).",
+                    "После выхода из игры command_history.txt уезжает в зашифрованное хранилище лаунчера — каждый раз под новым случайным именем в новой случайной папке.",
+                    "Перед запуском история возвращается на место: стрелка ↑ в чате работает как обычно.",
+                    "«Не сохранять пароли в истории»: команды /l, /login, /reg, /register, /changepassword убираются из файла сразу, даже пока игра запущена.",
+                    "Выключили функцию — история возвращается в папки игры."
+                ],
+                en: [
+                    "Settings → Gameplay → \"Command history anti-theft\" (on by default).",
+                    "After you quit, command_history.txt moves to the launcher's encrypted storage under a new random name in a new random folder each time.",
+                    "It comes back before launch, so the ↑ key in chat works as usual.",
+                    "\"Do not keep passwords in history\": /l, /login, /reg, /register and /changepassword are removed from the file right away, even while the game is running.",
+                    "Turn the feature off and the history returns to the game folders."
+                ]
+            }
+        },
+        {
             id: "3.5.0-import-fast-downloads",
             version: "3.5.0",
             date: "2026-10-27T12:00:00+03:00",

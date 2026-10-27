@@ -657,6 +657,88 @@ const hideLauncherWindow = () => {
 let mainWindow = require("./windows/mainWindow"); // Модуль для создания главного окна
 let minecraftGameActive = false;
 let activeMinecraftPid = 0;
+
+// Анти-кража истории команд: файл лежит в папке игры только пока игра запущена
+const commandHistoryVault = require("./commandHistoryVault").createCommandHistoryVault({
+    vaultRoot: path.join(userDataPath, "vault"), safeStorage, log: message => console.log(message)
+});
+let commandHistoryDirectory = null;
+const readLauncherSetting = (key, fallback) => {
+    try {
+        const value = JSON.parse(fs.readFileSync(launcherConfigPath, "utf8"))[key];
+        return typeof value === typeof fallback ? value : fallback;
+    } catch (_) {
+        return fallback;
+    }
+};
+const commandHistorySettings = () => {
+    const enabled = readLauncherSetting("antiTheftCommandHistory", true) === true;
+    return {enabled, strip: enabled && readLauncherSetting("stripCommandPasswords", true) === true};
+};
+// Папка игры из интерфейса — только корень игры или папка внутри него
+const acceptedGameDirectory = (supplied) => {
+    if (typeof supplied !== "string" || !path.isAbsolute(supplied)) return null;
+    try {
+        const root = fs.realpathSync(gameFileSafety.configuredRoot());
+        const target = path.resolve(supplied);
+        if (fs.existsSync(target)) {
+            const real = fs.realpathSync(target);
+            const relative = path.relative(root, real);
+            if (relative.startsWith("..") || path.isAbsolute(relative) || !fs.statSync(real).isDirectory()) return null;
+            return real;
+        }
+        const relative = path.relative(root, target);
+        if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) return null;
+        fs.mkdirSync(target, {recursive: true});
+        return target;
+    } catch (_) {
+        return null;
+    }
+};
+// Все папки игры лаунчера: общая, home/* и modpacks/*
+const knownGameDirectories = () => {
+    const root = gameFileSafety.configuredRoot();
+    const result = [root];
+    for (const kind of ["home", "modpacks"]) {
+        try {
+            for (const entry of fs.readdirSync(path.join(root, kind), {withFileTypes: true})) {
+                if (entry.isDirectory()) result.push(path.join(root, kind, entry.name));
+            }
+        } catch (_) {}
+    }
+    return result;
+};
+const protectCommandHistoryEverywhere = async () => {
+    const {enabled, strip} = commandHistorySettings();
+    if (!enabled) return 0;
+    let count = 0;
+    for (const dir of knownGameDirectories()) {
+        if (minecraftGameActive && commandHistoryDirectory && path.resolve(dir).toLowerCase() === path.resolve(commandHistoryDirectory).toLowerCase()) continue;
+        if (!fs.existsSync(path.join(dir, "command_history.txt"))) continue;
+        try {
+            if ((await commandHistoryVault.protect(dir, {strip})).saved) count++;
+        } catch (error) {
+            console.log(`CommandHistory: protect failed [error=${error.message}]`);
+        }
+    }
+    return count;
+};
+const finishCommandHistory = async () => {
+    const dir = commandHistoryDirectory;
+    if (!dir) return;
+    commandHistoryDirectory = null;
+    commandHistoryVault.unwatch(dir);
+    const {enabled, strip} = commandHistorySettings();
+    if (!enabled) return;
+    // Игра только что закрылась — даём Windows отпустить файл
+    await new Promise(resolve => setTimeout(resolve, 400));
+    try {
+        const result = await commandHistoryVault.protect(dir, {strip});
+        console.log(`CommandHistory: hidden after game [saved=${result.saved}] [lines=${result.lines}]`);
+    } catch (error) {
+        console.log(`CommandHistory: protect after game failed [error=${error.message}]`);
+    }
+};
 let installUpdateWhenGameCloses = false;
 let forceWindowClose = false;
 let secureUpdaterEnabled = false;
@@ -1056,6 +1138,12 @@ app.on("before-quit", () => {
 console.log(colors.inverse("RxLauncher v" + pjson.version + " | Hostname: " + os.hostname() + " | <> by MaxRx"));
 
 app.whenReady().then(() => {
+    // История команд, оставшаяся в папках игры (игру закрыли без лаунчера или он упал), — в хранилище
+    setTimeout(() => {
+        protectCommandHistoryEverywhere()
+            .then(count => { if (count) console.log(`CommandHistory: hidden on startup [count=${count}]`); })
+            .catch(error => console.log(`CommandHistory: startup sweep failed [error=${error.message}]`));
+    }, 3000);
     if (!isAppInDev) {
         console.log(colors.inverse("We are in production mode"));
 
@@ -1242,6 +1330,7 @@ app.whenReady().then(() => {
         }
         minecraftGameActive = false;
         activeMinecraftPid = 0;
+        finishCommandHistory().catch(() => {});
         if (installUpdateWhenGameCloses) {
             installUpdateWhenGameCloses = false;
             if (!secureUpdaterEnabled || !verifiedUpdateReady) {
@@ -1532,6 +1621,31 @@ app.whenReady().then(() => {
     });
 
     // Получить конфиг для MCLC
+    // Перед запуском: вернуть историю команд в папку игры и следить, чтобы в неё не попадали пароли
+    handleTrusted("command-history-prepare", async (_event, payload = {}) => {
+        const dir = acceptedGameDirectory(payload?.gameDirectory);
+        if (!dir) return false;
+        if (commandHistoryDirectory && commandHistoryDirectory !== dir) commandHistoryVault.unwatch(commandHistoryDirectory);
+        commandHistoryDirectory = dir;
+        const {strip} = commandHistorySettings();
+        try {
+            const result = await commandHistoryVault.restore(dir, {strip});
+            if (strip) commandHistoryVault.watch(dir);
+            console.log(`CommandHistory: ready for game [restored=${result.restored}] [lines=${result.lines}] [strip=${strip}]`);
+            return true;
+        } catch (error) {
+            console.log(`CommandHistory: restore failed [error=${error.message}]`);
+            return false;
+        }
+    });
+
+    // Переключили «Анти-кражу»: спрятать все истории сейчас или вернуть их по местам
+    handleTrusted("command-history-setting", async () => {
+        if (commandHistorySettings().enabled) return {hidden: await protectCommandHistoryEverywhere()};
+        commandHistoryVault.unwatchAll();
+        return {released: await commandHistoryVault.releaseAll()};
+    });
+
     handleTrusted("generate-mclc-config", async (_event, data) => {
         const type = data?.type;
         const version = data?.version;

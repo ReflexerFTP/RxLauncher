@@ -191,6 +191,12 @@ class RxStarter {
             RxCollector.writeLog(`Servers: Could not sync Minecraft list [error=${error}]`);
             RxToasts.create(RxServersUI.message("syncFailed", "Не удалось обновить список серверов Minecraft"), "warning");
         }
+        // История команд (command_history.txt) возвращается в папку игры только на время игры
+        try {
+            await ipcRenderer.invoke("command-history-prepare", {gameDirectory});
+        } catch (error) {
+            RxCollector.writeLog(`CommandHistory: prepare failed [error=${error?.message || error}]`);
+        }
         try {
             launcher.launch(this.config).then(childProcess => {
                 // Запуск отменили, пока шли загрузки — игру не показываем

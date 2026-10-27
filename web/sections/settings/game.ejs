@@ -31,6 +31,35 @@
     </label>
 </div>
 
+<!-- Анти-кража: command_history.txt лежит в папке игры только пока игра запущена -->
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">shield_lock</span>
+    </div>
+    <div class="flex-grow">
+        <span class="name">{{settings.game.antiTheft.title}}</span>
+        <div class="description">{{settings.game.antiTheft.description}}</div>
+    </div>
+    <label class="switch" data-setting="antiTheftCommandHistory" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">password</span>
+    </div>
+    <div class="flex-grow">
+        <span class="name">{{settings.game.stripPasswords.title}}</span>
+        <div class="description">{{settings.game.stripPasswords.description}}</div>
+    </div>
+    <label class="switch" data-setting="stripCommandPasswords" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
 <div class="flex flex-center flex-gap-8 settings-item">
     <div class="icon">
         <span class="material-symbols-outlined">terminal</span>

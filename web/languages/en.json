@@ -471,6 +471,16 @@
         "sendTechnicalStats": {
           "title": "Send technical statistics",
           "description": "Optional: Windows and launcher versions, CPU, memory and installed version counts. Uses a random identifier; disabled by default."
+        },
+        "antiTheft": {
+          "title": "Command history anti-theft",
+          "description": "command_history.txt stays in the game folder only while the game is running. After you quit, it is hidden in the launcher's encrypted storage under a new random name in a new random folder each time. It comes back before launch, so the ↑ key in chat works as usual",
+          "enabled": "Command history hidden",
+          "disabled": "Command history returned to the game folders"
+        },
+        "stripPasswords": {
+          "title": "Do not keep passwords in history",
+          "description": "Login commands with a password (/l, /login, /reg, /register, /changepassword) are removed from command_history.txt right away, even while the game is running. Works together with anti-theft"
         }
       },
       "java": {

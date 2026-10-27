@@ -128,6 +128,14 @@ $(function () {
             }
         }
 
+        // Анти-кража: спрятать истории команд сейчас или вернуть их в папки игры
+        if (setting === "antiTheftCommandHistory" || setting === "stripCommandPasswords") {
+            ipcRenderer.invoke("command-history-setting").then(() => {
+                if (setting !== "antiTheftCommandHistory") return;
+                RxToasts.create(currentValue ? MESSAGES.settings.game.antiTheft.enabled : MESSAGES.settings.game.antiTheft.disabled, "shield_lock");
+            }).catch(error => RxCollector.writeLog(`CommandHistory: setting sync failed [error=${error?.message || error}]`));
+        }
+
         if (setting === "disableCssEffects") {
             if (currentValue === true) {
                 $("html").addClass("noEffects");
