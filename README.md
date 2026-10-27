@@ -2,7 +2,7 @@
 
 Бесплатный Minecraft-лаунчер с открытым исходным кодом. Любые версии игры, готовые сборки в один клик, моды без поиска по сайтам и игра с друзьями по одному коду.
 
-![Главный экран RxLauncher](site/assets/shots/home.webp)
+![Главный экран RxLauncher](.github/home.webp)
 
 ## Ссылки
 
@@ -58,10 +58,6 @@ npm start
 - [minecraft-launcher-core](https://github.com/Pierce01/MinecraftLauncher-core)
 - [tomate-loaders](https://github.com/doublekekse/tomate-loaders)
 - [Modrinth API](https://docs.modrinth.com/)
-
-## Сайт
-
-Исходники сайта лежат в папке [`site`](site): чистые HTML, CSS и JS без сборки. Скриншоты для него снимает `tests/siteShots.js`.
 
 ## Лицензия
 

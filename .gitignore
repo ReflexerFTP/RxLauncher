@@ -32,3 +32,6 @@ dist
 .cache/
 
 dist-design/
+
+# Сайт rxlauncher.xyz хранится только локально
+site/

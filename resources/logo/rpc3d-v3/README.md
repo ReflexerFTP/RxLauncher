@@ -23,6 +23,6 @@ Renderer options: `RX_RPC_SIZE`, `RX_RPC_LOOP`, `RX_RPC_FRAMES`, `RX_RPC_SOURCE`
 How the GIF stays at 4.8 MB: pixels that stay within `RX_RPC_TOLERANCE` of what is already on screen become transparent (so LZW sees long runs), the palette is refined with k-means, and a static 8×8 Bayer pattern hides banding on the dark gradients without flicker.
 
 Discord requires a publicly accessible image URL for animation. The launcher uses the file hosted on the project site:
-<https://rxlauncher.xyz/assets/rpc/rxlauncher-rpc-3d-v3.gif> (source copy: `site/assets/rpc/`). The `RX_DISCORD_RPC_LARGE_IMAGE_KEY` environment override still works. The published file was fetched back and its SHA-256 matched the local GIF.
+<https://rxlauncher.xyz/assets/rpc/rxlauncher-rpc-3d-v3.gif>. The `RX_DISCORD_RPC_LARGE_IMAGE_KEY` environment override still works. The published file was fetched back and its SHA-256 matched the local GIF.
 
 Vendored renderer libraries are shared with v2 (`../rpc3d-v2/vendor`): Three.js r158 and polygon-clipping (MIT).
