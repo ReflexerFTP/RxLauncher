@@ -15,7 +15,8 @@ const ctx = vm.createContext({fs, path, crypto, process, fsPromises: fs.promises
     RxCollector: {writeLog() {}}, RxVersionsManager: {versionToDisplayName: () => '1.21.1'},
     RxFlyout: {setUIStartMode() {}, setText() {}, changeMode: async () => {}}, MESSAGES: {starter: {configuring: 'Configuring'}},
     RxJavaManager: {gameVersionToJavaVersion: async () => '21', install: async () => { installed++; }, getPath: () => false},
-    RxLaunchConfigurator: {createConfigForVersion: async () => ({javaPath: executable})}
+    RxLaunchConfigurator: {createConfigForVersion: async () => ({javaPath: executable})},
+    RxGameFiles: {prepare: async () => true}
 });
 (async () => {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../web/js/RxStarter.js'), 'utf8') + '\nthis.Starter = RxStarter;', ctx);

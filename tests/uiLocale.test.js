@@ -29,13 +29,13 @@ const notesSource = fs.readFileSync(path.join(__dirname, "..", "web", "js", "RxP
 vm.runInContext(`${notesSource}\nthis.RxPatchNotes = RxPatchNotes;`, context, {filename: "RxPatchNotes.js"});
 assert.strictEqual(context.RxPatchNotes.locale(), "ru-RU");
 assert.doesNotThrow(() => context.RxPatchNotes.formatDate("2026-07-29T18:00:00+03:00"));
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Новая аватарка в Discord");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Импорт из других лаунчеров");
 language = "en";
 assert.strictEqual(context.RxPatchNotes.locale(), "en-US");
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "A new Discord avatar");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Import from other launchers");
 // Устаревший сохранённый язык откатывается на английские тексты
 language = "ua";
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "A new Discord avatar");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Import from other launchers");
 // Каждый патч локализован для обоих языков
 for (const lang of ["ru", "en"]) {
     language = lang;

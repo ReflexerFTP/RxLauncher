@@ -147,6 +147,10 @@ class RxStarter {
         this.config = configuration;
         RxCollector.writeLog(`Starter: Configuration ready`);
 
+        // Библиотеки и ассеты — заранее и параллельно, MCLC затем только проверит их
+        await RxGameFiles.prepare(configuration);
+        if (RxStarter.cancelRequested) return false;
+
         // Если версия ForgeOptiFine - скачиваем/переносим файл в моды
         if(this.versionType === "forgeOptiFine"){
             RxCollector.writeLog(`Starter: Preparing OptiFine`);

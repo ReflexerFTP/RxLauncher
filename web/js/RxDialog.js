@@ -6,8 +6,9 @@ class RxDialog {
     static escape = (value) => String(value ?? "").replace(/[&<>"']/g, char => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"})[char]);
 
     // options: {icon, title, text, items: [{icon, title, text, level}], choices: [{value, icon, image, title, text}],
+    //           checks: [{id, icon, title, text, checked, disabled, separated}],
     //           input: {placeholder, multiline, value}, buttons: [{id, text, icon, primary, danger}]}
-    // Результат: {button, value, input}; button === null — окно закрыли
+    // Результат: {button, value, input, checks: {id: true/false}}; button === null — окно закрыли
     static open = (options = {}) => new Promise((resolve) => {
         RxDialog.close(null);
         const esc = RxDialog.escape;
@@ -19,13 +20,21 @@ class RxDialog {
             ${choice.image ? `<img src="${esc(choice.image)}" alt=""/>` : `<span class="material-symbols-outlined">${esc(choice.icon || "radio_button_unchecked")}</span>`}
             <div><b>${esc(choice.title)}</b>${choice.text ? `<span>${esc(choice.text)}</span>` : ""}</div>
         </button>`).join("");
+        // separated — отдельные галочки под списком, они не уезжают при прокрутке
+        const checkHtml = check => `<label class="rx-dialog-check${check.disabled ? " disabled" : ""}">
+            <span class="material-symbols-outlined">${esc(check.icon || "check_box")}</span>
+            <div><b>${esc(check.title)}</b>${check.text ? `<span>${esc(check.text)}</span>` : ""}</div>
+            <span class="switch"><input type="checkbox" data-check="${esc(check.id)}"${check.checked && !check.disabled ? " checked" : ""}${check.disabled ? " disabled" : ""}><span class="inner"></span></span>
+        </label>`;
+        const checks = (options.checks || []).filter(check => !check.separated).map(checkHtml).join("");
+        const pinnedChecks = (options.checks || []).filter(check => check.separated).map(checkHtml).join("");
         const input = options.input
             ? (options.input.multiline
                 ? `<textarea class="rx-dialog-input" rows="4" spellcheck="false" placeholder="${esc(options.input.placeholder || "")}">${esc(options.input.value || "")}</textarea>`
                 : `<input class="rx-dialog-input" type="text" spellcheck="false" placeholder="${esc(options.input.placeholder || "")}" value="${esc(options.input.value || "")}"/>`)
             : "";
         const buttons = (options.buttons || [{id: "ok", text: MESSAGES.commons?.close || "OK", primary: true}]).map(button => `<button type="button"
-            class="${button.primary ? "" : "transparent"}${button.danger ? " rx-dialog-danger" : ""}" data-dialog-button="${esc(button.id)}">
+            class="${button.primary ? "" : "transparent"}${button.danger ? " rx-dialog-danger" : ""}" data-dialog-button="${esc(button.id)}"${button.requiresCheck ? " data-requires-check" : ""}>
             ${button.icon ? `<span class="material-symbols-outlined">${esc(button.icon)}</span>` : ""}<span>${esc(button.text)}</span>
         </button>`).join("");
 
@@ -40,6 +49,8 @@ class RxDialog {
                 </div>
                 ${items ? `<ul class="rx-dialog-items">${items}</ul>` : ""}
                 ${choices ? `<div class="rx-dialog-choices">${choices}</div>` : ""}
+                ${checks ? `<div class="rx-dialog-checks">${checks}</div>` : ""}
+                ${pinnedChecks ? `<div class="rx-dialog-checks pinned">${pinnedChecks}</div>` : ""}
                 ${input}
                 <div class="rx-dialog-actions">${buttons}</div>
             </div>
@@ -50,9 +61,11 @@ class RxDialog {
             window.removeEventListener("keydown", onKey, true);
             RxDialog.current = null;
             const text = String($root.find(".rx-dialog-input").val() ?? "");
+            const checked = {};
+            $root.find("[data-check]").each(function () { checked[$(this).attr("data-check")] = $(this).is(":checked"); });
             $root.addClass("leaving");
             setTimeout(() => $root.remove(), 160);
-            resolve({button, value, input: text});
+            resolve({button, value, input: text, checks: checked});
         };
         const onKey = (event) => {
             if (event.key === "Escape") {
@@ -68,6 +81,10 @@ class RxDialog {
         };
 
         $root.on("click", (event) => { if (event.target === event.currentTarget) finish(null); });
+        // Кнопку «готово» можно выключить, пока ни одна галочка не выбрана
+        const syncRequired = () => $root.find("[data-dialog-button][data-requires-check]")
+            .prop("disabled", !$root.find("[data-check]:checked:not([data-check-optional])").length);
+        $root.on("change", "[data-check]", syncRequired);
         $root.on("click", "[data-dialog-button]", function () { finish($(this).attr("data-dialog-button")); });
         $root.on("click", "[data-choice]", function () {
             const choice = options.choices[Number($(this).attr("data-choice"))];
@@ -76,6 +93,8 @@ class RxDialog {
         window.addEventListener("keydown", onKey, true);
         RxDialog.current = {root: $root, finish};
         $("body").append($root);
+        (options.checks || []).filter(check => check.optional).forEach(check => $root.find(`[data-check="${CSS.escape(String(check.id))}"]`).attr("data-check-optional", ""));
+        syncRequired();
         setTimeout(() => ($root.find(".rx-dialog-input")[0] || $root.find("[data-dialog-button]").last()[0])?.focus(), 30);
     });
 

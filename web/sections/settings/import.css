@@ -1,0 +1,78 @@
+#modal-settings .import-panel .description { max-width: none; }
+
+#modal-settings .import-target {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: var(--text-sub);
+    font-size: 9.5pt;
+}
+
+#modal-settings .import-target .material-symbols-outlined { font-size: 17px; }
+#modal-settings .import-target span:last-child { overflow-wrap: anywhere; }
+
+#modal-settings .import-sources,
+#modal-settings .import-backups {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+#modal-settings .import-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 9px 10px 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--rx-stroke);
+    background: var(--theme-primaryBg);
+}
+
+#modal-settings .import-row > .material-symbols-outlined { font-size: 22px; color: var(--theme-primaryLighter); }
+#modal-settings .import-row-copy { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; }
+#modal-settings .import-row-copy b { font-size: 10.5pt; }
+#modal-settings .import-row-copy span { color: var(--text-sub); font-size: 9pt; overflow-wrap: anywhere; }
+#modal-settings .import-row button { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+#modal-settings .import-row button .material-symbols-outlined { font-size: 18px; }
+#modal-settings .import-empty { color: var(--text-sub); font-size: 10pt; padding: 4px 2px; }
+
+#modal-settings .import-actions { margin-top: 4px; flex-wrap: wrap; }
+#modal-settings .import-actions button { display: flex; align-items: center; gap: 6px; }
+#modal-settings .import-actions button .material-symbols-outlined { font-size: 18px; }
+
+#modal-settings .import-progress { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+#modal-settings .import-progress[hidden] { display: none; }
+#modal-settings .import-progress span { color: var(--text-sub); font-size: 9.5pt; }
+
+#modal-settings .import-progress-bar {
+    height: 6px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--theme-primaryBgLighter);
+}
+
+#modal-settings .import-progress-bar div {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--theme-primary);
+    transition: width .15s linear;
+}
+
+#modal-settings .import-row button,
+#modal-settings .import-actions button {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-size: 10pt;
+}
+
+#modal-settings .import-actions button.transparent,
+#modal-settings .import-row button.transparent { border: 1px solid var(--rx-stroke); }
+#modal-settings .import-actions button.transparent:hover,
+#modal-settings .import-row button.transparent:hover { background: var(--theme-primaryBgLighter); }
+#modal-settings .import-row button:disabled,
+#modal-settings .import-actions button:disabled { opacity: .5; pointer-events: none; }

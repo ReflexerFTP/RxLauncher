@@ -61,6 +61,7 @@ function loadSettingsUI() {
 
     // Директория игры
     $("#gameDirectoryInput").val(GAME_DATA);
+    $("#downloadSourceSelect").val(RxGameFiles.source());
 }
 
 function updateWallpaperAppearanceUI(appearance) {
@@ -107,6 +108,12 @@ async function checkNetworkCompatibility() {
 }
 
 $(function () {
+    // Откуда качать файлы игры
+    $("#downloadSourceSelect").on("change", function () {
+        const value = String($(this).val());
+        if (RxGameFiles.SOURCES.includes(value)) RxConfig.write("downloadSource", value);
+    });
+
     // Сохранение настроек при изменении
     $("#modal-settings input[type='checkbox']").on("change", function () {
         let setting = $(this).parent().data("setting");

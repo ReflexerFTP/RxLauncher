@@ -1124,7 +1124,8 @@ variable {
             configResult.overrides.gameDirectory = path.join(GAME_DATA, "modpacks", parsedActive.name);
         }
 
-        configResult.overrides.maxSockets = 1;
+        // Сколько файлов MCLC качает одновременно (с 1 потоком тысячи ассетов шли по одному)
+        configResult.overrides.maxSockets = RxGameFiles.CONCURRENCY;
         RxCollector.writeLog("Config: Applied user settings");
         return configResult;
     }

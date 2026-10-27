@@ -1,6 +1,36 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.5.0-import-fast-downloads",
+            version: "3.5.0",
+            date: "2026-10-27T12:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "ИМПОРТ", en: "IMPORT"},
+            title: {ru: "Импорт из других лаунчеров", en: "Import from other launchers"},
+            summary: {
+                ru: "Переезжайте из Legacy Launcher и TLauncher за минуту, а версии игры теперь скачиваются в несколько раз быстрее.",
+                en: "Move over from Legacy Launcher and TLauncher in a minute, and game versions now download several times faster."
+            },
+            changes: {
+                ru: [
+                    "Настройки → Импорт: лаунчер сам находит Legacy Launcher, TLauncher и папку .minecraft, а любую другую папку можно выбрать вручную.",
+                    "Галочками выбирается, что перенести: миры, моды, конфиги, настройки игры, ресурспаки, шейдеры, скриншоты, серверы, ники и уже скачанные файлы игры.",
+                    "Резервная копия перед импортом: если что-то пойдёт не так, импорт отменяется тоже по галочкам — добавленное удаляется, заменённые файлы возвращаются.",
+                    "Свои миры никогда не перезаписываются: мир с таким же именем переносится как «(импорт)».",
+                    "Файлы игры качаются в 16 потоков вместо одного: новые версии загружаются в несколько раз быстрее.",
+                    "Если серверы Mojang не отвечают, загрузка сама переключается на зеркало. Источник можно выбрать в Настройки → Параметры запуска."
+                ],
+                en: [
+                    "Settings → Import: the launcher finds Legacy Launcher, TLauncher and the .minecraft folder by itself, and any other folder can be chosen manually.",
+                    "Pick what to bring over with checkboxes: worlds, mods, configs, game settings, resource packs, shaders, screenshots, servers, nicknames and already downloaded game files.",
+                    "A backup before importing: if something goes wrong, the import can be undone, also with checkboxes. Added files are removed and replaced ones come back.",
+                    "Your own worlds are never overwritten: a world with the same name is imported as \"(import)\".",
+                    "Game files download over 16 connections instead of one, so new versions install several times faster.",
+                    "If Mojang servers do not respond, downloads switch to a mirror automatically. The source can be chosen in Settings → Startup."
+                ]
+            }
+        },
+        {
             id: "3.4.0-rpc-avatar",
             version: "3.4.0",
             date: "2026-10-26T19:00:00+03:00",

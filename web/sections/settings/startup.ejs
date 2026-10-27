@@ -18,6 +18,21 @@
 
 <div class="flex flex-center flex-gap-8 settings-item">
     <div class="icon">
+        <span class="material-symbols-outlined">cloud_download</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center flex-gap-4">
+        <span class="name">{{settings.startup.downloadSource.title}}</span>
+        <div class="description">{{settings.startup.downloadSource.description}}</div>
+    </div>
+    <select id="downloadSourceSelect" aria-label="{{settings.startup.downloadSource.title}}">
+        <option value="auto">{{settings.startup.downloadSource.auto}}</option>
+        <option value="official">{{settings.startup.downloadSource.official}}</option>
+        <option value="mirror">{{settings.startup.downloadSource.mirror}}</option>
+    </select>
+</div>
+
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
         <span class="material-symbols-outlined">memory_alt</span>
     </div>
     <div class="flex flex-grow flex-col flex-justify-center flex-gap-4">

@@ -118,7 +118,8 @@ class RxDownloader {
     static RETRIES = 3;
 
     // Скачать много файлов параллельно (файлы сборки): повтор при обрыве, проверка хеша, общий прогресс.
-    // items: [{url, path, hashes, size, displayName}]. Ошибка любого файла после всех попыток — ошибка всей загрузки
+    // items: [{url, fallbackUrl, path, hashes, size, displayName}]; вторая попытка идёт через fallbackUrl (зеркало), если он есть.
+    // Ошибка любого файла после всех попыток — ошибка всей загрузки
     static downloadMany = async (items, title, concurrency = 6) => {
         if (!Array.isArray(items)) throw new TypeError("Download items must be an array");
         if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error("Invalid download concurrency");
@@ -159,7 +160,8 @@ class RxDownloader {
                 try {
                     if (signal.aborted) throw new Error("Download aborted");
                     recordBytes(item, 0);
-                    await RxHttp.download(item.url, item.path, {
+                    const url = item.fallbackUrl && attempt % 2 === 0 ? item.fallbackUrl : item.url;
+                    await RxHttp.download(url, item.path, {
                         hashes: item.hashes, signal, urlPolicy: item.urlPolicy, onProgress: (bytes) => {
                             recordBytes(item, bytes);
                             updateUI();
@@ -167,8 +169,9 @@ class RxDownloader {
                     });
                     return;
                 } catch (error) {
-                    // Отмену и ответ 4xx (файла нет) повторять бесполезно
-                    if (signal.aborted || (error.status >= 400 && error.status < 500) || attempt >= RxDownloader.RETRIES) throw error;
+                    // Отмену и ответ 4xx (файла нет) повторять бесполезно — разве что через ещё не опробованное зеркало
+                    const missing = error.status >= 400 && error.status < 500;
+                    if (signal.aborted || attempt >= RxDownloader.RETRIES || (missing && (!item.fallbackUrl || attempt >= 2))) throw error;
                     RxCollector.writeLog(`Download retry ${attempt} [file=${item.displayName || path.basename(item.path)}] [error=${error.message}]`);
                     await new Promise((resolve, reject) => {
                         const onAbort = () => {

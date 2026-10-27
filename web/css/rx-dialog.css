@@ -129,5 +129,38 @@
 .rx-dialog-actions .material-symbols-outlined { font-size: 18px; color: inherit; }
 .rx-dialog-actions .rx-dialog-danger { background: var(--error) !important; color: #fff !important; }
 
+/* Список галочек (импорт и восстановление) */
+.rx-dialog-checks {
+    min-height: 0;
+    flex: 0 1 auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 4px 0 0;
+}
+
+.rx-dialog-check {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--rx-stroke);
+    background: var(--theme-primaryBgLight);
+    cursor: pointer;
+}
+
+.rx-dialog-checks.pinned { flex: 0 0 auto; overflow: visible; padding: 0; }
+.rx-dialog-checks.pinned .rx-dialog-check { border-color: color-mix(in srgb, var(--theme-primary) 40%, transparent); }
+.rx-dialog-check.disabled { opacity: .5; cursor: default; }
+.rx-dialog-check > .material-symbols-outlined { width: 28px; font-size: 21px; color: var(--theme-primaryLighter); text-align: center; }
+.rx-dialog-check div { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; }
+.rx-dialog-check b { font-size: 9.5pt; }
+.rx-dialog-check div span { color: var(--text-sub); font-size: 8.5pt; line-height: 1.35; overflow-wrap: anywhere; }
+.rx-dialog-check .switch { flex: 0 0 auto; }
+.rx-dialog-actions button:disabled { opacity: .45; pointer-events: none; }
+
 @keyframes rx-dialog-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes rx-dialog-pop { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }

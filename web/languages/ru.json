@@ -420,7 +420,8 @@
       "cancelWait": "Предыдущий запуск ещё останавливается — подождите пару секунд",
       "remaining": "осталось ~{0}",
       "sec": "с",
-      "min": "мин"
+      "min": "мин",
+      "gameFiles": "файлов игры"
     },
     "updater": {
       "available": "Доступно новое обновление",
@@ -437,7 +438,8 @@
         "game": "Игровой процесс",
         "startup": "Параметры запуска",
         "java": "Параметры Java",
-        "about": "О лаунчере"
+        "about": "О лаунчере",
+        "import": "Импорт"
       },
       "game": {
         "consoleOnStart": "Открыть консоль при запуске игры",
@@ -609,6 +611,13 @@
         "rxClientLobbyMode": {
           "title": "Rx Client Lobby (In-Game, 1.21.4)",
           "description": "Adds the Rx Client menu inside Minecraft (SinglePlayer/MultiPlayer/ALT manager/Discord/Telegram). Works on 1.21.4."
+        },
+        "downloadSource": {
+          "title": "Источник загрузки",
+          "description": "Откуда качать файлы Minecraft. «Авто» берёт серверы Mojang, а если они не отвечают — переключается на зеркало",
+          "auto": "Авто (Mojang + зеркало)",
+          "official": "Только Mojang",
+          "mirror": "Сначала зеркало"
         }
       },
       "about": {
@@ -630,6 +639,59 @@
         "telegramText": "Новости и обновления",
         "githubText": "Исходный код и ошибки",
         "siteText": "Сайт лаунчера"
+      },
+      "import": {
+        "title": "Импорт из другого лаунчера",
+        "description": "Перенесите миры, моды, настройки, ресурспаки и ники из Legacy Launcher, TLauncher или любой папки .minecraft. Перед переносом можно сделать резервную копию.",
+        "target": "Куда: {0}",
+        "pickFolder": "Выбрать папку вручную",
+        "refresh": "Обновить",
+        "importButton": "Импортировать",
+        "noSources": "Другие лаунчеры не найдены — выберите папку вручную",
+        "scanning": "Смотрим, что есть в {0}…",
+        "dialogTitle": "Импорт из {0}",
+        "dialogText": "Откуда: {0}\nКуда: {1}",
+        "nothing": "Нечего переносить",
+        "importedSuffix": "импорт",
+        "backupCheck": "Сделать резервную копию",
+        "backupCheckText": "Если что-то пойдёт не так, всё можно будет вернуть в «Резервных копиях импорта»",
+        "done": "Импорт завершён: файлов {0}",
+        "doneWithErrors": "Не скопировано: {0}",
+        "failed": "Не удалось выполнить импорт",
+        "closeGame": "Закройте игру перед импортом",
+        "notGameDir": "В этой папке нет файлов Minecraft",
+        "ownFolder": "Это папка самого RxLauncher",
+        "backupsTitle": "Резервные копии импорта",
+        "backupsDescription": "Здесь можно отменить импорт: добавленное удалится, а заменённые файлы вернутся. Тоже по галочкам.",
+        "noBackups": "Копий пока нет",
+        "restoreButton": "Вернуть",
+        "restoreTitle": "Вернуть как было",
+        "restoreText": "Отмеченное вернётся к состоянию до импорта из {0}: добавленное удалится, заменённые файлы вернутся.",
+        "restoreCount": "Изменений: {0}",
+        "restored": "Возвращено как было",
+        "restoredAll": "Уже возвращено",
+        "deleteBackup": "Удалить копию",
+        "deleteBackupText": "После удаления вернуть этот импорт будет нельзя.",
+        "part_options": "Настройки игры и управление",
+        "part_saves": "Миры",
+        "part_mods": "Моды",
+        "part_config": "Конфиги модов",
+        "part_resourcepacks": "Ресурспаки",
+        "part_shaderpacks": "Шейдеры",
+        "part_screenshots": "Скриншоты",
+        "part_servers": "Список серверов",
+        "part_accounts": "Ники (без паролей)",
+        "part_cache": "Скачанные файлы игры (чтобы не качать заново)",
+        "count_options": "Файлов: {0}",
+        "count_saves": "Миров: {0}",
+        "count_mods": "Файлов: {0}",
+        "count_config": "Файлов: {0}",
+        "count_resourcepacks": "Файлов: {0}",
+        "count_shaderpacks": "Файлов: {0}",
+        "count_screenshots": "Скриншотов: {0}",
+        "count_servers": "Новых серверов: {0}",
+        "count_accounts": "Новых ников: {0}",
+        "count_cache": "Файлов: {0}"
       }
     },
     "flymenu": {

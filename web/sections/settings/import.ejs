@@ -1,0 +1,38 @@
+<link rel="stylesheet" href="sections/settings/import.css"/>
+
+<!-- Импорт из других лаунчеров -->
+<div class="flex flex-gap-8 settings-item import-panel">
+    <div class="icon">
+        <span class="material-symbols-outlined">move_to_inbox</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-gap-4">
+        <span class="name">{{settings.import.title}}</span>
+        <div class="description">{{settings.import.description}}</div>
+        <div class="import-target"><span class="material-symbols-outlined">subdirectory_arrow_right</span><span data-import-target></span></div>
+        <div class="import-sources" data-import-sources></div>
+        <div class="import-progress" data-import-progress hidden>
+            <div class="import-progress-bar"><div></div></div>
+            <span data-import-progress-text></span>
+        </div>
+        <div class="flex flex-gap-8 import-actions">
+            <button type="button" class="transparent small" data-import-pick>
+                <span class="material-symbols-outlined">folder_open</span><span>{{settings.import.pickFolder}}</span>
+            </button>
+            <button type="button" class="transparent small" data-import-refresh>
+                <span class="material-symbols-outlined">refresh</span><span>{{settings.import.refresh}}</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Резервные копии импорта -->
+<div class="flex flex-gap-8 settings-item import-panel">
+    <div class="icon">
+        <span class="material-symbols-outlined">settings_backup_restore</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-gap-4">
+        <span class="name">{{settings.import.backupsTitle}}</span>
+        <div class="description">{{settings.import.backupsDescription}}</div>
+        <div class="import-backups" data-import-backups></div>
+    </div>
+</div>

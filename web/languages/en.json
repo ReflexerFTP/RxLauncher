@@ -420,7 +420,8 @@
       "cancelWait": "The previous launch is still stopping — wait a couple of seconds",
       "remaining": "~{0} left",
       "sec": "s",
-      "min": "min"
+      "min": "min",
+      "gameFiles": "game files"
     },
     "updater": {
       "available": "New update available",
@@ -437,7 +438,8 @@
         "game": "Gameplay",
         "startup": "Startup options",
         "java": "Java options",
-        "about": "About launcher"
+        "about": "About launcher",
+        "import": "Import"
       },
       "game": {
         "consoleOnStart": "Open console when starting game",
@@ -609,6 +611,13 @@
         "rxClientLobbyMode": {
           "title": "Rx Client Lobby (In-Game, 1.21.4)",
           "description": "Adds the Rx Client menu inside Minecraft (SinglePlayer/MultiPlayer/ALT manager/Discord/Telegram). Works on 1.21.4."
+        },
+        "downloadSource": {
+          "title": "Download source",
+          "description": "Where Minecraft files come from. \"Auto\" uses Mojang servers and switches to a mirror if they do not respond",
+          "auto": "Auto (Mojang + mirror)",
+          "official": "Mojang only",
+          "mirror": "Mirror first"
         }
       },
       "about": {
@@ -630,6 +639,59 @@
         "telegramText": "News and updates",
         "githubText": "Source code and issues",
         "siteText": "Launcher website"
+      },
+      "import": {
+        "title": "Import from another launcher",
+        "description": "Bring over worlds, mods, settings, resource packs and nicknames from Legacy Launcher, TLauncher or any .minecraft folder. You can make a backup first.",
+        "target": "To: {0}",
+        "pickFolder": "Choose a folder",
+        "refresh": "Refresh",
+        "importButton": "Import",
+        "noSources": "No other launchers found. Choose a folder manually",
+        "scanning": "Looking inside {0}…",
+        "dialogTitle": "Import from {0}",
+        "dialogText": "From: {0}\nTo: {1}",
+        "nothing": "Nothing to import",
+        "importedSuffix": "import",
+        "backupCheck": "Make a backup",
+        "backupCheckText": "If something goes wrong, you can undo everything in \"Import backups\"",
+        "done": "Import finished: {0} files",
+        "doneWithErrors": "Not copied: {0}",
+        "failed": "Import failed",
+        "closeGame": "Close the game before importing",
+        "notGameDir": "This folder has no Minecraft files",
+        "ownFolder": "This is the RxLauncher folder itself",
+        "backupsTitle": "Import backups",
+        "backupsDescription": "Undo an import here: added files are removed and replaced files come back. Also with checkboxes.",
+        "noBackups": "No backups yet",
+        "restoreButton": "Undo",
+        "restoreTitle": "Undo import",
+        "restoreText": "The checked parts go back to how they were before the import from {0}: added files are removed, replaced files come back.",
+        "restoreCount": "Changes: {0}",
+        "restored": "Import undone",
+        "restoredAll": "Already undone",
+        "deleteBackup": "Delete backup",
+        "deleteBackupText": "After deleting it, this import can no longer be undone.",
+        "part_options": "Game settings and controls",
+        "part_saves": "Worlds",
+        "part_mods": "Mods",
+        "part_config": "Mod configs",
+        "part_resourcepacks": "Resource packs",
+        "part_shaderpacks": "Shaders",
+        "part_screenshots": "Screenshots",
+        "part_servers": "Server list",
+        "part_accounts": "Nicknames (no passwords)",
+        "part_cache": "Downloaded game files (no need to download again)",
+        "count_options": "Files: {0}",
+        "count_saves": "Worlds: {0}",
+        "count_mods": "Files: {0}",
+        "count_config": "Files: {0}",
+        "count_resourcepacks": "Files: {0}",
+        "count_shaderpacks": "Files: {0}",
+        "count_screenshots": "Screenshots: {0}",
+        "count_servers": "New servers: {0}",
+        "count_accounts": "New nicknames: {0}",
+        "count_cache": "Files: {0}"
       }
     },
     "flymenu": {
