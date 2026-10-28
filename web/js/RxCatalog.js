@@ -106,7 +106,10 @@ class RxCatalog {
             state.total = result.total_hits || 0;
             state.offset += (result.hits || []).length;
             (result.hits || []).forEach(hit => RxCatalog.hits.set(hit.project_id, hit));
-            $modal.find("[data-catalog-list]").append((result.hits || []).map(RxCatalog.cardHtml).join(""));
+            if (!append) await RxCatalog.prependRecommended(generation);
+            if (generation !== state.generation) return;
+            const shownAbove = new Set(state.type === "modpack" && !state.query && !state.category ? RxCatalog.recommendedCache.hits.map(hit => hit.project_id) : []);
+            $modal.find("[data-catalog-list]").append((result.hits || []).filter(hit => !shownAbove.has(hit.project_id)).map(RxCatalog.cardHtml).join(""));
             if (!append) $modal.find("[data-catalog-scroll]").scrollTop(0);
             if (state.total === 0) RxCatalog.setStatus("search_off", MESSAGES.mods.catalogEmpty, MESSAGES.mods.catalogEmptyText);
             else RxCatalog.setStatus(null);
@@ -122,6 +125,34 @@ class RxCatalog {
                 state.loading = false;
                 RxCatalog.loadMoreIfNeeded();
             }
+        }
+    };
+
+    // Сборки, которые рекомендует админ RxLauncher (с сайта): блок в начале каталога сборок без поиска
+    static recommendedCache = {key: "", hits: []};
+    static prependRecommended = async (generation) => {
+        const state = RxCatalog.state;
+        const packs = typeof RxFeed !== "undefined" ? RxFeed.recommendedPacks() : [];
+        if (state.type !== "modpack" || state.query || state.category || !packs.length) return;
+        const key = packs.map(pack => pack.project).join(",");
+        try {
+            if (RxCatalog.recommendedCache.key !== key) {
+                const projects = await RxCatalog.call("GET", `/projects?ids=${encodeURIComponent(JSON.stringify(packs.map(pack => pack.project)))}`);
+                const byKey = new Map();
+                (projects || []).forEach(project => { byKey.set(project.id, project); byKey.set(project.slug, project); });
+                RxCatalog.recommendedCache = {key, hits: packs.map(pack => byKey.get(pack.project)).filter(project => project?.project_type === "modpack").map(project => ({
+                    project_id: project.id, title: project.title, description: project.description, author: "", icon_url: project.icon_url,
+                    downloads: project.downloads, follows: project.followers, date_modified: project.updated, versions: project.game_versions || []
+                }))};
+            }
+            if (generation !== state.generation || !RxCatalog.recommendedCache.hits.length) return;
+            RxCatalog.recommendedCache.hits.forEach(hit => RxCatalog.hits.set(hit.project_id, hit));
+            const notes = new Map(packs.map(pack => [pack.project, pack.text]));
+            RxCatalog.$modal().find("[data-catalog-list]").append(`<div class="cat-rec-head"><span class="material-symbols-outlined">star</span>${RxCatalog.escape(MESSAGES.feed.recommendedPacks)}</div>`
+                + RxCatalog.recommendedCache.hits.map(hit => RxCatalog.cardHtml(hit).replace('class="mc-card cat-card"', 'class="mc-card cat-card recommended"')).join("")
+                + `<div class="cat-rec-head muted">${RxCatalog.escape(MESSAGES.feed.allPacks)}</div>`);
+        } catch (error) {
+            RxCollector.writeLog(`Catalog: Recommended packs failed [error=${error?.message || error}]`);
         }
     };
 
@@ -225,7 +256,7 @@ class RxCatalog {
         return `<article class="mc-card cat-card" data-project="${esc(hit.project_id)}" title="${esc(RxCatalog.t("details"))}">
             <div class="mc-icon">${icon}</div>
             <div class="mc-copy">
-                <div class="mc-title-row"><strong>${esc(hit.title)}</strong><span>${esc(MESSAGES.mods.catalogBy.replace("{0}", hit.author || "—"))}</span>${installedBadge}</div>
+                <div class="mc-title-row"><strong>${esc(hit.title)}</strong>${hit.author ? `<span>${esc(MESSAGES.mods.catalogBy.replace("{0}", hit.author))}</span>` : ""}${installedBadge}</div>
                 <p>${esc(hit.description)}</p>
                 <div class="mc-meta">
                     <span><span class="material-symbols-outlined">download</span>${RxCatalog.compact(hit.downloads)}</span>

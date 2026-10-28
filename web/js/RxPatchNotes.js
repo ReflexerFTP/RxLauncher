@@ -1,6 +1,36 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.10.0-announcements-recommended",
+            version: "3.10.0",
+            date: "2026-10-29T12:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "НОВОСТИ", en: "NEWS"},
+            title: {ru: "Объявления и рекомендации", en: "Announcements and picks"},
+            summary: {
+                ru: "Новости RxLauncher теперь появляются прямо на главной, а в «Серверах» и каталоге — серверы и сборки, которые мы рекомендуем.",
+                en: "RxLauncher news now shows right on the home screen, and Servers and the catalog highlight servers and modpacks we recommend."
+            },
+            changes: {
+                ru: [
+                    "Объявления на главной над списком патчей: обновления, ивенты, важное. Новое приходит уведомлением, ненужное можно скрыть.",
+                    "«Серверы»: рекомендуемые серверы первыми, со значком «Рекомендуем» и правильной версией для входа.",
+                    "Каталог сборок: блок «Рекомендуем» в начале списка.",
+                    "Админка: всё об игроке — время в игре, последняя игра, активность за 30 дней, друзья, устройства и «Выйти на всех устройствах».",
+                    "Админка: статистика — аккаунты, онлайн, графики регистраций и активности, популярные версии, загрузчики и серверы.",
+                    "На сайте в админке — объявления и рекомендации: публикация, срок показа, порядок."
+                ],
+                en: [
+                    "Announcements on the home screen above the patch list: updates, events, important notes. New ones arrive as a notification and can be hidden.",
+                    "Servers: recommended servers come first with a Recommended badge and the right version to join.",
+                    "Modpack catalog: a Recommended block at the top.",
+                    "Admin panel: player details — play time, last game, 30-day activity, friends, devices and Log out everywhere.",
+                    "Admin panel: statistics — accounts, online, sign-up and activity charts, popular versions, loaders and servers.",
+                    "The website admin panel manages announcements and picks: publishing, expiry date, order."
+                ]
+            }
+        },
+        {
             id: "3.9.0-friends-tab-menu-login",
             version: "3.9.0",
             date: "2026-10-29T01:00:00+03:00",

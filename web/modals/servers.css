@@ -931,3 +931,7 @@ html.noAnimations #modal-servers *::after {
     animation: none !important;
     transition: none !important;
 }
+
+/* Рекомендовано админом RxLauncher */
+.server-card-category.recommended { display: inline-flex; align-items: center; gap: 3px; background: rgba(245, 196, 81, .16) !important; color: #f5c451 !important; border-color: rgba(245, 196, 81, .35) !important; }
+.server-card-category.recommended .material-symbols-outlined { font-size: 13px; color: inherit; font-variation-settings: 'FILL' 1; }

@@ -175,7 +175,10 @@ class RxServersUI {
     static categoryName = (category) => ({
         anarchy: "Anarchy",
         grief: "Grief",
-        boxpvp: "BoxPvP"
+        boxpvp: "BoxPvP",
+        survival: "Survival",
+        minigames: "Minigames",
+        other: "Minecraft"
     }[category] || "Custom");
 
     static idForAddress = (address) => {
@@ -209,7 +212,9 @@ class RxServersUI {
 
     static getServers = () => {
         const seen = new Set();
-        return [...RxServersUI.BUILTIN_SERVERS, ...RxServersUI.getCustomServers()]
+        // Рекомендованные админом (с сайта) — первыми
+        const recommended = typeof RxFeed !== "undefined" ? RxFeed.recommendedServers() : [];
+        return [...recommended, ...RxServersUI.BUILTIN_SERVERS, ...RxServersUI.getCustomServers()]
             .map((server) => ({...server, address: RxServersUI.normalizeAddress(server.address)}))
             .filter((server) => {
                 if (!server.address || seen.has(server.address)) return false;
@@ -477,6 +482,7 @@ class RxServersUI {
         });
 
         return matches.sort((left, right) => {
+            if (Boolean(left.recommended) !== Boolean(right.recommended)) return left.recommended ? -1 : 1;
             if (RxServersUI.sort === "name") return left.name.localeCompare(right.name, RxServersUI.locale());
             const leftOnline = RxServersUI.statuses.get(left.address)?.online
                 ? Number(RxServersUI.statuses.get(left.address).players?.online) || 0
@@ -489,7 +495,7 @@ class RxServersUI {
         });
     };
 
-    static fallbackDescription = (server) => ({
+    static fallbackDescription = (server) => server.description || ({
         anarchy: "Anarchy Minecraft Network",
         grief: "Grief Minecraft Network",
         boxpvp: "BoxPvP Minecraft Network"
@@ -608,6 +614,11 @@ class RxServersUI {
             .append($("<span>").addClass("server-card-category").text(RxServersUI.categoryName(server.category)));
         if (server.custom) {
             $titleRow.append($("<span>").addClass("server-card-category").text(RxServersUI.message("custom", "Custom")));
+        }
+        if (server.recommended) {
+            $titleRow.append($("<span>").addClass("server-card-category recommended")
+                .append($("<span>").addClass("material-symbols-outlined").text("star"))
+                .append(document.createTextNode(MESSAGES.feed.recommended)));
         }
         $copy.append($titleRow)
             .append($("<span>").addClass("server-card-address").text(server.address))

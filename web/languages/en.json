@@ -1385,7 +1385,7 @@
       },
       "admin": {
         "title": "Admin panel",
-        "text": "RxLauncher players: groups, bans, nicknames and passwords",
+        "text": "Players, statistics and everything about each account",
         "menuText": "Assign groups, ban, reset passwords",
         "search": "Search by nickname",
         "allGroups": "All groups",
@@ -1410,7 +1410,46 @@
         "delete": "Delete account",
         "deleteText": "The account {0}, its friends and requests are deleted forever.",
         "deleted": "Account deleted",
-        "groupSet": "Group: {0}"
+        "groupSet": "Group: {0}",
+        "siteContent": "Announcements and picks",
+        "tabPlayers": "Players",
+        "tabStats": "Statistics",
+        "info": "Player details",
+        "back": "Back",
+        "playTime": "Play time",
+        "friendsCount": "Friends",
+        "created": "Joined",
+        "lastSeen": "Last login",
+        "notLinked": "not linked",
+        "password": "Password",
+        "passwordSet": "set",
+        "passwordNone": "none (Discord)",
+        "copyMode": "Setup copying",
+        "renamed": "Nickname changed",
+        "never": "never",
+        "lastGame": "Last game",
+        "activity": "Activity over 30 days · {0} days",
+        "none": "none",
+        "devices": "Devices",
+        "signedIn": "Signed in {0}",
+        "used": "active {0}",
+        "logoutAll": "Log out everywhere",
+        "logoutAllText": "{0} will have to log in again on every device.",
+        "loggedOutAll": "Sessions ended",
+        "minutesShort": "{0} min",
+        "hoursShort": "{0} h {1} min",
+        "noData": "No data yet",
+        "weekNew": "+{0} this week",
+        "playingNow": "playing: {0}",
+        "activeToday": "Active today",
+        "playTotal": "Total play time",
+        "chartRegistrations": "Sign-ups over 30 days",
+        "chartActive": "Active per day",
+        "chartOnline": "Online over 48 hours",
+        "topVersions": "Versions",
+        "topLoaders": "Loaders",
+        "topServers": "Servers",
+        "topPlayers": "Top players"
       },
       "ago": {
         "now": "just now",
@@ -1465,6 +1504,19 @@
         "friends": "All friends",
         "selected": "Selected"
       }
+    },
+    "feed": {
+      "kinds": {
+        "info": "Announcement",
+        "update": "Update",
+        "event": "Event",
+        "warning": "Important"
+      },
+      "hide": "Hide",
+      "more": "Learn more",
+      "recommended": "Recommended",
+      "recommendedPacks": "Recommended",
+      "allPacks": "All modpacks"
     }
   }
 }

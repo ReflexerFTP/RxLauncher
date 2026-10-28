@@ -214,3 +214,9 @@
 }
 
 .cat-version button .material-symbols-outlined { font-size: 18px; color: inherit; }
+
+/* Рекомендуемые сборки (от админа RxLauncher) */
+.cat-rec-head { display: flex; align-items: center; gap: 6px; margin: 4px 2px 0; color: #f5c451; font-size: 8.5pt; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.cat-rec-head .material-symbols-outlined { font-size: 16px; color: inherit; font-variation-settings: 'FILL' 1; }
+.cat-rec-head.muted { margin-top: 10px; color: var(--text-sub); }
+.cat-card.recommended { border-color: rgba(245, 196, 81, .35) !important; background: linear-gradient(90deg, rgba(245, 196, 81, .08), transparent 55%), var(--theme-primaryBgLight) !important; }

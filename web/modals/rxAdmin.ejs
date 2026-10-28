@@ -1,6 +1,7 @@
 <link rel="stylesheet" href="modals/rxAdmin.css"/>
 
-<!-- Админка аккаунтов RxLauncher (только группа «Админ»): группы, бан, ник, пароль, удаление -->
+<!-- Админка RxLauncher (только группа «Админ»): игроки и всё о них, статистика.
+     Объявления и рекомендации редактируются на сайте (кнопка в шапке) -->
 <div class="modal overlay centered" id="modal-rxAdmin" style="display: none;">
     <header class="rxad-head">
         <span class="rxad-icon material-symbols-outlined">shield_person</span>
@@ -8,18 +9,33 @@
             <h1>{{friends.admin.title}}</h1>
             <p>{{friends.admin.text}}</p>
         </div>
+        <button type="button" class="transparent rxad-site" data-admin-site><span class="material-symbols-outlined">campaign</span><span>{{friends.admin.siteContent}}</span></button>
         <button type="button" class="square transparent small" data-rx-onclick="RxModals.hideModal('rxAdmin')" title="{{commons.close}}">
             <span class="material-symbols-outlined">close</span>
         </button>
     </header>
-    <div class="rxad-stats" data-admin-stats></div>
-    <div class="rxad-tools">
-        <label class="rxad-search">
-            <span class="material-symbols-outlined">search</span>
-            <input type="text" data-admin-query maxlength="16" spellcheck="false" placeholder="{{friends.admin.search}}"/>
-        </label>
-        <select class="rxad-select" data-admin-group></select>
+    <div class="rxad-tabs">
+        <button type="button" class="active" data-admin-tab="players"><span class="material-symbols-outlined">group</span><span>{{friends.admin.tabPlayers}}</span></button>
+        <button type="button" data-admin-tab="stats"><span class="material-symbols-outlined">monitoring</span><span>{{friends.admin.tabStats}}</span></button>
     </div>
-    <div class="rxad-list" data-admin-list></div>
-    <button type="button" class="transparent rxad-more" data-admin-more hidden>{{friends.admin.more}}</button>
+
+    <!-- Игроки -->
+    <div class="rxad-pane" data-admin-pane="players">
+        <div class="rxad-stats" data-admin-stats></div>
+        <div class="rxad-tools">
+            <label class="rxad-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" data-admin-query maxlength="16" spellcheck="false" placeholder="{{friends.admin.search}}"/>
+            </label>
+            <select class="rxad-select" data-admin-group></select>
+        </div>
+        <div class="rxad-list" data-admin-list></div>
+        <button type="button" class="transparent rxad-more" data-admin-more hidden>{{friends.admin.more}}</button>
+    </div>
+
+    <!-- Всё об игроке -->
+    <div class="rxad-pane rxad-player" data-admin-pane="player" hidden></div>
+
+    <!-- Статистика -->
+    <div class="rxad-pane rxad-statpane" data-admin-pane="stats" hidden></div>
 </div>

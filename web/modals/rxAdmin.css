@@ -94,3 +94,62 @@
 .rx-group[data-group="admin"] { background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 30%, transparent), color-mix(in srgb, var(--theme-primary) 12%, transparent)); border-color: color-mix(in srgb, var(--theme-primary) 45%, transparent); color: var(--theme-primaryLighter); }
 .rx-group[data-group="tester"] { background: rgba(88, 166, 255, .14); border-color: rgba(88, 166, 255, .35); color: #79b8ff; }
 .rx-group[data-group="player_plus"] { background: linear-gradient(135deg, rgba(245, 196, 81, .22), rgba(240, 140, 41, .12)); border-color: rgba(245, 196, 81, .4); color: #f5c451; }
+
+/* Вкладки, всё об игроке, статистика */
+#modal-rxAdmin { height: min(700px, calc(100vh - 70px)); width: 820px; }
+.rxad-site { height: 36px !important; padding: 0 12px !important; display: flex; align-items: center; gap: 6px; border-radius: 10px !important; font-size: 9pt; }
+.rxad-site .material-symbols-outlined { font-size: 18px; color: inherit; }
+.rxad-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; border-radius: 13px; background: var(--theme-primaryBgLight); }
+.rxad-tabs button { width: 100%; height: 36px !important; display: flex; align-items: center; justify-content: center; gap: 7px; border-radius: 10px !important; background: transparent !important; color: var(--text-sub) !important; font-weight: 700; font-size: 9.5pt; }
+.rxad-tabs button .material-symbols-outlined { font-size: 18px; color: inherit; }
+.rxad-tabs button.active { background: var(--theme-primary) !important; color: #fff !important; }
+.rxad-pane { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.rxad-pane[hidden] { display: none; }
+.rxad-player, .rxad-statpane { overflow-y: auto; padding-right: 4px; }
+.rxad-loading { flex: 1; display: grid; place-items: center; }
+.rxad-loading .material-symbols-outlined { font-size: 30px; color: var(--theme-primaryLighter); }
+.rxad-loading .spin { animation: mc-spin 1s linear infinite; }
+
+.rxad-player-head { display: flex; align-items: center; gap: 12px; }
+.rxad-player-head img { width: 56px; height: 56px; border-radius: 14px; image-rendering: pixelated; }
+.rxad-player-name { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rxad-player-name strong { display: flex; align-items: center; gap: 6px; font-size: 15pt; }
+.rxad-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.rxad-fact { display: flex; flex-direction: column; gap: 2px; padding: 9px 11px; border-radius: 11px; background: var(--theme-primaryBgLight); min-width: 0; }
+.rxad-fact span { color: var(--text-sub); font-size: 7.8pt; font-weight: 700; }
+.rxad-fact b { font-size: 9.5pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rxad-section { margin-top: 4px; color: var(--text-sub); font-size: 8pt; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.rxad-days { display: grid; grid-template-columns: repeat(30, 1fr); gap: 3px; }
+.rxad-days i { aspect-ratio: 1; border-radius: 3px; background: var(--theme-primaryBgLight); }
+.rxad-days i.on { background: var(--theme-primary); }
+.rxad-people { display: flex; flex-wrap: wrap; gap: 5px; }
+.rxad-people span { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; background: var(--theme-primaryBgLight); font-size: 8.5pt; font-weight: 600; }
+.rxad-people i { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+.rxad-people em, .rxad-sessions em, .rxad-top em { color: var(--text-sub); font-size: 8.5pt; font-style: normal; }
+.rxad-sessions { display: flex; flex-direction: column; gap: 4px; }
+.rxad-sessions div { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 10px; background: var(--theme-primaryBgLight); font-size: 8.5pt; }
+.rxad-sessions .material-symbols-outlined { font-size: 16px; color: var(--text-sub); }
+.rxad-sessions div em { margin-left: auto; }
+.rxad-player-actions { display: flex; gap: 6px; padding-top: 4px; }
+.rxad-player-actions button { height: 36px !important; padding: 0 12px !important; display: flex; align-items: center; gap: 6px; border-radius: 10px !important; font-size: 9pt; }
+.rxad-player-actions .material-symbols-outlined { font-size: 17px; color: inherit; }
+
+.rxad-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.rxad-kpi { display: flex; flex-direction: column; padding: 11px 13px; border-radius: 12px; background: var(--theme-primaryBgLight); }
+.rxad-kpi b { font-size: 16pt; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.rxad-kpi span { color: var(--text-sub); font-size: 8.5pt; font-weight: 600; }
+.rxad-kpi small { color: var(--text-sub); font-size: 7.8pt; opacity: .8; }
+.rxad-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rxad-chart { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; height: 110px; margin-top: 6px; }
+.rxad-axis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; color: var(--text-sub); font-size: 7.5pt; }
+.rxad-bars { display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--rx-stroke); background: linear-gradient(var(--rx-stroke) 1px, transparent 1px) 0 0 / 100% 50%; }
+.rxad-bar { flex: 1 1 0; height: 100%; display: flex; align-items: flex-end; }
+.rxad-bar i { display: block; width: 100%; max-width: 16px; margin: 0 auto; border-radius: 3px 3px 0 0; background: var(--theme-primary); opacity: .85; }
+.rxad-bar:hover i { opacity: 1; background: var(--theme-primaryLighter); }
+.rxad-xaxis { display: flex; justify-content: space-between; margin: 4px 0 0 28px; color: var(--text-sub); font-size: 7.5pt; }
+.rxad-tops { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.rxad-top { display: flex; flex-direction: column; gap: 4px; }
+.rxad-top-row { position: relative; isolation: isolate; display: flex; justify-content: space-between; gap: 8px; padding: 5px 9px; border-radius: 8px; overflow: hidden; font-size: 8.8pt; }
+.rxad-top-row i { position: absolute; inset: 0 auto 0 0; z-index: -1; border-radius: 8px; background: color-mix(in srgb, var(--theme-primary) 18%, transparent); }
+.rxad-top-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rxad-top-row b { font-variant-numeric: tabular-nums; }

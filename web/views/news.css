@@ -207,3 +207,34 @@
     font-size: 8.5pt;
     opacity: .75;
 }
+
+/* Объявления с сайта: над лентой патчей */
+.feed-list { display: flex; flex-direction: column; gap: 8px; flex: 0 0 auto; }
+.feed-list[hidden] { display: none; }
+.feed-card {
+    --feed: var(--theme-primary);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 12px 12px 12px 15px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--feed) 40%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--feed) 16%, transparent), transparent 70%), var(--theme-primaryBgLight);
+    overflow: hidden;
+    animation: feed-in .3s ease-out;
+}
+.feed-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--feed); }
+.feed-card[data-kind="update"] { --feed: #29ae6b; }
+.feed-card[data-kind="event"] { --feed: #58a6ff; }
+.feed-card[data-kind="warning"] { --feed: #f04438; }
+@keyframes feed-in { from { opacity: 0; transform: translateY(-4px); } }
+.feed-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.feed-kind { display: inline-flex; align-items: center; gap: 5px; color: color-mix(in srgb, var(--feed) 70%, white); font-size: 7.8pt; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.feed-kind .material-symbols-outlined { font-size: 15px; color: inherit; }
+.feed-close { width: 26px; height: 26px !important; padding: 0 !important; display: grid; place-items: center; border-radius: 8px !important; }
+.feed-close .material-symbols-outlined { font-size: 16px; color: var(--text-sub); }
+.feed-card strong { font-size: 10.5pt; line-height: 1.3; }
+.feed-card p { margin: 0; color: var(--text-sub); font-size: 8.8pt; line-height: 1.45; white-space: pre-line; }
+.feed-link { align-self: flex-start; height: 30px !important; margin-top: 3px; padding: 0 11px !important; display: inline-flex; align-items: center; gap: 5px; border-radius: 9px !important; font-size: 8.5pt; font-weight: 700; background: color-mix(in srgb, var(--feed) 30%, var(--theme-primaryBgLighter)) !important; }
+.feed-link .material-symbols-outlined { font-size: 15px; color: inherit; }
