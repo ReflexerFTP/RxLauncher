@@ -1,6 +1,36 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.8.0-friends-copy-discord",
+            version: "3.8.0",
+            date: "2026-10-28T23:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "ДРУЗЬЯ", en: "FRIENDS"},
+            title: {ru: "Сборки друзей, Discord и новое меню", en: "Friends' setups, Discord and a new menu"},
+            summary: {
+                ru: "Копируйте сборку друга в один клик, смотрите, во что он играл последний раз, входите через Discord — а боковое меню стало аккуратнее.",
+                en: "Copy a friend's setup in one click, see what they played last, log in with Discord — and the side menu is tidier."
+            },
+            changes: {
+                ru: [
+                    "«Кто может копировать мою сборку»: никто, все друзья или выбранные — в лаунчере и на сайте. Друг ставит ваши моды, ресурспаки и шейдеры одной кнопкой.",
+                    "Друг не в сети — видно, когда он был и во что играл последний раз: версия, сборка и сервер.",
+                    "Статус друзей стал нагляднее: «Играет» с пульсом, значки загрузчика, сборки и сервера.",
+                    "Значки групп с иконками: Админ, Тестер, Игрок+.",
+                    "Вход и регистрация через Discord — на сайте и в лаунчере.",
+                    "Боковое меню: не больше четырёх вкладок в ряд, остальные — в аккуратной панели «Ещё». Настройки переехали вниз."
+                ],
+                en: [
+                    "\"Who can copy my setup\": nobody, all friends or selected friends — in the launcher and on the website. A friend installs your mods, resource packs and shaders in one click.",
+                    "When a friend is offline you see when they were online and what they played last: version, setup and server.",
+                    "Friend status is clearer: a pulsing \"Playing\", loader, setup and server chips.",
+                    "Group badges with icons: Admin, Tester, Player+.",
+                    "Log in and sign up with Discord — on the website and in the launcher.",
+                    "Side menu: at most four tabs in a row, the rest in a neat \"More\" panel. Settings moved to the bottom."
+                ]
+            }
+        },
+        {
             id: "3.7.0-friends-accounts",
             version: "3.7.0",
             date: "2026-10-28T20:00:00+03:00",

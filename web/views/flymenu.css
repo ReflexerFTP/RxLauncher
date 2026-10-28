@@ -83,3 +83,64 @@
     transition: top 0s, left 0s !important;
     pointer-events: none !important;
 }
+
+/* Нижняя группа: настройки и папка с игрой */
+.flymenu-bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--theme-primaryBgLight); }
+
+/* «Ещё»: вкладки, которым не хватило места в рейле */
+.flymenu .item.more.active { background: color-mix(in srgb, var(--theme-primary) 22%, var(--theme-primaryBgLight)); box-shadow: none; }
+.flymenu .item.more.active * { color: var(--theme-primaryLighter); }
+.flymenu .item.more.open:not(.active) { background: var(--theme-primaryBgLight); color: var(--text-color); }
+
+.flymenu-more {
+    position: fixed;
+    z-index: 9998;
+    width: 300px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 18px;
+    border: 1px solid var(--rx-stroke, var(--theme-primaryBgLight));
+    background: var(--theme-primaryBg);
+    box-shadow: 0 24px 70px -20px rgba(0, 0, 0, .85);
+    animation: flymenu-more-in .18s ease-out;
+}
+.flymenu-more[hidden] { display: none; }
+@keyframes flymenu-more-in { from { opacity: 0; transform: translateX(-6px) scale(.98); } }
+
+.flymenu-more-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px 0 4px; }
+.flymenu-more-head > span { color: var(--text-sub); font-size: 8.5pt; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.flymenu-more-head button { height: 28px !important; padding: 0 8px !important; display: flex; align-items: center; gap: 4px; border-radius: 9px !important; font-size: 8.5pt; color: var(--text-sub) !important; }
+.flymenu-more-head button:hover { color: var(--text-color) !important; }
+.flymenu-more-head .material-symbols-outlined { font-size: 16px; color: inherit; }
+
+.flymenu-more-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.flymenu-more-grid button {
+    width: 100%;
+    height: auto !important;
+    padding: 12px 10px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    border-radius: 13px !important;
+    background: var(--theme-primaryBgLight) !important;
+    color: var(--text-color) !important;
+    font-size: 9pt;
+    font-weight: 700;
+    text-align: left;
+    transition: background-color .15s, transform .15s;
+}
+.flymenu-more-grid button:hover { background: var(--theme-primaryBgLighter) !important; transform: translateY(-1px); }
+.flymenu-more-grid button .material-symbols-outlined {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    font-size: 19px;
+    color: var(--theme-primaryLighter);
+    background: color-mix(in srgb, var(--theme-primary) 14%, transparent);
+}
+.flymenu-more-grid button.active { background: color-mix(in srgb, var(--theme-primary) 22%, var(--theme-primaryBgLight)) !important; }

@@ -46,7 +46,8 @@ class RxAccount {
 
     static remember = async (token, user) => {
         RxAccount.token = token;
-        RxAccount.user = {id: user.id, nick: user.nick, group: user.group || "player", created: user.created};
+        RxAccount.user = {id: user.id, nick: user.nick, group: user.group || "player", created: user.created,
+            copyMode: user.copyMode || "nobody", discord: user.discord || "", hasPassword: user.hasPassword !== false};
         RxConfig.write(RxAccount.USER_KEY, RxAccount.user);
         await ipcRenderer.invoke("rx-account-token", {action: "set", token});
         RxAccount.changed();
@@ -56,9 +57,12 @@ class RxAccount {
     static setUser = (user) => {
         if (!user?.nick || !RxAccount.user) return;
         const group = user.group || "player";
-        if (user.nick === RxAccount.user.nick && group === RxAccount.user.group) return;
+        const extra = {copyMode: user.copyMode || RxAccount.user.copyMode || "nobody", discord: user.discord ?? RxAccount.user.discord ?? "",
+            hasPassword: user.hasPassword ?? RxAccount.user.hasPassword ?? true};
+        if (user.nick === RxAccount.user.nick && group === RxAccount.user.group
+            && Object.entries(extra).every(([key, value]) => RxAccount.user[key] === value)) return;
         const previous = RxAccount.user.nick;
-        RxAccount.user = {...RxAccount.user, nick: user.nick, group};
+        RxAccount.user = {...RxAccount.user, nick: user.nick, group, ...extra};
         RxConfig.write(RxAccount.USER_KEY, RxAccount.user);
         if (previous !== user.nick) RxAccount.renameProfile(previous, user.nick);
         RxAccount.changed();
@@ -100,6 +104,48 @@ class RxAccount {
         RxAccount.useProfile(data.user.nick);
         RxCollector.writeLog(`RxAccount: Logged in [nick=${data.user.nick}]`);
         return data.user;
+    };
+
+    // Включён ли вход через Discord на сервере (без секрета приложения кнопку не показываем)
+    static discordEnabled = async () => {
+        try {
+            return (await RxHttp.json(RxAccount.api("auth/config"), {timeout: 8000}))?.discord === true;
+        } catch (_) {
+            return false;
+        }
+    };
+
+    // Вход через Discord: браузер открывает сайт, лаунчер раз в 2 секунды спрашивает, чем закончилось (до 5 минут)
+    static discordWait = null;
+    static loginDiscord = async () => {
+        RxAccount.cancelDiscord();
+        const launcher = crypto.randomBytes(24).toString("base64url");
+        const wait = {cancelled: false};
+        RxAccount.discordWait = wait;
+        openExternal(`${SITE_URL}/api/auth/discord/start?mode=login&launcher=${launcher}`);
+        const until = Date.now() + 5 * 60e3;
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        while (!wait.cancelled && Date.now() < until) {
+            try {
+                const data = await RxAccount.call("auth/discord/poll", {launcher});
+                if (data.token) {
+                    await RxAccount.remember(data.token, data.user);
+                    RxAccount.useProfile(data.user.nick);
+                    RxCollector.writeLog(`RxAccount: Logged in with Discord [nick=${data.user.nick}]`);
+                    return data.user;
+                }
+            } catch (error) {
+                // expired — браузер ещё не дошёл до сайта; ждём дальше
+                if (error.code !== "expired" && error.code !== "offline") throw error;
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        if (wait.cancelled) return null;
+        throw Object.assign(new Error("discordTimeout"), {code: "discordTimeout"});
+    };
+    static cancelDiscord = () => {
+        if (RxAccount.discordWait) RxAccount.discordWait.cancelled = true;
+        RxAccount.discordWait = null;
     };
 
     static logout = async () => {

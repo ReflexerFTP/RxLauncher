@@ -103,7 +103,8 @@ class RxShare {
         }
     };
 
-    static createCode = async (versionId, server = "") => {
+    // remember: false — код для друзей (сборку копируют из списка друзей), в историю «Недавние коды» не попадает
+    static createCode = async (versionId, server = "", {remember = true} = {}) => {
         const source = RxShare.describe(versionId);
         const collected = await RxShare.collect(source);
         const data = {v: 1, n: source.name.slice(0, 64), g: source.game, l: source.loader, m: collected.m, r: collected.r, s: collected.s, by: RxShare.nickname()};
@@ -112,7 +113,7 @@ class RxShare {
         if (loaderVersion) data.lv = loaderVersion;
         if (server) data.sv = RxMinecraftServers.normalizeAddress(server);
         const code = RxShare.encode(data);
-        RxShare.remember({direction: "sent", code, name: data.n, server: data.sv || ""});
+        if (remember) RxShare.remember({direction: "sent", code, name: data.n, server: data.sv || ""});
         return {code, data, unknown: collected.unknown};
     };
 

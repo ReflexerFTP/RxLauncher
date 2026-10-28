@@ -717,7 +717,9 @@
       "screenshots": "Screenshots",
       "instances": "Instances",
       "catalog": "Catalog",
-      "together": "Play together"
+      "together": "Play together",
+      "more": "More",
+      "customize": "Customize"
     },
     "screenshots": {
       "title": "Screenshots",
@@ -1328,7 +1330,10 @@
           "title": "Delete account",
           "hint": "The account, friend list and requests are deleted forever and the nickname becomes free. Enter your password to confirm.",
           "submit": "Delete forever"
-        }
+        },
+        "or": "or",
+        "discord": "Log in with Discord",
+        "discordWaiting": "Confirm the login in your browser…"
       },
       "errors": {
         "badNick": "Nickname: 3–16 Latin letters, digits or _",
@@ -1350,7 +1355,15 @@
         "banned": "The account is banned by an administrator",
         "lastAdmin": "The last administrator cannot be removed",
         "forbidden": "Access denied",
-        "badGroup": "Unknown group"
+        "badGroup": "Unknown group",
+        "copyForbidden": "Your friend has not allowed copying their setup",
+        "noPack": "Your friend has not played with this setting yet — no setup to copy",
+        "discordTimeout": "Discord login was not completed — try again",
+        "expired": "Login time ran out — try again",
+        "needPassword": "Set a password first, or you will not be able to log in",
+        "discordTaken": "This Discord is already linked to another account",
+        "badSettings": "Invalid setting",
+        "badCode": "Could not send the setup"
       },
       "onSite": "Account on the website",
       "onSiteText": "rxlauncher.xyz/account — profile, password and nickname",
@@ -1388,7 +1401,31 @@
         "deleteText": "The account {0}, its friends and requests are deleted forever.",
         "deleted": "Account deleted",
         "groupSet": "Group: {0}"
-      }
+      },
+      "ago": {
+        "now": "just now",
+        "minutes": "{0} min ago",
+        "hours": "{0} h ago",
+        "yesterday": "yesterday",
+        "days": "{0} days ago"
+      },
+      "wasOnline": "seen {0}",
+      "lastPlayed": "· last played:",
+      "copyPack": "Copy the \"{0}\" setup",
+      "packFallback": "friend setup",
+      "packReady": "Your friend's setup is ready to install — check below",
+      "copyTitle": "Who can copy my setup",
+      "copyText": "Friends can install the same mods, resource packs and shaders you play with",
+      "copyModes": {
+        "nobody": "Nobody",
+        "friends": "All friends",
+        "selected": "Selected friends"
+      },
+      "copyPick": "Choose",
+      "copyPickTitle": "Who can copy your setup",
+      "copyPickText": "Tick the friends who can install your setup.",
+      "copySaved": "Setting saved",
+      "copySelectedCount": "Friends selected: {0}"
     }
   }
 }

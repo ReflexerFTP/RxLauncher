@@ -43,6 +43,19 @@
                 <div class="fr-error" data-friends-error hidden></div>
                 <div class="fr-list" data-friends-requests></div>
                 <div class="fr-list" data-friends-list></div>
+                <div class="fr-copy">
+                    <span class="material-symbols-outlined">file_copy</span>
+                    <div class="fr-copy-text">
+                        <strong>{{friends.copyTitle}}</strong>
+                        <span>{{friends.copyText}}</span>
+                    </div>
+                    <select data-friends-copy-mode>
+                        <option value="nobody">{{friends.copyModes.nobody}}</option>
+                        <option value="friends">{{friends.copyModes.friends}}</option>
+                        <option value="selected">{{friends.copyModes.selected}}</option>
+                    </select>
+                    <button type="button" class="transparent" data-friends-copy-pick hidden><span class="material-symbols-outlined">checklist</span><span>{{friends.copyPick}}</span></button>
+                </div>
                 <div class="fr-options">
                     <label class="fr-option">
                         <span class="material-symbols-outlined">visibility_off</span>

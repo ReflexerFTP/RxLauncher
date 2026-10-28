@@ -1,4 +1,15 @@
 class RxUtils {
+    // Прокрутить к элементу только внутри его прокручиваемого родителя:
+    // scrollIntoView двигает и само окно лаунчера, и вся вёрстка съезжает вверх
+    static scrollWithin = (element) => {
+        if (!element) return;
+        let parent = element.parentElement;
+        while (parent && !(parent.scrollHeight > parent.clientHeight && /auto|scroll/.test(getComputedStyle(parent).overflowY))) parent = parent.parentElement;
+        if (!parent) return;
+        const offset = element.getBoundingClientRect().top - parent.getBoundingClientRect().top;
+        parent.scrollTo({top: parent.scrollTop + offset - (parent.clientHeight - element.clientHeight) / 2, behavior: "smooth"});
+    }
+
     // Random Integer
     static getRandomInt = (max) => {
         return Math.floor(Math.random() * max);

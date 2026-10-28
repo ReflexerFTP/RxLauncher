@@ -42,7 +42,7 @@ config.lessDataCollection = false;
 RxAccount.call = async (route, body) => { sent.push([route, JSON.parse(JSON.stringify(body || {}))]); return {friends: [], incoming: [], outgoing: []}; };
 assert.deepStrictEqual({...RxFriends.presence()}, {status: "launcher"});
 RxFriends.gameStarted({version: "1.21.4", loaderType: "fabric", server: "mc.example.ru"});
-assert.deepStrictEqual({...RxFriends.presence()}, {status: "playing", version: "1.21.4", loader: "fabric", server: "mc.example.ru"});
+assert.deepStrictEqual({...RxFriends.presence()}, {status: "playing", version: "1.21.4", loader: "fabric", title: "", server: "mc.example.ru"});
 config.friendsShowServer = false;
 assert.strictEqual(RxFriends.presence().server, "", "server hidden by the option");
 config.friendsShowServer = true;
@@ -71,6 +71,31 @@ assert.strictEqual(RxFriendsUI.statusText({online: true, status: "launcher"}), "
 assert.strictEqual(RxFriendsUI.statusText({online: true, status: "playing", loader: "fabric", version: "1.21.4", server: "mc.example.ru", since: now - 25 * 60000}),
     "Играет · Fabric 1.21.4 · mc.example.ru · 25 мин");
 assert.strictEqual(RxFriendsUI.statusText({online: true, status: "playing", loader: "", version: "", server: "", since: now - 125 * 60000}), "Играет · 2 ч 5 мин");
+
+// Красивый статус: не в сети — когда был и во что играл последний раз
+const offline = RxFriendsUI.statusHtml({online: false, seen: now - 3 * 3600e3, last: {version: "1.21.4", loader: "fabric", server: "mc.example.ru", title: "", at: now - 3 * 3600e3}});
+assert.ok(offline.includes("Не в сети") && offline.includes("был(а) 3 ч назад") && offline.includes("играл"), offline);
+assert.ok(offline.includes("assets/versions/fabric.webp") && offline.includes("Fabric 1.21.4") && offline.includes("mc.example.ru"));
+assert.ok(!RxFriendsUI.statusHtml({online: false}).includes("играл"), "no last game — no chips");
+const playing = RxFriendsUI.statusHtml({online: true, status: "playing", loader: "neoforge", version: "1.21.1", title: "<Сборка>", server: "", since: now - 5 * 60000});
+assert.ok(playing.includes("fr-state playing") && playing.includes("NeoForge 1.21.1") && playing.includes("&lt;Сборка&gt;") && playing.includes("5 мин"));
+assert.strictEqual(RxFriendsUI.ago(now - 30 * 3600e3), "вчера");
+// Значки групп с иконкой; у обычного игрока значка нет
+assert.ok(RxFriendsUI.groupBadge("tester").includes("science") && RxFriendsUI.groupBadge("tester").includes("Тестер"));
+assert.ok(RxFriendsUI.groupBadge("player_plus").includes("Игрок+"));
+assert.strictEqual(RxFriendsUI.groupBadge("player"), "");
+// Кнопка «Скопировать сборку» — только если друг разрешил
+assert.ok(RxFriendsUI.row({id: "0123456789abcdef", nick: "A", online: false, canCopy: true, packName: "Pack"}, "friend").includes('data-friend-action="pack"'));
+assert.ok(!RxFriendsUI.row({id: "0123456789abcdef", nick: "A", online: false, canCopy: false}, "friend").includes('data-friend-action="pack"'));
+
+// Боковое меню: не больше 4 вкладок в рейле, остальное — в «Ещё»; одну вкладку в «Ещё» не прячем
+load("RxTabs.js");
+const {RxTabs} = context;
+const all = RxTabs.layout(RxTabs.ALL);
+assert.deepStrictEqual([...all.rail], ["catalog", "instances", "together", "mods"]);
+assert.deepStrictEqual([...all.more], ["servers", "statistics", "skins", "screenshots", "console"]);
+assert.deepStrictEqual([...RxTabs.layout(RxTabs.DEFAULT).more], [], "default menu has no More button");
+assert.deepStrictEqual([...RxTabs.layout(["content", "settings", "catalog", "mods", "skins", "servers", "console"]).more], [], "5 tabs fit without More");
 
 // Ник в строке экранируется
 assert.ok(!RxFriendsUI.row({id: "0123456789abcdef", nick: "<b>x</b>", online: false}, "friend").includes("<b>x</b>"));

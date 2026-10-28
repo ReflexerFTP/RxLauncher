@@ -232,7 +232,7 @@ class RxStarter {
                     version: this.versionNumber,
                     loaderType: this.versionType
                 });
-                RxFriends.gameStarted({version: this.versionNumber, loaderType: this.versionType, server: this.launchServer});
+                RxFriends.gameStarted({version: this.versionNumber, loaderType: this.versionType, server: this.launchServer, sourceId: RxVersionsManager.getActiveVersion()});
             }).catch(error => {
                 RxStarter.recoverFromLaunchFailure(error);
             });

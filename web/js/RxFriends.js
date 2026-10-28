@@ -20,9 +20,44 @@ class RxFriends {
     static presence = () => {
         if (RxFriends.invisible()) return {status: "invisible"};
         if (!RxFriends.game) return {status: "launcher"};
-        return {status: "playing", version: RxFriends.game.version, loader: RxFriends.game.loader,
+        return {status: "playing", version: RxFriends.game.version, loader: RxFriends.game.loader, title: RxFriends.game.title,
             server: RxFriends.showServer() ? RxFriends.game.server : ""};
     };
+
+    // ---------- «Кто может копировать мою сборку» ----------
+    static COPY_MODES = ["nobody", "friends", "selected"];
+    static copyMode = () => RxFriends.COPY_MODES.includes(RxAccount.user?.copyMode) ? RxAccount.user.copyMode : "nobody";
+
+    static saveCopySettings = async (copyMode, allowed = null) => {
+        const data = await RxAccount.call("account/settings", {copyMode, ...(allowed ? {allowed} : {})});
+        RxAccount.setUser({...RxAccount.user, copyMode: data.settings.copyMode});
+        // Разрешили копировать во время игры — отправим сборку сразу
+        if (copyMode !== "nobody" && RxFriends.game?.sourceId) RxFriends.uploadPack(RxFriends.game.sourceId);
+        return data.settings;
+    };
+
+    static copySettings = () => RxAccount.call("account/me").then(data => ({...data.settings, friends: data.friends}));
+
+    // Код запущенной сборки (только файлы с Modrinth) — отправляется, если копировать разрешено хоть кому-то
+    static lastPack = "";
+    static uploadPack = async (sourceId) => {
+        if (!RxFriends.enabled() || RxFriends.copyMode() === "nobody" || !sourceId) return false;
+        try {
+            const {code, data} = await RxShare.createCode(sourceId, "", {remember: false});
+            if (code === RxFriends.lastPack) return true;
+            await RxAccount.call("friends/pack", {code, name: data.n});
+            RxFriends.lastPack = code;
+            RxCollector.writeLog(`Friends: Pack shared [name=${data.n}] [files=${data.m.length + data.r.length + data.s.length}]`);
+            return true;
+        } catch (error) {
+            // Своя версия, Modrinth недоступен и т.п. — просто не делимся
+            RxCollector.writeLog(`Friends: Pack not shared [error=${error?.message || error}]`);
+            return false;
+        }
+    };
+
+    // Скопировать сборку друга: код → превью в «Принять приглашение»
+    static copyPack = async (id) => (await RxAccount.call("friends/copy", {id})).code;
 
     static apply = (data) => {
         if (!data || !Array.isArray(data.friends)) return;
@@ -92,13 +127,21 @@ class RxFriends {
     static remove = (id) => RxFriends.act("friends/remove", {id});
 
     // ---------- игра ----------
-    static gameStarted = ({version = "", loaderType = "", server = ""} = {}) => {
+    static gameStarted = ({version = "", loaderType = "", server = "", sourceId = ""} = {}) => {
+        let title = "";
+        try {
+            const parsed = RxVersionsManager.parseVersionID(sourceId);
+            if (parsed.type === "pack") title = RxPacks.getModpackManifest(parsed.name)?.displayName || "";
+        } catch (_) {}
         RxFriends.game = {
             version: String(version || "").slice(0, 40),
             loader: String(loaderType || ""),
-            server: RxDiscordRpc.sanitizeServer(server)
+            server: RxDiscordRpc.sanitizeServer(server),
+            title: String(title).slice(0, 48),
+            sourceId
         };
         RxFriends.sync();
+        RxFriends.uploadPack(sourceId);
     };
 
     static gameStopped = () => {

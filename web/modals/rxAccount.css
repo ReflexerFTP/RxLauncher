@@ -156,3 +156,30 @@
 }
 #modal-rxAccount .rxa-link:hover { text-decoration: underline; }
 #modal-rxAccount .rxa-link .material-symbols-outlined { font-size: 15px; color: inherit; }
+
+/* Вход через Discord */
+#modal-rxAccount .rxa-discord-wrap { display: flex; flex-direction: column; gap: 12px; margin-top: -6px; }
+#modal-rxAccount .rxa-discord-wrap[hidden] { display: none; }
+#modal-rxAccount .rxa-or { display: flex; align-items: center; gap: 10px; color: var(--text-sub); font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+#modal-rxAccount .rxa-or::before, #modal-rxAccount .rxa-or::after { content: ""; flex: 1; height: 1px; background: var(--rx-stroke); }
+#modal-rxAccount .rxa-discord {
+    width: 100%;
+    height: 46px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 13px !important;
+    background: #5865f2 !important;
+    color: #fff !important;
+    font-size: 10.5pt;
+    font-weight: 700;
+    box-shadow: 0 12px 30px -14px rgba(88, 101, 242, .9);
+    transition: filter .2s, transform .15s;
+}
+#modal-rxAccount .rxa-discord:hover { filter: brightness(1.08); }
+#modal-rxAccount .rxa-discord:active { transform: scale(.985); }
+#modal-rxAccount .rxa-discord svg { width: 21px; height: 21px; }
+#modal-rxAccount .rxa-discord .rxa-discord-spin { display: none; font-size: 18px; color: inherit; animation: mc-spin 1s linear infinite; }
+#modal-rxAccount .rxa-discord.waiting { background: color-mix(in srgb, #5865f2 55%, var(--theme-primaryBgLight)) !important; }
+#modal-rxAccount .rxa-discord.waiting .rxa-discord-spin { display: inline-block; }

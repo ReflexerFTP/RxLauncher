@@ -22,10 +22,50 @@ class RxFriendsUI {
     };
 
     static GROUPS = ["admin", "tester", "player_plus", "player"];
+    static GROUP_ICONS = {admin: "shield_person", tester: "science", player_plus: "star", player: "person"};
     static groupName = (group) => RxFriendsUI.t("groups")[group] || RxFriendsUI.t("groups").player;
-    // Значок группы (у обычных игроков не показывается)
+    // Значок группы с иконкой (у обычных игроков не показывается)
     static groupBadge = (group) => RxFriendsUI.GROUPS.includes(group) && group !== "player"
-        ? `<span class="rx-group" data-group="${group}">${RxFriendsUI.escape(RxFriendsUI.groupName(group))}</span>` : "";
+        ? `<span class="rx-group" data-group="${group}"><span class="material-symbols-outlined">${RxFriendsUI.GROUP_ICONS[group]}</span>${RxFriendsUI.escape(RxFriendsUI.groupName(group))}</span>` : "";
+
+    // «5 мин назад», «3 ч назад», «вчера», «4 дн. назад»
+    static ago = (time) => {
+        const minutes = Math.max(0, Math.round((Date.now() - Number(time || 0)) / 60000));
+        const t = RxFriendsUI.t("ago");
+        if (minutes < 2) return t.now;
+        if (minutes < 60) return t.minutes.replace("{0}", minutes);
+        if (minutes < 24 * 60) return t.hours.replace("{0}", Math.round(minutes / 60));
+        const days = Math.round(minutes / 1440);
+        return days === 1 ? t.yesterday : t.days.replace("{0}", days);
+    };
+
+    static loaderIcon = (loader) => RxFriendsUI.LOADERS[loader] ? `assets/versions/${loader}.webp` : "";
+
+    // Чипы «во что играет»: загрузчик + версия, сборка, сервер
+    static gameChips = (game) => {
+        const esc = RxFriendsUI.escape;
+        const chips = [];
+        const version = [RxFriendsUI.LOADERS[game.loader] || "", game.version].filter(Boolean).join(" ");
+        if (version) {
+            const icon = RxFriendsUI.loaderIcon(game.loader);
+            chips.push(`<span class="fr-chip">${icon ? `<img src="${icon}" alt=""/>` : '<span class="material-symbols-outlined">deployed_code</span>'}${esc(version)}</span>`);
+        }
+        if (game.title) chips.push(`<span class="fr-chip"><span class="material-symbols-outlined">stacks</span>${esc(game.title)}</span>`);
+        if (game.server) chips.push(`<span class="fr-chip server"><span class="material-symbols-outlined">dns</span>${esc(game.server)}</span>`);
+        return chips.join("");
+    };
+
+    static statusHtml = (friend) => {
+        const esc = RxFriendsUI.escape;
+        if (friend.online && friend.status === "playing") {
+            return `<span class="fr-state playing"><i></i>${esc(RxFriendsUI.t("playing"))}</span>${RxFriendsUI.gameChips(friend)}<span class="fr-time">${esc(RxFriendsUI.duration(friend.since))}</span>`;
+        }
+        if (friend.online) return `<span class="fr-state launcher"><i></i>${esc(RxFriendsUI.t("inLauncher"))}</span>`;
+        const seen = friend.seen ? `<span class="fr-time">${esc(RxFriendsUI.t("wasOnline").replace("{0}", RxFriendsUI.ago(friend.seen)))}</span>` : "";
+        const last = friend.last?.version
+            ? `<span class="fr-last">${esc(RxFriendsUI.t("lastPlayed"))}</span>${RxFriendsUI.gameChips(friend.last)}` : "";
+        return `<span class="fr-state"><i></i>${esc(RxFriendsUI.t("offline"))}</span>${seen}${last}`;
+    };
 
     static rank = (friend) => !friend.online ? 2 : friend.status === "playing" ? 0 : 1;
 
@@ -41,6 +81,7 @@ class RxFriendsUI {
                 actions += RxFriendsUI.button("join", "login", RxFriendsUI.t("join"), true);
                 actions += RxFriendsUI.button("copy", "content_copy", RxFriendsUI.t("copyServer"));
             }
+            if (person.canCopy) actions += RxFriendsUI.button("pack", "file_copy", RxFriendsUI.t("copyPack").replace("{0}", person.packName || RxFriendsUI.t("packFallback")));
             actions += RxFriendsUI.button("remove", "person_remove", RxFriendsUI.t("remove"));
         } else if (kind === "incoming") {
             status = RxFriendsUI.t("wantsToBeFriends");
@@ -53,7 +94,7 @@ class RxFriendsUI {
         return `<div class="tg-history-row fr-row ${state}" data-friend-id="${esc(person.id)}" data-friend-kind="${kind}">
             <img alt="" loading="lazy" src="${esc(RxFriendsUI.head(person.nick))}"/>
             ${kind === "friend" ? `<span class="fr-dot"></span>` : ""}
-            <div class="tg-history-copy"><strong>${esc(person.nick)}${RxFriendsUI.groupBadge(person.group)}</strong><span>${esc(status)}</span></div>
+            <div class="tg-history-copy"><strong>${esc(person.nick)}${RxFriendsUI.groupBadge(person.group)}</strong><span class="fr-status" title="${esc(status)}">${kind === "friend" ? RxFriendsUI.statusHtml(person) : esc(status)}</span></div>
             ${actions}
         </div>`;
     };
@@ -66,6 +107,8 @@ class RxFriendsUI {
         $card.find("[data-friends-guest]").prop("hidden", logged || paranoid);
         $card.find("[data-friends-body]").prop("hidden", !logged || paranoid);
         $card.find("[data-friends-me]").prop("hidden", !logged);
+        $card.find("[data-friends-copy-mode]").val(RxFriends.copyMode());
+        $card.find("[data-friends-copy-pick]").prop("hidden", RxFriends.copyMode() !== "selected");
         $card.find("[data-friends-option]").each(function () {
             const key = this.dataset.friendsOption;
             this.checked = RxConfig.read(key, key === "friendsShowServer") === true;
@@ -134,11 +177,56 @@ class RxFriendsUI {
             return RxToasts.create(RxFriendsUI.t("serverCopied"), "content_copy", person.server, "success");
         }
         if (action === "join") return RxFriendsUI.join(person);
+        if (action === "pack") return RxFriendsUI.copyPack($button, person);
         if (action === "remove") {
             const confirmed = await RxDialog.confirm({icon: "person_remove", title: RxFriendsUI.t("removeTitle").replace("{0}", person.nick),
                 text: RxFriendsUI.t("removeText"), confirmText: RxFriendsUI.t("remove"), danger: true});
             if (confirmed) return RxFriendsUI.busy($button, () => RxFriends.remove(id));
         }
+    };
+
+    // Сборка друга → превью в «Принять приглашение»: там видно, что внутри, и кнопки «Установить»
+    static copyPack = async ($button, friend) => {
+        const code = await RxFriendsUI.busy($button, () => RxFriends.copyPack(friend.id));
+        if (!code) return;
+        const $modal = RxTogetherUI.$modal();
+        $modal.find("[data-join-code]").val(code);
+        if (RxTogetherUI.check(code)) {
+            RxUtils.scrollWithin($modal.find("[data-join-preview]")[0]);
+            RxToasts.create(RxFriendsUI.t("packReady"), "file_copy", friend.nick, "success");
+        }
+    };
+
+    static setCopyMode = async (mode) => {
+        try {
+            if (mode === "selected") return await RxFriendsUI.pickCopyFriends();
+            await RxFriends.saveCopySettings(mode);
+            RxToasts.create(RxFriendsUI.t("copySaved"), "file_copy", RxFriendsUI.t("copyModes")[mode], "success");
+        } catch (error) {
+            RxToasts.create(RxAccount.errorText(error), "error", "", "error");
+        }
+        RxFriendsUI.render();
+    };
+
+    // «Выбранные друзья»: галочки по списку друзей
+    static pickCopyFriends = async () => {
+        const settings = await RxFriends.copySettings();
+        if (!settings.friends.length) {
+            RxToasts.create(RxFriendsUI.t("empty"), "group", "", "warning");
+            return RxFriendsUI.render();
+        }
+        const allowed = new Set(settings.copyMode === "selected" ? settings.allowed : []);
+        const result = await RxDialog.open({
+            icon: "file_copy", title: RxFriendsUI.t("copyPickTitle"), text: RxFriendsUI.t("copyPickText"),
+            checks: settings.friends.map(friend => ({id: friend.id, icon: "person", title: friend.nick, checked: allowed.has(friend.id)})),
+            buttons: [{id: "cancel", text: MESSAGES.dialog.cancel}, {id: "ok", text: MESSAGES.accounts.save, primary: true}]
+        });
+        if (result.button === "ok") {
+            const chosen = Object.entries(result.checks).filter(([, on]) => on).map(([id]) => id);
+            await RxFriends.saveCopySettings("selected", chosen);
+            RxToasts.create(RxFriendsUI.t("copySaved"), "file_copy", RxFriendsUI.t("copySelectedCount").replace("{0}", chosen.length), "success");
+        }
+        RxFriendsUI.render();
     };
 
     // Зайти к другу на сервер своей выбранной версией (версию друга показываем, чтобы было видно, совпадает ли)
@@ -202,6 +290,32 @@ class RxFriendsUI {
 
     static openRegister = () => openExternal(`${SITE_URL}/account/#register`);
 
+    static loginDiscord = async () => {
+        const $modal = RxFriendsUI.$account();
+        const $button = $modal.find("[data-account-discord]");
+        if ($button.hasClass("waiting")) {
+            RxAccount.cancelDiscord();
+            return RxFriendsUI.discordWaiting(false);
+        }
+        RxFriendsUI.accountError("");
+        RxFriendsUI.discordWaiting(true);
+        try {
+            const user = await RxAccount.loginDiscord();
+            if (!user) return;
+            RxToasts.create(RxFriendsUI.t("loggedIn"), "login", user.nick, "success");
+            await RxModals.hideModal("rxAccount");
+        } catch (error) {
+            RxFriendsUI.accountError(RxAccount.errorText(error));
+        } finally {
+            RxFriendsUI.discordWaiting(false);
+        }
+    };
+
+    static discordWaiting = (waiting) => {
+        const $button = RxFriendsUI.$account().find("[data-account-discord]").toggleClass("waiting", waiting);
+        $button.find("[data-discord-text]").text(waiting ? RxFriendsUI.t("account").discordWaiting : RxFriendsUI.t("account").discord);
+    };
+
     // ---------- окно аккаунта: вход, смена пароля, удаление ----------
     static MODES = {
         login: {icon: "login", submitIcon: "arrow_forward"},
@@ -218,7 +332,7 @@ class RxFriendsUI {
         $modal.find("[data-account-submit]").text(texts.submit);
         $modal.find("[data-account-icon]").text(RxFriendsUI.MODES[mode].icon);
         $modal.find("[data-account-submit-icon]").text(RxFriendsUI.MODES[mode].submitIcon).removeClass("spin");
-        $modal.find("[data-account-foot]").prop("hidden", mode !== "login");
+        $modal.find("[data-account-foot], [data-account-discord-wrap]").prop("hidden", mode !== "login");
         $modal.find("[data-modes]").each(function () {
             this.hidden = !this.dataset.modes.split(" ").includes(mode);
         });
@@ -237,6 +351,10 @@ class RxFriendsUI {
 
     static openAccount = async (mode) => {
         RxFriendsUI.setMode(mode);
+        if (mode === "login") {
+            const $wrap = RxFriendsUI.$account().find("[data-account-discord-wrap]").prop("hidden", true);
+            RxAccount.discordEnabled().then(on => $wrap.prop("hidden", !on || RxFriendsUI.$account().attr("data-mode") !== "login"));
+        }
         await RxModals.showModal("rxAccount");
         setTimeout(() => RxFriendsUI.$account().find("[data-modes]:not([hidden]) input").first().trigger("focus"), 60);
     };
@@ -299,6 +417,8 @@ class RxFriendsUI {
         $card.on("click", "[data-friend-action]", function () {
             RxFriendsUI.friendAction($(this), $(this).closest("[data-friend-id]").attr("data-friend-id"), $(this).attr("data-friend-action"));
         });
+        $card.on("change", "[data-friends-copy-mode]", function () { RxFriendsUI.setCopyMode(this.value); });
+        $card.on("click", "[data-friends-copy-pick]", () => RxFriendsUI.pickCopyFriends().catch(error => RxToasts.create(RxAccount.errorText(error), "error", "", "error")));
         $card.on("change", "[data-friends-option]", function () {
             RxConfig.write(this.dataset.friendsOption, this.checked);
             RxFriends.sync();
@@ -306,6 +426,12 @@ class RxFriendsUI {
 
         $account.on("submit", "[data-account-form]", (event) => { event.preventDefault(); RxFriendsUI.submitAccount(); });
         $account.on("click", "[data-account-register]", () => RxFriendsUI.openRegister());
+        $account.on("click", "[data-account-discord]", () => RxFriendsUI.loginDiscord());
+        $(document).on("hideModalEvent", (event) => {
+            if (event.originalEvent?.detail?.modal !== "rxAccount") return;
+            RxAccount.cancelDiscord();
+            RxFriendsUI.discordWaiting(false);
+        });
         $account.on("click", "[data-account-eye]", function () {
             const $input = $(this).siblings("input");
             const show = $input.attr("type") === "password";
