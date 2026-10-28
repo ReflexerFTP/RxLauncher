@@ -88,14 +88,12 @@ assert.strictEqual(RxFriendsUI.groupBadge("player"), "");
 assert.ok(RxFriendsUI.row({id: "0123456789abcdef", nick: "A", online: false, canCopy: true, packName: "Pack"}, "friend").includes('data-friend-action="pack"'));
 assert.ok(!RxFriendsUI.row({id: "0123456789abcdef", nick: "A", online: false, canCopy: false}, "friend").includes('data-friend-action="pack"'));
 
-// Боковое меню: не больше 4 вкладок в рейле, остальное — в «Ещё»; одну вкладку в «Ещё» не прячем
+// Боковое меню: вкладка «Друзья» есть и включена по умолчанию, меню разворачивается
 load("RxTabs.js");
 const {RxTabs} = context;
-const all = RxTabs.layout(RxTabs.ALL);
-assert.deepStrictEqual([...all.rail], ["catalog", "instances", "together", "mods"]);
-assert.deepStrictEqual([...all.more], ["servers", "statistics", "skins", "screenshots", "console"]);
-assert.deepStrictEqual([...RxTabs.layout(RxTabs.DEFAULT).more], [], "default menu has no More button");
-assert.deepStrictEqual([...RxTabs.layout(["content", "settings", "catalog", "mods", "skins", "servers", "console"]).more], [], "5 tabs fit without More");
+assert.ok(RxTabs.ALL.includes("friends") && RxTabs.DEFAULT.includes("friends"));
+assert.strictEqual(RxTabs.ICONS.friends, "diversity_3");
+assert.strictEqual(RxTabs.isExpanded(), false);
 
 // Ник в строке экранируется
 assert.ok(!RxFriendsUI.row({id: "0123456789abcdef", nick: "<b>x</b>", online: false}, "friend").includes("<b>x</b>"));

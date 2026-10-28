@@ -566,7 +566,8 @@
             "screenshots": "Screenshots",
             "console": "Console",
             "catalog": "Catalog",
-            "together": "Together"
+            "together": "Together",
+            "friends": "Friends"
           }
         }
       },
@@ -718,8 +719,13 @@
       "instances": "Instances",
       "catalog": "Catalog",
       "together": "Play together",
-      "more": "More",
-      "customize": "Customize"
+      "friends": "Friends",
+      "expand": "Expand menu",
+      "collapse": "Collapse",
+      "groups": {
+        "social": "Together",
+        "tools": "Tools"
+      }
     },
     "screenshots": {
       "title": "Screenshots",
@@ -1258,8 +1264,8 @@
     "friends": {
       "title": "Friends",
       "text": "Add friends by nickname and see who is in the launcher, what they play and on which server.",
-      "guestText": "You need an RxLauncher account: sign up on rxlauncher.xyz and log in here. You can change the nickname at any time — friends will see the new one, and your game profile is renamed with it.",
-      "register": "Sign up on the website",
+      "guestText": "Log in to your RxLauncher account to see which friends are playing right now, on which version and server.",
+      "register": "No account? Sign up on the website",
       "login": "Log in",
       "you": "You",
       "manage": "Account",
@@ -1271,7 +1277,7 @@
       "paranoid": "Friends are off in paranoid mode: the launcher sends nothing about you.",
       "loading": "Loading…",
       "onlineCount": "{0} of {1} online",
-      "empty": "No friends yet — type a friend nickname above and send a request.",
+      "empty": "Type a friend nickname above and send a request.",
       "incoming": "Friend requests",
       "wantsToBeFriends": "Wants to be your friend",
       "requestSent": "Request sent",
@@ -1322,8 +1328,8 @@
         "noAccount": "No account?",
         "registerOnSite": "Sign up on the website",
         "login": {
-          "title": "Log in to RxLauncher",
-          "hint": "Log in with your rxlauncher.xyz account and friends will see where you play.",
+          "title": "Log in",
+          "hint": "Your RxLauncher account from rxlauncher.xyz.",
           "submit": "Log in"
         },
         "delete": {
@@ -1333,7 +1339,11 @@
         },
         "or": "or",
         "discord": "Log in with Discord",
-        "discordWaiting": "Confirm the login in your browser…"
+        "discordWaiting": "Confirm the login in your browser…",
+        "artTitle": "One account — on the website and in the launcher",
+        "orNick": "or with a nickname",
+        "passwordNoPassword": "This account was created with Discord. Set a password to log in with your nickname too.",
+        "deleteNoPassword": "The account, friends and requests are deleted forever. Type your nickname to confirm."
       },
       "errors": {
         "badNick": "Nickname: 3–16 Latin letters, digits or _",
@@ -1425,7 +1435,36 @@
       "copyPickTitle": "Who can copy your setup",
       "copyPickText": "Tick the friends who can install your setup.",
       "copySaved": "Setting saved",
-      "copySelectedCount": "Friends selected: {0}"
+      "copySelectedCount": "Friends selected: {0}",
+      "guestTitle": "Play together with friends",
+      "pointPlaying": "Who plays where",
+      "pointPlayingText": "Your friend's version, setup and server",
+      "pointCopy": "Friends' setups",
+      "pointCopyText": "The same mods in one click",
+      "pointJoin": "Join a friend",
+      "pointJoinText": "The game starts on their server",
+      "paranoidTitle": "Friends are off",
+      "paranoidShort": "Paranoid mode: the launcher sends nothing about you",
+      "privacy": "Privacy",
+      "joinShort": "Join",
+      "packShort": "Setup",
+      "outgoing": "Sent requests",
+      "sectionPlaying": "Playing",
+      "sectionLauncher": "In the launcher",
+      "sectionOffline": "Offline",
+      "emptyTitle": "No friends yet",
+      "setPassword": "Set password",
+      "short": {
+        "rename": "Nickname",
+        "password": "Password",
+        "site": "Website",
+        "logout": "Log out"
+      },
+      "copyModesShort": {
+        "nobody": "Nobody",
+        "friends": "All friends",
+        "selected": "Selected"
+      }
     }
   }
 }

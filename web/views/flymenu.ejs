@@ -1,58 +1,59 @@
 <link rel="stylesheet" href="views/flymenu.css"/>
 
+<!-- Боковое меню: вкладки по группам. Свёрнуто — только значки, развёрнуто — значки с подписями (RxTabs) -->
 <div class="flymenu animate__animated animate__fadeInLeft animate__faster">
+    <div class="item toggle" data-flymenu-toggle data-text="{{flymenu.expand}}" tabindex="0">
+        <span class="material-symbols-outlined">left_panel_open</span>
+        <span class="label">{{flymenu.collapse}}</span>
+    </div>
     <div class="menu-wrapped">
         <div class="item active" data-modal="content" data-text="{{flymenu.home}}">
-            <span class="material-symbols-outlined">home</span>
+            <span class="material-symbols-outlined">home</span><span class="label">{{flymenu.home}}</span>
         </div>
         <div class="item" data-modal="catalog" data-text="{{flymenu.catalog}}">
-            <span class="material-symbols-outlined">travel_explore</span>
+            <span class="material-symbols-outlined">travel_explore</span><span class="label">{{flymenu.catalog}}</span>
         </div>
         <div class="item" data-modal="instances" data-text="{{flymenu.instances}}">
-            <span class="material-symbols-outlined">stacks</span>
+            <span class="material-symbols-outlined">stacks</span><span class="label">{{flymenu.instances}}</span>
         </div>
         <div class="item" data-modal="mods" data-text="{{flymenu.mods}}">
-            <span class="material-symbols-outlined">extension</span>
+            <span class="material-symbols-outlined">extension</span><span class="label">{{flymenu.mods}}</span>
         </div>
-        <div class="item" data-modal="skins" data-text="{{flymenu.skins}}">
-            <span class="material-symbols-outlined">accessibility_new</span>
-        </div>
-        <div class="item" data-modal="servers" data-text="{{flymenu.servers}}">
-            <span class="material-symbols-outlined">dns</span>
-        </div>
-        <div class="item" data-modal="statistics" data-text="{{flymenu.statistics}}">
-            <span class="material-symbols-outlined">monitoring</span>
+
+        <div class="flymenu-group" data-flymenu-group="social"><span>{{flymenu.groups.social}}</span></div>
+        <div class="item" data-modal="friends" data-text="{{flymenu.friends}}">
+            <span class="material-symbols-outlined">diversity_3</span><span class="label">{{flymenu.friends}}</span>
+            <span class="flymenu-badge" data-friends-badge hidden></span>
         </div>
         <div class="item" data-modal="together" data-text="{{flymenu.together}}">
-            <span class="material-symbols-outlined">group</span>
+            <span class="material-symbols-outlined">group</span><span class="label">{{flymenu.together}}</span>
+        </div>
+        <div class="item" data-modal="servers" data-text="{{flymenu.servers}}">
+            <span class="material-symbols-outlined">dns</span><span class="label">{{flymenu.servers}}</span>
+        </div>
+        <div class="item" data-modal="skins" data-text="{{flymenu.skins}}">
+            <span class="material-symbols-outlined">accessibility_new</span><span class="label">{{flymenu.skins}}</span>
+        </div>
+
+        <div class="flymenu-group" data-flymenu-group="tools"><span>{{flymenu.groups.tools}}</span></div>
+        <div class="item" data-modal="statistics" data-text="{{flymenu.statistics}}">
+            <span class="material-symbols-outlined">monitoring</span><span class="label">{{flymenu.statistics}}</span>
         </div>
         <div class="item" data-modal="screenshots" data-text="{{flymenu.screenshots}}">
-            <span class="material-symbols-outlined">photo_library</span>
+            <span class="material-symbols-outlined">photo_library</span><span class="label">{{flymenu.screenshots}}</span>
         </div>
         <div class="item" data-modal="console" data-text="{{console.title}}">
-            <span class="material-symbols-outlined">terminal</span>
-        </div>
-        <!-- Вкладки, которым не хватило места, — в панели «Ещё» (RxTabs.apply) -->
-        <div class="item more" data-flymenu-more-button data-text="{{flymenu.more}}" tabindex="0" style="display: none;">
-            <span class="material-symbols-outlined">apps</span>
+            <span class="material-symbols-outlined">terminal</span><span class="label">{{console.title}}</span>
         </div>
     </div>
     <div class="flymenu-bottom">
         <div class="item" data-modal="settings" data-text="{{flymenu.settings}}">
-            <span class="material-symbols-outlined">settings</span>
+            <span class="material-symbols-outlined">settings</span><span class="label">{{flymenu.settings}}</span>
         </div>
         <div class="item" data-text="{{flymenu.folder}}" data-rx-onclick="openExternal(GAME_DATA)">
-            <span class="material-symbols-outlined">folder</span>
+            <span class="material-symbols-outlined">folder</span><span class="label">{{flymenu.folder}}</span>
         </div>
     </div>
-</div>
-
-<div class="flymenu-more" data-flymenu-more hidden>
-    <div class="flymenu-more-head">
-        <span>{{flymenu.more}}</span>
-        <button type="button" class="transparent" data-flymenu-customize><span class="material-symbols-outlined">tune</span><span>{{flymenu.customize}}</span></button>
-    </div>
-    <div class="flymenu-more-grid" data-flymenu-more-grid></div>
 </div>
 
 <script type="application/x-rx-script">
@@ -68,8 +69,9 @@
         await RxModals.switchModal(modalName);
     })
 
+    // Подсказка нужна только в свёрнутом меню — в развёрнутом подписи и так видны
     $(".flymenu .item").mouseenter(function () {
-        if ($(this).hasClass("active")) {
+        if ($(this).hasClass("active") || $(".flymenu").hasClass("expanded")) {
             return;
         }
         RxFlyout.showTooltip(this, $(this).data("text"));

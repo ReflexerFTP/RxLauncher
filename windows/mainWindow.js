@@ -1,5 +1,5 @@
 let path = require("path");
-const {BrowserWindow} = require("electron");
+const {BrowserWindow, app} = require("electron");
 const ejs = require('ejs-electron');
 
 const MW_OPTIONS = {
@@ -24,6 +24,8 @@ const MW_OPTIONS = {
         preload: path.join(__dirname, "../preload.js"),
         // Проверка орфографии лаунчеру не нужна, а словари занимают память
         spellcheck: false,
+        // В установленном лаунчере DevTools нет — только при запуске из исходников
+        devTools: !app.isPackaged,
     },
 };
 

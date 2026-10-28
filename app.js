@@ -8,6 +8,10 @@ if (isAppInDev && !process.argv.includes("noreload")) {
 // Загрузка модулей
 let startTime = performance.now();
 const {app, ipcMain, BrowserWindow, globalShortcut, dialog, safeStorage, shell, nativeImage, Tray, Menu, clipboard} = require("electron");
+// Установленный лаунчер не запускается с отладочными ключами: к нему нельзя подключиться и подсмотреть или подменить код
+if (app.isPackaged && ["remote-debugging-port", "remote-debugging-pipe", "inspect", "inspect-brk", "inspect-port", "js-flags"].some(name => app.commandLine.hasSwitch(name))) {
+    process.exit(0);
+}
 
 // Chromium manages V8 memory itself. Forcing GC on focus changes caused UI stalls,
 // so the renderer only collects once while the window is hidden (see RxOptimizer).

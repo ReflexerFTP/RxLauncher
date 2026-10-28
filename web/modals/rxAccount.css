@@ -1,71 +1,121 @@
-/* Окно аккаунта RxLauncher: карточка по центру, логотип с мягким свечением, поля с иконками */
+/* Окно аккаунта RxLauncher: обложка слева, форма справа */
 #modal-rxAccount {
-    width: 420px;
+    width: 820px;
     max-width: calc(100vw - 48px);
     height: max-content;
-    padding: 30px 30px 22px;
+    max-height: calc(100vh - 60px);
+    padding: 0;
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid var(--rx-stroke);
+    /* Сплошная подложка: сквозь окно не должна просвечивать вкладка под ним */
+    background: linear-gradient(var(--theme-primaryBg), var(--theme-primaryBg)), #0d0f11 !important;
+    box-shadow: 0 50px 140px -30px rgba(0, 0, 0, .9);
+}
+
+/* ---------- обложка ---------- */
+#modal-rxAccount .rxa-art {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 26px;
     overflow: hidden;
-    border-radius: 22px;
-    border: 1px solid var(--rx-stroke);
     background:
-        radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--theme-primary) 22%, transparent), transparent 62%),
-        var(--theme-primaryBg);
-    box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .85);
+        linear-gradient(180deg, rgba(0, 0, 0, .15) 0%, rgba(0, 0, 0, .55) 55%, rgba(0, 0, 0, .85) 100%),
+        radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--theme-primary) 55%, transparent), transparent 60%),
+        url("../assets/backgrounds/1.webp") center / cover no-repeat;
 }
-
-#modal-rxAccount .rxa-close { position: absolute; top: 12px; right: 12px; z-index: 1; }
-
-#modal-rxAccount .rxa-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-#modal-rxAccount .rxa-logo { position: relative; width: 68px; height: 68px; margin-bottom: 8px; }
-#modal-rxAccount .rxa-logo img {
-    width: 68px;
-    height: 68px;
-    border-radius: 18px;
-    box-shadow: 0 0 0 1px var(--rx-stroke), 0 16px 40px -10px color-mix(in srgb, var(--theme-primary) 55%, transparent);
-}
-#modal-rxAccount .rxa-logo .material-symbols-outlined {
-    position: absolute;
-    right: -6px;
-    bottom: -6px;
-    width: 28px;
-    height: 28px;
+#modal-rxAccount .rxa-art-top { display: flex; align-items: center; gap: 10px; }
+#modal-rxAccount .rxa-art-top img { width: 40px; height: 40px; border-radius: 12px; box-shadow: 0 10px 30px -8px rgba(0, 0, 0, .8); }
+#modal-rxAccount .rxa-art-top span { color: #fff; font-size: 13pt; font-weight: 800; letter-spacing: -.01em; }
+#modal-rxAccount .rxa-art-copy h2 { margin: 0 0 14px; color: #fff; font-size: 19pt; line-height: 1.15; }
+#modal-rxAccount .rxa-art-copy ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; }
+#modal-rxAccount .rxa-art-copy li { display: flex; align-items: center; gap: 10px; color: rgba(255, 255, 255, .88); font-size: 9.5pt; font-weight: 600; }
+#modal-rxAccount .rxa-art-copy li .material-symbols-outlined {
+    width: 30px;
+    height: 30px;
     display: grid;
     place-items: center;
-    border-radius: 50%;
-    border: 3px solid var(--theme-primaryBg);
-    background: var(--theme-primary);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .12);
+    backdrop-filter: blur(8px);
     color: #fff;
-    font-size: 15px;
+    font-size: 17px;
 }
-#modal-rxAccount[data-mode="delete"] .rxa-logo .material-symbols-outlined { background: var(--error); }
-#modal-rxAccount .rxa-hero h1 { margin: 0; font-size: 17pt; }
-#modal-rxAccount .rxa-hero p { margin: 0; max-width: 330px; color: var(--text-sub); font-size: 9pt; line-height: 1.5; }
 
-#modal-rxAccount .rxa-form { display: flex; flex-direction: column; gap: 10px; }
-#modal-rxAccount .rxa-field {
+/* ---------- форма ---------- */
+#modal-rxAccount .rxa-panel { position: relative; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 30px 32px 22px; overflow-y: auto; }
+#modal-rxAccount .rxa-close { position: absolute; top: 12px; right: 12px; z-index: 1; }
+#modal-rxAccount .rxa-hero { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+#modal-rxAccount .rxa-badge {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 4px;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--theme-primary) 18%, var(--theme-primaryBgLight));
+    color: var(--theme-primaryLighter);
+    font-size: 22px;
+}
+#modal-rxAccount[data-mode="delete"] .rxa-badge { background: color-mix(in srgb, var(--error) 18%, transparent); color: var(--error); }
+#modal-rxAccount .rxa-hero h1 { margin: 0; font-size: 18pt; }
+#modal-rxAccount .rxa-hero p { margin: 0; color: var(--text-sub); font-size: 9pt; line-height: 1.5; }
+
+#modal-rxAccount .rxa-discord-wrap { display: flex; flex-direction: column; gap: 14px; }
+#modal-rxAccount .rxa-discord-wrap[hidden] { display: none; }
+#modal-rxAccount .rxa-discord {
+    width: 100%;
+    height: 48px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 14px !important;
+    background: #5865f2 !important;
+    color: #fff !important;
+    font-size: 10.5pt;
+    font-weight: 700;
+    box-shadow: 0 14px 34px -16px rgba(88, 101, 242, .95);
+    transition: filter .2s, transform .15s;
+}
+#modal-rxAccount .rxa-discord:hover { filter: brightness(1.08); }
+#modal-rxAccount .rxa-discord:active { transform: scale(.985); }
+#modal-rxAccount .rxa-discord svg { width: 22px; height: 22px; }
+#modal-rxAccount .rxa-discord .rxa-discord-spin { display: none; font-size: 18px; color: inherit; animation: mc-spin 1s linear infinite; }
+#modal-rxAccount .rxa-discord.waiting { background: color-mix(in srgb, #5865f2 55%, var(--theme-primaryBgLight)) !important; }
+#modal-rxAccount .rxa-discord.waiting .rxa-discord-spin { display: inline-block; }
+#modal-rxAccount .rxa-or { display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+#modal-rxAccount .rxa-or::before, #modal-rxAccount .rxa-or::after { content: ""; flex: 1; height: 1px; background: var(--rx-stroke); }
+
+#modal-rxAccount .rxa-form { display: flex; flex-direction: column; gap: 12px; }
+#modal-rxAccount .rxa-field { display: flex; flex-direction: column; gap: 6px; }
+#modal-rxAccount .rxa-field[hidden] { display: none; }
+#modal-rxAccount .rxa-label { color: var(--text-sub); font-size: 8.5pt; font-weight: 700; }
+#modal-rxAccount .rxa-input {
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 48px;
-    padding: 0 8px 0 14px;
+    height: 46px;
+    padding: 0 6px 0 13px;
     border-radius: 13px;
     border: 1px solid var(--rx-stroke);
-    background: color-mix(in srgb, var(--theme-primaryBgLight) 85%, transparent);
+    background: var(--theme-primaryBgLight);
     color: var(--text-sub);
     cursor: text;
     transition: border-color .2s, box-shadow .2s, color .2s;
 }
-#modal-rxAccount .rxa-field[hidden] { display: none; }
-#modal-rxAccount .rxa-field > .material-symbols-outlined { font-size: 20px; }
-#modal-rxAccount .rxa-field:focus-within {
+#modal-rxAccount .rxa-input > .material-symbols-outlined { font-size: 19px; }
+#modal-rxAccount .rxa-input:focus-within {
     color: var(--theme-primaryLighter);
     border-color: color-mix(in srgb, var(--theme-primary) 65%, transparent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-primary) 16%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-primary) 15%, transparent);
 }
-#modal-rxAccount .rxa-field input {
+#modal-rxAccount .rxa-input input {
     flex: 1 1 auto;
     min-width: 0;
     height: 100%;
@@ -116,10 +166,10 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    border-radius: 13px !important;
+    border-radius: 14px !important;
     font-size: 10.5pt;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--theme-primary), var(--theme-primaryDarker));
+    background: linear-gradient(135deg, var(--theme-primary), var(--theme-primaryDarker)) !important;
     box-shadow: 0 12px 30px -12px color-mix(in srgb, var(--theme-primary) 75%, transparent);
     transition: filter .2s, transform .15s;
 }
@@ -129,57 +179,16 @@
 #modal-rxAccount .rxa-submit:hover .material-symbols-outlined { transform: translateX(3px); }
 #modal-rxAccount .rxa-submit[disabled] { opacity: .75; pointer-events: none; }
 #modal-rxAccount .rxa-submit .spin { animation: mc-spin 1s linear infinite; }
-#modal-rxAccount[data-mode="delete"] .rxa-submit { background: var(--error); box-shadow: none; }
+#modal-rxAccount[data-mode="delete"] .rxa-submit { background: var(--error) !important; box-shadow: none; }
 
-#modal-rxAccount .rxa-foot {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 4px 6px;
-    padding-top: 14px;
-    border-top: 1px solid var(--rx-stroke);
-    color: var(--text-sub);
-    font-size: 9pt;
-}
+#modal-rxAccount .rxa-foot { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 6px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--rx-stroke); color: var(--text-sub); font-size: 9pt; }
 #modal-rxAccount .rxa-foot[hidden] { display: none; }
-#modal-rxAccount .rxa-link {
-    height: auto !important;
-    padding: 2px 4px !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: transparent !important;
-    color: var(--theme-primaryLighter) !important;
-    font-size: 9pt;
-    font-weight: 700;
-}
+#modal-rxAccount .rxa-link { height: auto !important; padding: 2px 4px !important; display: inline-flex; align-items: center; gap: 4px; background: transparent !important; color: var(--theme-primaryLighter) !important; font-size: 9pt; font-weight: 700; }
 #modal-rxAccount .rxa-link:hover { text-decoration: underline; }
 #modal-rxAccount .rxa-link .material-symbols-outlined { font-size: 15px; color: inherit; }
 
-/* Вход через Discord */
-#modal-rxAccount .rxa-discord-wrap { display: flex; flex-direction: column; gap: 12px; margin-top: -6px; }
-#modal-rxAccount .rxa-discord-wrap[hidden] { display: none; }
-#modal-rxAccount .rxa-or { display: flex; align-items: center; gap: 10px; color: var(--text-sub); font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-#modal-rxAccount .rxa-or::before, #modal-rxAccount .rxa-or::after { content: ""; flex: 1; height: 1px; background: var(--rx-stroke); }
-#modal-rxAccount .rxa-discord {
-    width: 100%;
-    height: 46px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    border-radius: 13px !important;
-    background: #5865f2 !important;
-    color: #fff !important;
-    font-size: 10.5pt;
-    font-weight: 700;
-    box-shadow: 0 12px 30px -14px rgba(88, 101, 242, .9);
-    transition: filter .2s, transform .15s;
+/* Узкое окно — обложку прячем */
+@media (max-width: 1100px) {
+    #modal-rxAccount { width: 460px; grid-template-columns: 1fr; }
+    #modal-rxAccount .rxa-art { display: none; }
 }
-#modal-rxAccount .rxa-discord:hover { filter: brightness(1.08); }
-#modal-rxAccount .rxa-discord:active { transform: scale(.985); }
-#modal-rxAccount .rxa-discord svg { width: 21px; height: 21px; }
-#modal-rxAccount .rxa-discord .rxa-discord-spin { display: none; font-size: 18px; color: inherit; animation: mc-spin 1s linear infinite; }
-#modal-rxAccount .rxa-discord.waiting { background: color-mix(in srgb, #5865f2 55%, var(--theme-primaryBgLight)) !important; }
-#modal-rxAccount .rxa-discord.waiting .rxa-discord-spin { display: inline-block; }

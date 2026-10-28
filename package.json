@@ -1,6 +1,6 @@
 {
   "name": "rxclient",
-  "version": "3.8.0",
+  "version": "3.9.0",
   "description": "Minecraft-лаунчер. Быстрый. Индивидуальный. Твой",
   "main": "app.js",
   "scripts": {
@@ -148,7 +148,14 @@
       "!README.md",
       "!.gitignore",
       "!.git{/*}"
-    ]
+    ],
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
+    }
   },
   "overrides": {
     "request": "npm:@cypress/request@4.0.1",

@@ -1,0 +1,230 @@
+/* Вкладка «Друзья»: шапка как в «Сборках» (instances.css), слева список, справа профиль и настройки */
+#modal-friends {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 22px;
+    min-height: 0;
+}
+#modal-friends [hidden] { display: none !important; }
+
+/* ---------- гость ---------- */
+.fx-guest {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 20px;
+    text-align: center;
+}
+.fx-guest-art {
+    width: 96px;
+    height: 96px;
+    display: grid;
+    place-items: center;
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--theme-primaryLighter) 45%, transparent), transparent 60%),
+        linear-gradient(145deg, var(--theme-primary), var(--theme-primaryDarker));
+    box-shadow: 0 24px 60px -18px color-mix(in srgb, var(--theme-primary) 80%, transparent);
+}
+.fx-guest-art .material-symbols-outlined { font-size: 48px; color: #fff; }
+.fx-guest h2 { margin: 8px 0 0; font-size: 20pt; }
+.fx-guest > p { max-width: 520px; margin: 0; color: var(--text-sub); font-size: 10pt; line-height: 1.55; }
+.fx-guest-points { display: grid; grid-template-columns: repeat(3, minmax(0, 190px)); gap: 10px; margin: 6px 0; }
+.fx-guest-points div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--rx-stroke);
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 70%, transparent);
+}
+.fx-guest-points .material-symbols-outlined { font-size: 24px; color: var(--theme-primaryLighter); margin-bottom: 2px; }
+.fx-guest-points strong { font-size: 10pt; }
+.fx-guest-points small { color: var(--text-sub); font-size: 8.5pt; line-height: 1.4; }
+.fx-guest-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 4px; }
+
+.fx-btn {
+    height: 46px !important;
+    min-width: 200px;
+    padding: 0 22px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 14px !important;
+    font-size: 10.5pt;
+    font-weight: 700;
+    transition: filter .2s, transform .15s;
+}
+.fx-btn:hover { filter: brightness(1.08); }
+.fx-btn:active { transform: scale(.98); }
+.fx-btn .material-symbols-outlined { font-size: 20px; color: inherit; }
+.fx-btn.primary { background: linear-gradient(135deg, var(--theme-primary), var(--theme-primaryDarker)) !important; box-shadow: 0 14px 34px -14px color-mix(in srgb, var(--theme-primary) 80%, transparent); }
+.fx-btn.discord { background: #5865f2 !important; color: #fff !important; box-shadow: 0 14px 34px -16px rgba(88, 101, 242, .9); }
+.fx-btn.discord svg { width: 21px; height: 21px; }
+.fx-link { height: auto !important; padding: 4px 8px !important; display: inline-flex; align-items: center; gap: 5px; background: transparent !important; color: var(--theme-primaryLighter) !important; font-size: 9.5pt; font-weight: 700; }
+.fx-link:hover { text-decoration: underline; }
+.fx-link .material-symbols-outlined { font-size: 15px; color: inherit; }
+
+/* ---------- вошли ---------- */
+.fx-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; }
+.fx-main { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
+.fx-side { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+
+.fx-add {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    padding: 0 6px 0 14px;
+    border-radius: 15px;
+    border: 1px solid var(--rx-stroke);
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 85%, transparent);
+    color: var(--text-sub);
+    transition: border-color .2s, box-shadow .2s;
+}
+.fx-add:focus-within { border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-primary) 14%, transparent); color: var(--theme-primaryLighter); }
+.fx-add > .material-symbols-outlined { font-size: 21px; }
+.fx-add input { flex: 1 1 auto; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none; color: var(--text-color); font-size: 10.5pt; }
+.fx-add button { height: 38px !important; padding: 0 18px !important; border-radius: 11px !important; font-size: 9.5pt !important; font-weight: 700; }
+.fx-error { flex: 0 0 auto; padding: 9px 12px; border-radius: 11px; background: color-mix(in srgb, var(--error) 14%, transparent); color: var(--error); font-size: 9pt; font-weight: 600; }
+
+.fx-list { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; }
+.fx-list:empty { display: none; }
+.fx-section { display: flex; align-items: center; gap: 8px; margin: 6px 2px 0; color: var(--text-sub); font-size: 8pt; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.fx-section b { padding: 1px 7px; border-radius: 999px; background: var(--theme-primaryBgLight); color: var(--text-color); letter-spacing: 0; }
+.fx-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 34px 20px;
+    border-radius: 18px;
+    border: 1px dashed var(--rx-stroke);
+    color: var(--text-sub);
+    font-size: 9.5pt;
+    text-align: center;
+}
+.fx-empty .material-symbols-outlined { font-size: 34px; color: var(--theme-primaryLighter); }
+.fx-empty b { color: var(--text-color); font-size: 11pt; }
+
+/* Карточка друга */
+.fx-friend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 12px 12px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--rx-stroke);
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 78%, transparent);
+    transition: border-color .2s, background-color .2s;
+}
+.fx-friend:hover { border-color: color-mix(in srgb, var(--theme-primary) 30%, var(--rx-stroke)); }
+.fx-friend.playing { background: linear-gradient(90deg, color-mix(in srgb, var(--theme-primary) 10%, var(--theme-primaryBgLight)), color-mix(in srgb, var(--theme-primaryBgLight) 78%, transparent) 60%); }
+.fx-friend.offline { opacity: .82; }
+.fx-avatar { position: relative; flex: 0 0 auto; width: 46px; height: 46px; }
+.fx-avatar img { width: 46px; height: 46px; border-radius: 12px; image-rendering: pixelated; background: var(--theme-primaryBg); }
+.fx-friend.offline .fx-avatar img { filter: grayscale(1); opacity: .6; }
+.fx-avatar i { position: absolute; right: -3px; bottom: -3px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--theme-primaryBgLight); background: var(--text-sub); }
+.fx-friend.launcher .fx-avatar i { background: var(--success); }
+.fx-friend.playing .fx-avatar i { background: var(--theme-primary); }
+.fx-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.fx-name { display: flex; align-items: center; min-width: 0; font-size: 11pt; font-weight: 700; }
+.fx-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+.fx-actions button { height: 36px !important; padding: 0 12px !important; display: flex; align-items: center; gap: 6px; border-radius: 11px !important; font-size: 9pt; font-weight: 700; }
+.fx-actions button.icon { width: 36px; padding: 0 !important; justify-content: center; }
+.fx-actions .material-symbols-outlined { font-size: 18px; color: inherit; }
+
+/* Статус: «Играет» с пульсом, чипы версии/сборки/сервера */
+.fr-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; color: var(--text-sub); font-size: 8.5pt; }
+.fr-state { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.fr-state i { width: 7px; height: 7px; border-radius: 50%; background: var(--text-sub); opacity: .6; }
+.fr-state.launcher { color: var(--success); }
+.fr-state.launcher i { background: var(--success); opacity: 1; }
+.fr-state.playing { color: var(--theme-primaryLighter); }
+.fr-state.playing i { background: var(--theme-primary); opacity: 1; animation: fr-pulse 1.6s ease-out infinite; }
+@keyframes fr-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-primary) 60%, transparent); } 100% { box-shadow: 0 0 0 7px transparent; } }
+.fr-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 230px;
+    height: 22px;
+    padding: 0 8px 0 5px;
+    border-radius: 8px;
+    background: var(--theme-primaryBg);
+    color: var(--text-color);
+    font-size: 8pt;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fr-chip img { width: 15px; height: 15px; border-radius: 4px; image-rendering: pixelated; }
+.fr-chip .material-symbols-outlined { font-size: 14px; color: var(--text-sub); }
+.fr-chip.server { font-family: "Fira Code", monospace; font-size: 7.8pt; }
+.fr-time, .fr-last { color: var(--text-sub); }
+
+/* ---------- правая колонка ---------- */
+.fx-card {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid var(--rx-stroke);
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 82%, transparent);
+}
+.fx-card > p { margin: -4px 0 0; color: var(--text-sub); font-size: 8.5pt; line-height: 1.45; }
+.fx-card-title { display: flex; align-items: center; gap: 8px; font-size: 10pt; }
+.fx-card-title .material-symbols-outlined { font-size: 19px; color: var(--theme-primaryLighter); }
+
+.fx-me { background: radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--theme-primary) 18%, transparent), transparent 60%), color-mix(in srgb, var(--theme-primaryBgLight) 82%, transparent); }
+.fx-me-head { display: flex; align-items: center; gap: 12px; }
+.fx-me-head img { width: 54px; height: 54px; border-radius: 14px; image-rendering: pixelated; box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-primary) 55%, transparent); }
+.fx-me-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.fx-me-copy strong { max-width: 100%; font-size: 13pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-me-copy .rx-group { margin-left: 0; }
+.fx-me-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.fx-me-actions button { width: 100%; height: 36px !important; padding: 0 10px !important; display: flex; align-items: center; gap: 6px; border-radius: 10px !important; font-size: 8.5pt; font-weight: 600; justify-content: flex-start; }
+.fx-me-actions button .material-symbols-outlined { font-size: 17px; color: inherit; }
+.fx-me-actions .fx-me-admin { grid-column: 1 / -1; justify-content: center; }
+
+.fx-segment { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; border-radius: 12px; background: var(--theme-primaryBg); }
+.fx-segment button {
+    height: 34px !important;
+    padding: 0 4px !important;
+    border-radius: 9px !important;
+    background: transparent !important;
+    color: var(--text-sub) !important;
+    font-size: 8.3pt;
+    font-weight: 700;
+    transition: background-color .15s, color .15s;
+}
+.fx-segment button:hover { color: var(--text-color) !important; }
+.fx-segment button.active { background: var(--theme-primary) !important; color: #fff !important; box-shadow: 0 6px 16px -8px var(--theme-primary); }
+.fx-pick { width: 100%; height: 34px !important; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px !important; font-size: 9pt; }
+.fx-pick .material-symbols-outlined { font-size: 17px; color: inherit; }
+
+.fx-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--text-color); font-size: 9pt; cursor: pointer; }
+.fx-option .switch { flex: 0 0 auto; transform: scale(.78); transform-origin: right center; }
+.fx-delete { align-self: flex-start; height: auto !important; padding: 2px 0 !important; background: transparent !important; color: var(--text-sub) !important; font-size: 8.5pt; text-decoration: underline; }
+.fx-delete:hover { color: var(--error) !important; }
+
+@media (max-width: 1180px) {
+    .fx-body { grid-template-columns: minmax(0, 1fr) 260px; }
+    .fx-actions button:not(.icon) span:last-child { display: none; }
+    .fx-actions button:not(.icon) { width: 36px; padding: 0 !important; justify-content: center; }
+}

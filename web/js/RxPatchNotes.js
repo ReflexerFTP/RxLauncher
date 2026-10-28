@@ -1,6 +1,36 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.9.0-friends-tab-menu-login",
+            version: "3.9.0",
+            date: "2026-10-29T01:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "ИНТЕРФЕЙС", en: "INTERFACE"},
+            title: {ru: "Вкладка «Друзья», новое меню и вход", en: "Friends tab, new menu and login"},
+            summary: {
+                ru: "Друзья переехали в свою вкладку, боковое меню разворачивается с подписями, окно входа стало удобнее — а вход через Discord заработал.",
+                en: "Friends moved to their own tab, the side menu expands with labels, the login window is easier to use — and Discord login now works."
+            },
+            changes: {
+                ru: [
+                    "Отдельная вкладка «Друзья»: «В игре», «В лаунчере», «Не в сети», заявки, профиль и настройки приватности справа.",
+                    "Кнопки «Зайти» и «Сборка» с подписями, значок с числом заявок или друзей в сети прямо на вкладке меню.",
+                    "Боковое меню разворачивается кнопкой сверху: значки с подписями и группами «Вместе» и «Инструменты». Панель «Ещё» убрана.",
+                    "Новое окно входа: вход через Discord сверху, поля с подписями.",
+                    "Вход и регистрация через Discord включены.",
+                    "Защита установленного лаунчера: без DevTools и отладки, проверка целостности файлов."
+                ],
+                en: [
+                    "A separate Friends tab: Playing, In the launcher, Offline, requests, and your profile and privacy settings on the right.",
+                    "Labelled Join and Setup buttons, and a badge with requests or online friends right on the menu tab.",
+                    "The side menu expands with the button at the top: icons with labels and Together/Tools groups. The More panel is gone.",
+                    "A new login window: Discord login at the top, labelled fields.",
+                    "Discord login and sign-up are enabled.",
+                    "The installed launcher is protected: no DevTools or debugging, file integrity check."
+                ]
+            }
+        },
+        {
             id: "3.8.0-friends-copy-discord",
             version: "3.8.0",
             date: "2026-10-28T23:00:00+03:00",

@@ -62,12 +62,12 @@ const tabsModule = load("RxTabs.js", "RxTabs", {
     document: {querySelectorAll: () => []},
     Array, Set
 });
-// По умолчанию — Главная, Настройки, Каталог, Статистика, Вместе, Консоль
-assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "statistics", "together", "console"]);
-// Обновление до 3.0 один раз добавляет новые разделы к уже настроенному меню
+// По умолчанию — Главная, Настройки, Каталог, Друзья, Статистика, Вместе, Консоль
+assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "friends", "statistics", "together", "console"]);
+// Обновления один раз добавляют новые разделы (3.0 — каталог и «Вместе», 3.9 — друзья) к уже настроенному меню
 config.enabledTabs = ["content", "settings", "mods"];
 tabsModule.migrate();
-assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "mods", "together"]);
+assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "mods", "friends", "together"]);
 config.enabledTabs = ["content", "settings"];
 tabsModule.migrate();
 assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings"], "migration must run only once");

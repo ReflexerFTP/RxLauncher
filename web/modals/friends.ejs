@@ -1,0 +1,98 @@
+<link rel="stylesheet" href="modals/friends.css"/>
+
+<!-- Друзья: аккаунт RxLauncher, кто где играет, сборки друзей (RxFriendsUI) -->
+<div class="modal" id="modal-friends" style="display: none;">
+    <header class="inst-header">
+        <div class="inst-heading-icon"><span class="material-symbols-outlined">diversity_3</span></div>
+        <div class="inst-heading-copy">
+            <h1>{{friends.title}}</h1>
+            <span data-friends-sub>{{friends.text}}</span>
+        </div>
+    </header>
+
+    <!-- Гость -->
+    <section class="fx-guest" data-friends-guest>
+        <div class="fx-guest-art">
+            <span class="material-symbols-outlined">diversity_3</span>
+        </div>
+        <h2>{{friends.guestTitle}}</h2>
+        <p>{{friends.guestText}}</p>
+        <div class="fx-guest-points">
+            <div><span class="material-symbols-outlined">sports_esports</span><strong>{{friends.pointPlaying}}</strong><small>{{friends.pointPlayingText}}</small></div>
+            <div><span class="material-symbols-outlined">file_copy</span><strong>{{friends.pointCopy}}</strong><small>{{friends.pointCopyText}}</small></div>
+            <div><span class="material-symbols-outlined">login</span><strong>{{friends.pointJoin}}</strong><small>{{friends.pointJoinText}}</small></div>
+        </div>
+        <div class="fx-guest-actions">
+            <button class="fx-btn primary" data-friends-action="login"><span class="material-symbols-outlined">login</span><span>{{friends.login}}</span></button>
+            <button class="fx-btn discord" data-friends-action="discord" data-discord-only hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.2a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2.1c-.7-.3-1.4-.6-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.2-.8-9.7-3.6-13.7zM8.1 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm7.8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>
+                <span>{{friends.account.discord}}</span>
+            </button>
+        </div>
+        <button class="fx-link" data-friends-action="register"><span>{{friends.register}}</span><span class="material-symbols-outlined">open_in_new</span></button>
+    </section>
+
+    <!-- Режим паранойи -->
+    <section class="fx-guest fx-paranoid" data-friends-paranoid hidden>
+        <div class="fx-guest-art"><span class="material-symbols-outlined">shield_lock</span></div>
+        <h2>{{friends.paranoidTitle}}</h2>
+        <p>{{friends.paranoid}}</p>
+    </section>
+
+    <!-- Вошли -->
+    <div class="fx-body" data-friends-body hidden>
+        <div class="fx-main">
+            <form class="fx-add" data-friends-add>
+                <span class="material-symbols-outlined">person_add</span>
+                <input type="text" data-friends-nick spellcheck="false" maxlength="16" autocomplete="off" placeholder="{{friends.addPlaceholder}}"/>
+                <button type="submit"><span>{{friends.add}}</span></button>
+            </form>
+            <div class="fx-error" data-friends-error hidden></div>
+            <div class="fx-list" data-friends-requests></div>
+            <div class="fx-list" data-friends-list></div>
+        </div>
+
+        <aside class="fx-side">
+            <div class="fx-card fx-me">
+                <div class="fx-me-head">
+                    <img alt="" data-friends-me-head/>
+                    <div class="fx-me-copy">
+                        <strong data-friends-me-nick></strong>
+                        <span data-friends-me-group></span>
+                    </div>
+                </div>
+                <div class="fx-me-actions">
+                    <button class="fx-me-admin" data-friends-action="admin" hidden><span class="material-symbols-outlined">shield_person</span><span>{{friends.admin.title}}</span></button>
+                    <button class="transparent" data-friends-action="rename"><span class="material-symbols-outlined">edit</span><span>{{friends.short.rename}}</span></button>
+                    <button class="transparent" data-friends-action="password"><span class="material-symbols-outlined">key</span><span data-friends-password-text>{{friends.short.password}}</span></button>
+                    <button class="transparent" data-friends-action="site"><span class="material-symbols-outlined">open_in_new</span><span>{{friends.short.site}}</span></button>
+                    <button class="transparent" data-friends-action="logout"><span class="material-symbols-outlined">logout</span><span>{{friends.short.logout}}</span></button>
+                </div>
+            </div>
+
+            <div class="fx-card">
+                <div class="fx-card-title"><span class="material-symbols-outlined">file_copy</span><strong>{{friends.copyTitle}}</strong></div>
+                <p>{{friends.copyText}}</p>
+                <div class="fx-segment" data-friends-copy-modes>
+                    <button type="button" data-copy-mode="nobody">{{friends.copyModesShort.nobody}}</button>
+                    <button type="button" data-copy-mode="friends">{{friends.copyModesShort.friends}}</button>
+                    <button type="button" data-copy-mode="selected">{{friends.copyModesShort.selected}}</button>
+                </div>
+                <button type="button" class="transparent fx-pick" data-friends-copy-pick hidden><span class="material-symbols-outlined">checklist</span><span data-friends-copy-pick-text>{{friends.copyPick}}</span></button>
+            </div>
+
+            <div class="fx-card">
+                <div class="fx-card-title"><span class="material-symbols-outlined">visibility</span><strong>{{friends.privacy}}</strong></div>
+                <label class="fx-option">
+                    <span>{{friends.invisible}}</span>
+                    <span class="switch"><input type="checkbox" data-friends-option="friendsInvisible"><span class="inner"></span></span>
+                </label>
+                <label class="fx-option">
+                    <span>{{friends.showServer}}</span>
+                    <span class="switch"><input type="checkbox" data-friends-option="friendsShowServer"><span class="inner"></span></span>
+                </label>
+                <button type="button" class="fx-delete" data-friends-action="delete">{{friends.deleteAccount}}</button>
+            </div>
+        </aside>
+    </div>
+</div>
