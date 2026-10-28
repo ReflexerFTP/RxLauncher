@@ -1,0 +1,50 @@
+<link rel="stylesheet" href="modals/rxAccount.css"/>
+
+<!-- Аккаунт RxLauncher: вход, смена пароля и удаление (режим — data-mode). Регистрация — на сайте -->
+<div class="modal overlay centered" id="modal-rxAccount" style="display: none;" data-mode="login">
+    <button type="button" class="rxa-close square transparent small" data-rx-onclick="RxModals.hideModal('rxAccount')" title="{{commons.close}}">
+        <span class="material-symbols-outlined">close</span>
+    </button>
+    <div class="rxa-hero">
+        <div class="rxa-logo">
+            <img src="assets/rx-logo.svg" alt=""/>
+            <span class="material-symbols-outlined" data-account-icon>login</span>
+        </div>
+        <h1 data-account-title></h1>
+        <p data-account-hint></p>
+    </div>
+    <form class="rxa-form" data-account-form autocomplete="off">
+        <label class="rxa-field" data-modes="login">
+            <span class="material-symbols-outlined">person</span>
+            <input type="text" data-field="nick" maxlength="16" spellcheck="false" placeholder="{{friends.account.nick}}"/>
+        </label>
+        <label class="rxa-field" data-modes="login password delete">
+            <span class="material-symbols-outlined">lock</span>
+            <input type="password" data-field="password" maxlength="128" placeholder="{{friends.account.passwordField}}"/>
+            <button type="button" class="rxa-eye" data-account-eye tabindex="-1"><span class="material-symbols-outlined">visibility</span></button>
+        </label>
+        <label class="rxa-field" data-modes="password">
+            <span class="material-symbols-outlined">key</span>
+            <input type="password" data-field="newPassword" maxlength="128" placeholder="{{friends.account.newPassword}}"/>
+        </label>
+        <label class="rxa-field" data-modes="password">
+            <span class="material-symbols-outlined">key</span>
+            <input type="password" data-field="repeat" maxlength="128" placeholder="{{friends.account.repeat}}"/>
+        </label>
+        <div class="rxa-error" data-account-error hidden>
+            <span class="material-symbols-outlined">error</span>
+            <span data-account-error-text></span>
+        </div>
+        <button type="submit" class="rxa-submit">
+            <span data-account-submit></span>
+            <span class="material-symbols-outlined" data-account-submit-icon>arrow_forward</span>
+        </button>
+    </form>
+    <div class="rxa-foot" data-account-foot>
+        <span>{{friends.account.noAccount}}</span>
+        <button type="button" class="rxa-link" data-account-register>
+            <span>{{friends.account.registerOnSite}}</span>
+            <span class="material-symbols-outlined">open_in_new</span>
+        </button>
+    </div>
+</div>

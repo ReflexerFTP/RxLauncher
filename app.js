@@ -44,6 +44,8 @@ const MINECRAFT_SKIN_EXPORT_COPY = Object.freeze({
     en: {title: "Save Minecraft texture", filter: "PNG texture"}
 });
 const curseForgeKeyPath = path.join(userDataPath, "curseforge-api-key.bin");
+// Сессия аккаунта RxLauncher (друзья): токен зашифрован средствами Windows
+const rxAccountTokenPath = path.join(userDataPath, "rx-account.bin");
 const CURSEFORGE_API_BASE = "https://api.curseforge.com";
 
 const normalizeLauncherAccountUuid = (value) => {
@@ -1571,6 +1573,35 @@ app.whenReady().then(() => {
             return false;
         }
         return result.filePath;
+    });
+
+    // Токен аккаунта RxLauncher: без safeStorage хранится только до закрытия лаунчера
+    let rxAccountTokenInMemory = "";
+    handleTrusted("rx-account-token", (_event, payload = {}) => {
+        if (payload?.action === "set") {
+            const token = typeof payload.token === "string" && /^rx1_[A-Za-z0-9_-]{43}$/.test(payload.token) ? payload.token : "";
+            if (!token) return false;
+            rxAccountTokenInMemory = token;
+            if (!safeStorage.isEncryptionAvailable()) return true;
+            try {
+                fs.writeFileSync(rxAccountTokenPath, safeStorage.encryptString(token), {mode: 0o600});
+            } catch (error) {
+                console.warn(`RxAccount: token save failed [error=${error.message}]`);
+            }
+            return true;
+        }
+        if (payload?.action === "clear") {
+            rxAccountTokenInMemory = "";
+            try { fs.rmSync(rxAccountTokenPath, {force: true}); } catch (_) {}
+            return true;
+        }
+        if (rxAccountTokenInMemory) return rxAccountTokenInMemory;
+        if (!fs.existsSync(rxAccountTokenPath) || !safeStorage.isEncryptionAvailable()) return "";
+        try {
+            return rxAccountTokenInMemory = safeStorage.decryptString(fs.readFileSync(rxAccountTokenPath)).trim();
+        } catch (_) {
+            return "";
+        }
     });
 
     handleTrusted("curseforge-key-status", () => ({

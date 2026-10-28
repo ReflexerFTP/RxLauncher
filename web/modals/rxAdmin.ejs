@@ -1,0 +1,25 @@
+<link rel="stylesheet" href="modals/rxAdmin.css"/>
+
+<!-- Админка аккаунтов RxLauncher (только группа «Админ»): группы, бан, ник, пароль, удаление -->
+<div class="modal overlay centered" id="modal-rxAdmin" style="display: none;">
+    <header class="rxad-head">
+        <span class="rxad-icon material-symbols-outlined">shield_person</span>
+        <div class="rxad-title">
+            <h1>{{friends.admin.title}}</h1>
+            <p>{{friends.admin.text}}</p>
+        </div>
+        <button type="button" class="square transparent small" data-rx-onclick="RxModals.hideModal('rxAdmin')" title="{{commons.close}}">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </header>
+    <div class="rxad-stats" data-admin-stats></div>
+    <div class="rxad-tools">
+        <label class="rxad-search">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" data-admin-query maxlength="16" spellcheck="false" placeholder="{{friends.admin.search}}"/>
+        </label>
+        <select class="rxad-select" data-admin-group></select>
+    </div>
+    <div class="rxad-list" data-admin-list></div>
+    <button type="button" class="transparent rxad-more" data-admin-more hidden>{{friends.admin.more}}</button>
+</div>

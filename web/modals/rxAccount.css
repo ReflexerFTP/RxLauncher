@@ -1,0 +1,158 @@
+/* Окно аккаунта RxLauncher: карточка по центру, логотип с мягким свечением, поля с иконками */
+#modal-rxAccount {
+    width: 420px;
+    max-width: calc(100vw - 48px);
+    height: max-content;
+    padding: 30px 30px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid var(--rx-stroke);
+    background:
+        radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--theme-primary) 22%, transparent), transparent 62%),
+        var(--theme-primaryBg);
+    box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .85);
+}
+
+#modal-rxAccount .rxa-close { position: absolute; top: 12px; right: 12px; z-index: 1; }
+
+#modal-rxAccount .rxa-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+#modal-rxAccount .rxa-logo { position: relative; width: 68px; height: 68px; margin-bottom: 8px; }
+#modal-rxAccount .rxa-logo img {
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    box-shadow: 0 0 0 1px var(--rx-stroke), 0 16px 40px -10px color-mix(in srgb, var(--theme-primary) 55%, transparent);
+}
+#modal-rxAccount .rxa-logo .material-symbols-outlined {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 3px solid var(--theme-primaryBg);
+    background: var(--theme-primary);
+    color: #fff;
+    font-size: 15px;
+}
+#modal-rxAccount[data-mode="delete"] .rxa-logo .material-symbols-outlined { background: var(--error); }
+#modal-rxAccount .rxa-hero h1 { margin: 0; font-size: 17pt; }
+#modal-rxAccount .rxa-hero p { margin: 0; max-width: 330px; color: var(--text-sub); font-size: 9pt; line-height: 1.5; }
+
+#modal-rxAccount .rxa-form { display: flex; flex-direction: column; gap: 10px; }
+#modal-rxAccount .rxa-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+    padding: 0 8px 0 14px;
+    border-radius: 13px;
+    border: 1px solid var(--rx-stroke);
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 85%, transparent);
+    color: var(--text-sub);
+    cursor: text;
+    transition: border-color .2s, box-shadow .2s, color .2s;
+}
+#modal-rxAccount .rxa-field[hidden] { display: none; }
+#modal-rxAccount .rxa-field > .material-symbols-outlined { font-size: 20px; }
+#modal-rxAccount .rxa-field:focus-within {
+    color: var(--theme-primaryLighter);
+    border-color: color-mix(in srgb, var(--theme-primary) 65%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-primary) 16%, transparent);
+}
+#modal-rxAccount .rxa-field input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0 !important;
+    outline: none;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: var(--text-color);
+    font-size: 10.5pt;
+}
+#modal-rxAccount .rxa-eye {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px !important;
+    padding: 0 !important;
+    display: grid;
+    place-items: center;
+    border-radius: 9px !important;
+    background: transparent !important;
+    color: var(--text-sub) !important;
+}
+#modal-rxAccount .rxa-eye:hover, #modal-rxAccount .rxa-eye.on { color: var(--text-color) !important; background: var(--theme-primaryBgLighter) !important; }
+#modal-rxAccount .rxa-eye .material-symbols-outlined { font-size: 19px; color: inherit; }
+
+#modal-rxAccount .rxa-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--error) 14%, transparent);
+    color: var(--error);
+    font-size: 9pt;
+    font-weight: 600;
+    animation: rxa-shake .35s;
+}
+#modal-rxAccount .rxa-error[hidden] { display: none; }
+#modal-rxAccount .rxa-error .material-symbols-outlined { font-size: 18px; color: inherit; }
+@keyframes rxa-shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+
+#modal-rxAccount .rxa-submit {
+    width: 100%;
+    height: 48px !important;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 13px !important;
+    font-size: 10.5pt;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--theme-primary), var(--theme-primaryDarker));
+    box-shadow: 0 12px 30px -12px color-mix(in srgb, var(--theme-primary) 75%, transparent);
+    transition: filter .2s, transform .15s;
+}
+#modal-rxAccount .rxa-submit:hover { filter: brightness(1.08); }
+#modal-rxAccount .rxa-submit:active { transform: scale(.985); }
+#modal-rxAccount .rxa-submit .material-symbols-outlined { font-size: 19px; color: inherit; transition: transform .2s; }
+#modal-rxAccount .rxa-submit:hover .material-symbols-outlined { transform: translateX(3px); }
+#modal-rxAccount .rxa-submit[disabled] { opacity: .75; pointer-events: none; }
+#modal-rxAccount .rxa-submit .spin { animation: mc-spin 1s linear infinite; }
+#modal-rxAccount[data-mode="delete"] .rxa-submit { background: var(--error); box-shadow: none; }
+
+#modal-rxAccount .rxa-foot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rx-stroke);
+    color: var(--text-sub);
+    font-size: 9pt;
+}
+#modal-rxAccount .rxa-foot[hidden] { display: none; }
+#modal-rxAccount .rxa-link {
+    height: auto !important;
+    padding: 2px 4px !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent !important;
+    color: var(--theme-primaryLighter) !important;
+    font-size: 9pt;
+    font-weight: 700;
+}
+#modal-rxAccount .rxa-link:hover { text-decoration: underline; }
+#modal-rxAccount .rxa-link .material-symbols-outlined { font-size: 15px; color: inherit; }

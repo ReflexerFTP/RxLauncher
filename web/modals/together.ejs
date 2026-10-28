@@ -10,6 +10,54 @@
     </header>
 
     <div class="tg-scroll">
+        <!-- Друзья: аккаунт RxLauncher, список друзей и кто где играет -->
+        <section class="tg-card fr-card" data-friends>
+            <div class="tg-card-head">
+                <span class="material-symbols-outlined">diversity_3</span>
+                <div class="fr-head-copy">
+                    <h2>{{friends.title}}</h2>
+                    <p data-friends-sub>{{friends.text}}</p>
+                </div>
+                <div class="fr-me" data-friends-me hidden>
+                    <img alt="" data-friends-me-head/>
+                    <div><span>{{friends.you}}</span><strong><span data-friends-me-nick></span><span data-friends-me-group></span></strong></div>
+                    <button class="transparent square small" data-friends-action="menu" title="{{friends.manage}}">
+                        <span class="material-symbols-outlined">manage_accounts</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="fr-guest" data-friends-guest>
+                <p>{{friends.guestText}}</p>
+                <div class="tg-actions">
+                    <button data-friends-action="login"><span class="material-symbols-outlined">login</span><span>{{friends.login}}</span></button>
+                    <button class="transparent" data-friends-action="register"><span class="material-symbols-outlined">open_in_new</span><span>{{friends.register}}</span></button>
+                </div>
+            </div>
+
+            <div class="fr-body" data-friends-body hidden>
+                <form class="fr-add" data-friends-add>
+                    <input type="text" data-friends-nick spellcheck="false" maxlength="16" autocomplete="off" placeholder="{{friends.addPlaceholder}}"/>
+                    <button type="submit"><span class="material-symbols-outlined">person_add</span><span>{{friends.add}}</span></button>
+                </form>
+                <div class="fr-error" data-friends-error hidden></div>
+                <div class="fr-list" data-friends-requests></div>
+                <div class="fr-list" data-friends-list></div>
+                <div class="fr-options">
+                    <label class="fr-option">
+                        <span class="material-symbols-outlined">visibility_off</span>
+                        <span class="flex-grow">{{friends.invisible}}</span>
+                        <span class="switch"><input type="checkbox" data-friends-option="friendsInvisible"><span class="inner"></span></span>
+                    </label>
+                    <label class="fr-option">
+                        <span class="material-symbols-outlined">dns</span>
+                        <span class="flex-grow">{{friends.showServer}}</span>
+                        <span class="switch"><input type="checkbox" data-friends-option="friendsShowServer"><span class="inner"></span></span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
         <div class="tg-grid">
             <!-- Поделиться -->
             <section class="tg-card">

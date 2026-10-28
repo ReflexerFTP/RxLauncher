@@ -232,6 +232,7 @@ class RxStarter {
                     version: this.versionNumber,
                     loaderType: this.versionType
                 });
+                RxFriends.gameStarted({version: this.versionNumber, loaderType: this.versionType, server: this.launchServer});
             }).catch(error => {
                 RxStarter.recoverFromLaunchFailure(error);
             });
@@ -250,6 +251,7 @@ class RxStarter {
         launcher.on('data', (e) => {
             RxCrashAnalyzer.record(e);
             RxDiscordRpc.handleGameLog(e);
+            RxFriends.handleGameLog(e);
             if (IS_APP_IN_DEV) {
                 console.log(e);
             }
@@ -266,6 +268,7 @@ class RxStarter {
         launcher.on('close', (exitCode) => {
             const closedPid = this.gamePid || Number(gamePid) || 0;
             RxDiscordRpc.stopGame();
+            RxFriends.gameStopped();
             if (this.statsSessionStarted || RxPlayStats.currentSession) {
                 RxPlayStats.onGameClose({exitCode, reason: killedManually ? "stopped" : "closed", pid: closedPid});
                 this.statsSessionStarted = false;
@@ -370,6 +373,7 @@ class RxStarter {
         assetsVerifyOffset = 0;
         startAssetsInterval = 0;
         RxDiscordRpc.stopGame();
+        RxFriends.gameStopped();
         RxPlayStats.abortSession("launch-failed");
         ipcRenderer.send("game-process-state", {active: false, pid: 0});
         $("#stopGameButton").hide();

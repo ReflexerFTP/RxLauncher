@@ -1,6 +1,38 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.7.0-friends-accounts",
+            version: "3.7.0",
+            date: "2026-10-28T20:00:00+03:00",
+            image: "assets/version-heroes/1.20.png",
+            tag: {ru: "ДРУЗЬЯ", en: "FRIENDS"},
+            title: {ru: "Друзья и аккаунт RxLauncher", en: "Friends and RxLauncher account"},
+            summary: {
+                ru: "Зарегистрируйтесь на rxlauncher.xyz, войдите в лаунчере, добавляйте друзей и смотрите, кто где играет — и заходите к ним на сервер в один клик.",
+                en: "Sign up on rxlauncher.xyz, log in to the launcher, add friends, see who plays where and join their server in one click."
+            },
+            changes: {
+                ru: [
+                    "Аккаунт RxLauncher: регистрация на сайте rxlauncher.xyz/account, в лаунчере — новое окно входа («Играть вместе» → «Друзья»).",
+                    "Ник можно сменить в любой момент (в лаунчере или на сайте): друзья сразу видят новый, игровой профиль переименовывается вместе с ним.",
+                    "Группы игроков: Админ, Тестер, Игрок+ и Игрок. Админка в лаунчере и на сайте: группы, бан, смена ника, сброс пароля.",
+                    "Друзья по нику: заявки, принятие, удаление. Видно, кто в лаунчере, кто играет, на какой версии и сервере, и сколько времени.",
+                    "«Зайти к другу» запускает игру сразу на его сервер.",
+                    "Невидимка и «Показывать друзьям мой сервер». В режиме паранойи друзья выключены.",
+                    "Пароль хранится на сервере только как стойкий хеш, сессия на ПК зашифрована средствами Windows."
+                ],
+                en: [
+                    "RxLauncher account: sign up on rxlauncher.xyz/account, and log in through the new window in the launcher (\"Play together\" → \"Friends\").",
+                    "Change your nickname any time (in the launcher or on the website): friends see the new one right away and your game profile is renamed with it.",
+                    "Player groups: Admin, Tester, Player+ and Player. Admin panel in the launcher and on the website: groups, bans, nickname changes, password resets.",
+                    "Friends by nickname: requests, accepting, removing. See who is in the launcher, who is playing, on which version and server, and for how long.",
+                    "\"Join friend\" starts the game straight on their server.",
+                    "Invisible mode and \"Show my server to friends\". Friends are off in paranoid mode.",
+                    "The server stores only a strong password hash, and the session on your PC is encrypted by Windows."
+                ]
+            }
+        },
+        {
             id: "3.6.0-command-history-anti-theft",
             version: "3.6.0",
             date: "2026-10-28T00:00:00+03:00",

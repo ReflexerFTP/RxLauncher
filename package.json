@@ -1,6 +1,6 @@
 {
   "name": "rxclient",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "description": "Minecraft-лаунчер. Быстрый. Индивидуальный. Твой",
   "main": "app.js",
   "scripts": {
@@ -133,6 +133,7 @@
       "!dist{,/**/*}",
       "!dist-*{,/**/*}",
       "!site{,/**/*}",
+      "!server{,/**/*}",
       "!logs{/*}",
       "!logs/",
       "!logs",

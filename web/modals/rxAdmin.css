@@ -1,0 +1,95 @@
+/* Админка: строки игроков как в списке друзей, группа — выпадающим списком */
+#modal-rxAdmin {
+    width: 760px;
+    max-width: calc(100vw - 48px);
+    height: min(640px, calc(100vh - 80px));
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 20px;
+    border: 1px solid var(--rx-stroke);
+    background: var(--theme-primaryBg);
+    box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .85);
+}
+
+.rxad-head { display: flex; align-items: center; gap: 12px; }
+.rxad-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    color: var(--theme-primaryLighter);
+    background: color-mix(in srgb, var(--theme-primary) 16%, var(--theme-primaryBgLighter));
+}
+.rxad-title { flex: 1 1 auto; min-width: 0; }
+.rxad-title h1 { margin: 0; font-size: 15pt; }
+.rxad-title p { margin: 2px 0 0; color: var(--text-sub); font-size: 9pt; }
+
+.rxad-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+.rxad-stat { display: flex; align-items: baseline; gap: 6px; padding: 6px 11px; border-radius: 10px; background: var(--theme-primaryBgLight); color: var(--text-sub); font-size: 8.5pt; font-weight: 700; }
+.rxad-stat b { color: var(--text-color); font-size: 11pt; }
+
+.rxad-tools { display: flex; gap: 8px; }
+.rxad-search {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 11px;
+    border: 1px solid var(--rx-stroke);
+    background: var(--theme-primaryBgLight);
+    color: var(--text-sub);
+}
+.rxad-search:focus-within { border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent); color: var(--theme-primaryLighter); }
+.rxad-search .material-symbols-outlined { font-size: 19px; }
+.rxad-search input { flex: 1 1 auto; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none; color: var(--text-color); }
+.rxad-select {
+    height: 40px;
+    padding: 0 10px;
+    border-radius: 11px;
+    border: 1px solid var(--rx-stroke);
+    background: var(--theme-primaryBgLight);
+    color: var(--text-color);
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+}
+.rxad-select option { background: var(--theme-primaryBg); }
+
+.rxad-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; }
+.rxad-row {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) 130px auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px 8px 10px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-primaryBgLight) 82%, transparent);
+}
+.rxad-row.banned { opacity: .65; }
+.rxad-row img { width: 34px; height: 34px; border-radius: 8px; image-rendering: pixelated; }
+.rxad-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rxad-copy strong { display: flex; align-items: center; gap: 6px; font-size: 10pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rxad-copy span { color: var(--text-sub); font-size: 8pt; }
+.rxad-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--text-sub); opacity: .5; }
+.rxad-dot.on { background: var(--success); opacity: 1; }
+.rxad-ban { padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--error) 18%, transparent); color: var(--error); font-size: 7.5pt; font-weight: 800; }
+.rxad-row .rxad-select { height: 34px; width: 100%; font-size: 9pt; }
+.rxad-actions { display: flex; gap: 4px; }
+.rxad-actions button { width: 34px; height: 34px !important; padding: 0 !important; display: grid; place-items: center; border-radius: 10px !important; }
+.rxad-actions button .material-symbols-outlined { font-size: 18px; color: inherit; }
+.rxad-actions button[disabled] { opacity: .3; pointer-events: none; }
+.rxad-empty { margin: 0; padding: 24px; text-align: center; color: var(--text-sub); font-size: 9.5pt; }
+.rxad-more { align-self: center; height: 36px !important; padding: 0 16px !important; border-radius: 10px !important; }
+.rxad-more[hidden] { display: none; }
+
+/* Значок группы: в шапке друзей, в строках друзей и в админке */
+.rx-group { display: inline-flex; margin-left: 6px; vertical-align: 1px; align-items: center; height: 17px; padding: 0 7px; border-radius: 999px; font-size: 7.5pt; font-weight: 800; letter-spacing: .02em; white-space: nowrap; }
+.rx-group[data-group="admin"] { background: color-mix(in srgb, var(--theme-primary) 22%, transparent); color: var(--theme-primaryLighter); }
+.rx-group[data-group="tester"] { background: rgba(88, 166, 255, .16); color: #79b8ff; }
+.rx-group[data-group="player_plus"] { background: rgba(240, 180, 41, .16); color: #f5c451; }

@@ -44,6 +44,7 @@ ipcMain.on("reload-main-window", () => {});
 ipcMain.handle("save-dialog", async () => false);
 ipcMain.handle("open-dialog", async () => false);
 ipcMain.handle("curseforge-key-status", async () => ({configured: false}));
+ipcMain.handle("rx-account-token", async () => "");
 ipcMain.handle("minecraft-skin-lookup", async () => ({success: true, found: false}));
 ipcMain.handle("minecraft-skin-export", async () => ({success: false, canceled: true}));
 ipcMain.handle("minecraft-skin-apply", async (_event, payload) => {
