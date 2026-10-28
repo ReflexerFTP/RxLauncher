@@ -14,7 +14,8 @@ class RxCollector {
                 path.join(archiveDirPath, "data.json")
             ];
             fs.mkdirSync(archiveDirPath);
-            const scrub = (text) => paranoid ? RxPrivacy.maskUserPaths(text) : text;
+            // Журнал уже вычищен при записи, но секреты могли стать известны позже — вычищаем ещё раз
+            const scrub = (text) => paranoid ? RxPrivacy.maskUserPaths(RxCollector.redact(text)) : RxCollector.redact(text);
             fs.writeFileSync(filesList[0], scrub(LAST_LOG));
             fs.writeFileSync(filesList[1], Date.now().toString());
             fs.writeFileSync(filesList[2], scrub(JSON.stringify(window.localStorage)));
@@ -51,9 +52,25 @@ class RxCollector {
         });
     }
 
+    // Значения токенов текущей сессии: вырезаются из журнала, где бы ни встретились (--xuid, --clientId, --session…)
+    static secrets = new Set();
+    static addSecrets = (...values) => {
+        values.forEach(value => { if (typeof value === "string" && value.length >= 8) RxCollector.secrets.add(value); });
+        if (RxCollector.secrets.size > 20) RxCollector.secrets = new Set([...RxCollector.secrets].slice(-20));
+    };
+
+    static redact = (text) => {
+        let line = String(text)
+            .replace(/((?:access[_-]?token|client[_-]?token|authorization|password)["\s:=]+)([^"\s,}]+)/gi, "$1[REDACTED]")
+            // Аргументы запуска Minecraft, в которых бывают секреты сессии
+            .replace(/(--(?:accessToken|clientId|xuid|session|proxyPass)\s+)(\S+)/g, "$1[REDACTED]");
+        for (const secret of RxCollector.secrets) if (line.includes(secret)) line = line.split(secret).join("[REDACTED]");
+        return line;
+    };
+
     static writeLog = (...data) => {
         let logDate = new Date().toISOString();
-        let line = data.join(" ").replace(/((?:access[_-]?token|client[_-]?token|authorization|password)["\s:=]+)([^"\s,}]+)/gi, "$1[REDACTED]");
+        let line = RxCollector.redact(data.join(" "));
         if (typeof RxPrivacy !== "undefined") line = RxPrivacy.maskIfParanoid(line);
         let newPart = "\n" + "[" + logDate + "] " + line
         global.LAST_LOG = global.LAST_LOG + newPart;

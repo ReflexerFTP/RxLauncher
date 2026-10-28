@@ -1,5 +1,6 @@
 const path = require('node:path');
 const net = require('node:net');
+const dns = require('node:dns');
 
 const BLOCKED_TOP_LEVEL = new Set([
     'manifest.json', 'modrinth.index.json', 'saves', 'worlds', 'screenshots',
@@ -46,6 +47,34 @@ function safePackUrl(value) {
     return parsed.toString();
 }
 
+// Адрес из локальной сети (в том числе IPv4 внутри IPv6: ::ffff:127.0.0.1)
+function isLocalAddress(address) {
+    const host = String(address || '').replace(/^\[|\]$/g, '').toLowerCase();
+    const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(host);
+    if (mapped) return isLocalAddress(mapped[1]);
+    const version = net.isIP(host);
+    return !version || LOCAL_ADDRESSES.check(host, version === 4 ? 'ipv4' : 'ipv6');
+}
+
+// DNS для загрузок сборки: проверяется каждый адрес, к которому реально будет соединение.
+// Обычное имя может указывать на 127.0.0.1 или внутреннюю сеть — такое соединение не открываем.
+// Сокет подключается ровно к проверенному адресу, имя остаётся для TLS (SNI и сертификат)
+function safeLookup(hostname, options, callback) {
+    if (typeof options === 'function') { callback = options; options = {}; }
+    const settings = typeof options === 'number' ? {family: options} : {...(options || {})};
+    dns.lookup(hostname, {...settings, all: true}, (error, addresses) => {
+        if (error) return callback(error);
+        const list = Array.isArray(addresses) ? addresses : [];
+        if (!list.length || list.some(item => isLocalAddress(item.address))) {
+            const blocked = new Error('Pack download URL resolves to a local network');
+            blocked.code = 'ELOCALADDRESS';
+            return callback(blocked);
+        }
+        if (settings.all) return callback(null, list);
+        return callback(null, list[0].address, list[0].family);
+    });
+}
+
 function safePackHashes(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Missing pack file hash');
     const hashes = {};
@@ -63,4 +92,4 @@ function safePackVersion(value) {
     return value;
 }
 
-module.exports = {safePackPath, safePackUrl, safePackHashes, safePackVersion};
+module.exports = {safePackPath, safePackUrl, safePackHashes, safePackVersion, safeLookup, isLocalAddress};

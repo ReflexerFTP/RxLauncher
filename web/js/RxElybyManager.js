@@ -61,7 +61,10 @@ class RxElybyManager {
             accounts[uuid] = account;
             RxAccountsManager.saveAccounts(accounts);
         }
-        return {access_token: account.accessToken, client_token: account.clientToken, uuid: account.uuid, name: account.nickname};
+        // xuid и clientId нужны только аккаунтам Microsoft. Без них MCLC подставил бы сюда токены сессии,
+        // и те попали бы в аргументы запуска (а значит в журнал) под именами --xuid и --clientId
+        return {access_token: account.accessToken, client_token: account.clientToken, uuid: account.uuid, name: account.nickname,
+            meta: {type: "mojang", xuid: "0", clientId: "0"}};
     };
 
     static getHeadURLByPlayerNickname = async (nickname) => {

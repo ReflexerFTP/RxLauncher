@@ -31,6 +31,9 @@
 
         const activeAccount = RxAccountsManager.getActiveAccount();
         resultConfig.authorization = await RxAccountsManager.getAccountMCLCData(activeAccount);
+        if (resultConfig.authorization) {
+            RxCollector.addSecrets(resultConfig.authorization.access_token, resultConfig.authorization.client_token);
+        }
         if (!resultConfig.authorization) {
             RxCollector.writeLog("Configurator: authorization config data is NULL!");
             return false;

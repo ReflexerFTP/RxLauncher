@@ -13,6 +13,38 @@ const CURSEFORGE_LOADER_TYPES = {
 };
 
 class RxCurseForge {
+    // Папка overrides из manifest.json CurseForge: относительный путь строго внутри распакованного архива, не ссылка
+    static safeOverridesDir = (root, value) => {
+        const name = value === undefined || value === null || value === "" ? "overrides" : value;
+        let relative;
+        try {
+            relative = RxPacks.safety().safePackPath(name);
+        } catch (_) {
+            throw new Error("Unsafe overrides folder in CurseForge manifest");
+        }
+        const base = fs.realpathSync(root);
+        const target = path.resolve(base, relative);
+        if (!target.startsWith(base + path.sep)) throw new Error("Unsafe overrides folder in CurseForge manifest");
+        if (!fs.existsSync(target)) return null;
+        const stat = fs.lstatSync(target);
+        if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error("Unsafe overrides folder in CurseForge manifest");
+        const real = fs.realpathSync(target);
+        if (!real.startsWith(base + path.sep)) throw new Error("Unsafe overrides folder in CurseForge manifest");
+        return real;
+    };
+
+    // forge-47.2.0 / neoforge-21.1.77 / fabric-0.16.9 → номер версии загрузчика (или "", если его нет)
+    static loaderVersion = (loaderId, loaderType) => {
+        if (loaderType === "vanilla") return "";
+        const match = /^[a-z-]*?-(\d[0-9A-Za-z._+-]*)$/i.exec(String(loaderId || ""));
+        if (!match) return "";
+        try {
+            return RxPacks.safety().safePackVersion(match[1]);
+        } catch (_) {
+            return "";
+        }
+    };
+
     static apiKeyConfigured = false;
 
     static request = async (endpoint, query = {}, method = "GET", body = null) => {
@@ -421,14 +453,23 @@ class RxCurseForge {
 
             fs.mkdirSync(packPath, {recursive: true});
             createdPackPath = packPath;
-            const overridesDirectory = path.join(tempPath, manifest.overrides || "overrides");
-            if (fs.existsSync(overridesDirectory)) await fsExtra.copy(overridesDirectory, packPath, {overwrite: true});
+            // Папка overrides из manifest.json — чужие данные: только относительный путь внутри распакованного архива,
+            // без ссылок (иначе можно скопировать в сборку файлы снаружи архива)
+            const overridesDirectory = RxCurseForge.safeOverridesDir(tempPath, manifest.overrides);
+            if (overridesDirectory) {
+                await fsExtra.copy(overridesDirectory, packPath, {
+                    overwrite: true, dereference: false,
+                    filter: (source) => !fs.lstatSync(source).isSymbolicLink()
+                });
+            }
 
-            const loaderId = manifest.minecraft.modLoaders?.find((loader) => loader.primary)?.id || manifest.minecraft.modLoaders?.[0]?.id || "vanilla";
+            const loaderId = String(manifest.minecraft.modLoaders?.find((loader) => loader.primary)?.id || manifest.minecraft.modLoaders?.[0]?.id || "vanilla");
             const loaderType = loaderId.startsWith("neoforge") ? "neoforge"
                 : loaderId.startsWith("forge") ? "forge"
                     : loaderId.includes("fabric") ? "fabric"
                         : loaderId.includes("quilt") ? "quilt" : "vanilla";
+            // Точная версия загрузчика (forge-47.2.0 → 47.2.0), как при импорте Modrinth: сборка ставится воспроизводимо
+            const loaderVersion = RxCurseForge.loaderVersion(loaderId, loaderType);
             RxPacks.writeModpackManifest(packId, {
                 id: packId,
                 uuid: crypto.randomUUID(),
@@ -436,7 +477,8 @@ class RxCurseForge {
                 baseVersion: {
                     full: `${loaderType}-${manifest.minecraft.version}`,
                     type: loaderType,
-                    number: manifest.minecraft.version
+                    number: manifest.minecraft.version,
+                    ...(loaderVersion ? {loaderVersion} : {})
                 },
                 files: preparedFiles,
                 icon: projectData.logo?.thumbnailUrl || false,

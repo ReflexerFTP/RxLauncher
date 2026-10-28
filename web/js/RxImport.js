@@ -226,16 +226,30 @@ class RxImport {
         }
     };
 
-    // Одинаковые файлы не копируем (маленькие сравниваем по содержимому, большие — по размеру)
+    // Одинаковые файлы не копируем. Сравниваем всегда по содержимому: маленькие целиком,
+    // большие — по блокам, без чтения всего файла в память (одинаковый размер ещё не значит одинаковый файл)
     static sameFile = async (a, b) => {
+        let first = null, second = null;
         try {
-            const [first, second] = await Promise.all([fsPromises.stat(a), fsPromises.stat(b)]);
-            if (first.size !== second.size) return false;
-            if (first.size > 4 * 1024 * 1024) return true;
-            const [x, y] = await Promise.all([fsPromises.readFile(a), fsPromises.readFile(b)]);
-            return x.equals(y);
+            const [statA, statB] = await Promise.all([fsPromises.stat(a), fsPromises.stat(b)]);
+            if (statA.size !== statB.size) return false;
+            if (statA.size <= 4 * 1024 * 1024) {
+                const [x, y] = await Promise.all([fsPromises.readFile(a), fsPromises.readFile(b)]);
+                return x.equals(y);
+            }
+            [first, second] = await Promise.all([fsPromises.open(a, "r"), fsPromises.open(b, "r")]);
+            const chunk = 1024 * 1024;
+            const left = Buffer.alloc(chunk), right = Buffer.alloc(chunk);
+            for (let position = 0; position < statA.size; position += chunk) {
+                const [readA, readB] = await Promise.all([first.read(left, 0, chunk, position), second.read(right, 0, chunk, position)]);
+                if (readA.bytesRead !== readB.bytesRead || !left.subarray(0, readA.bytesRead).equals(right.subarray(0, readB.bytesRead))) return false;
+                if (!readA.bytesRead) break;
+            }
+            return true;
         } catch (_) {
             return false;
+        } finally {
+            await Promise.all([first?.close(), second?.close()].filter(Boolean)).catch(() => {});
         }
     };
 

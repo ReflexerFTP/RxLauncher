@@ -587,7 +587,8 @@ class RxPacksUI {
         let isAnyActiveSet = false;
         $("#modal-packs .grid .item:not(.add)").off("click");
         myPacks.forEach((pack) => {
-            let packData = RxPacks.getModpackManifest(pack);
+            // ID — имя папки сборки, а не id из manifest.json (его могли подменить)
+            let packData = {...RxPacks.getModpackManifest(pack), id: pack};
             if (packData.id === selectedOption) {
                 isAnyActiveSet = true;
             }

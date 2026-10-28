@@ -16,6 +16,8 @@ class RxHttp {
             return reject(error);
         }
         try { urlPolicy?.(parsed.toString()); } catch (error) { return reject(error); }
+        // Адрес из чужих данных (файлы сборки): при соединении проверяем, куда реально ведёт DNS-имя
+        const lookup = options.lookup || (urlPolicy ? require("../modrinthPackSafety").safeLookup : undefined);
         const client = {"https:": require("https"), "http:": require("http")}[parsed.protocol];
         if (!client) return reject(new Error(`Unsupported protocol ${parsed.protocol}`));
         if (signal?.aborted) return reject(new Error("Request aborted"));
@@ -25,6 +27,7 @@ class RxHttp {
         const request = client.request(parsed, {
             method,
             timeout,
+            ...(lookup ? {lookup} : {}),
             headers: {
                 "User-Agent": RxHttp.userAgent(),
                 "Accept-Encoding": compress ? "gzip, deflate, br" : "identity",
@@ -159,8 +162,13 @@ class RxHttp {
     };
 
     // Скачать во временный файл, проверить хеш и только потом положить на место
+    // expectedSize — точный размер из метаданных: больше него не принимаем, меньше — тоже ошибка
     static download = async (url, filePath, {hashes = {}, signal = null, timeout = 30000,
-        onProgress = null, maxBytes = 4 * 1024 ** 3, urlPolicy = null} = {}) => {
+        onProgress = null, maxBytes = 4 * 1024 ** 3, urlPolicy = null, expectedSize = null} = {}) => {
+        if (expectedSize !== null) {
+            if (!Number.isSafeInteger(expectedSize) || expectedSize < 0) throw new Error("Invalid expected download size");
+            maxBytes = Math.min(maxBytes, Math.max(1, expectedSize));
+        }
         if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw new Error("Invalid download size limit");
         fs.mkdirSync(path.dirname(filePath), {recursive: true});
         const temp = `${filePath}.${crypto.randomUUID()}.rxdownload`;
@@ -194,6 +202,7 @@ class RxHttp {
             await pipeline(response.stream, meter, fs.createWriteStream(temp));
             if (signal?.aborted) throw new Error("Request aborted");
             if (total && received !== total) throw new Error("Incomplete download");
+            if (expectedSize !== null && received !== expectedSize) throw new Error(`Size mismatch for ${path.basename(filePath)}`);
             if (hash && hash.digest("hex") !== expected.value) throw new Error(`Checksum mismatch for ${path.basename(filePath)}`);
             fs.renameSync(temp, filePath);
             return {bytes: received, path: filePath};

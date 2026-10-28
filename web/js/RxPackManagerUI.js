@@ -301,8 +301,11 @@ class RxPackManagerUI {
         return true;
     }
 
-    // Загрузить пак в модальное окно
-    static loadPackByManifest = (manifest) => {
+    // Загрузить пак в модальное окно. ID — только проверенное имя папки сборки:
+    // id внутри manifest.json — чужие данные, по нему строятся пути (удаление, файлы, папка)
+    static loadPackByManifest = (manifest, packId) => {
+        if (!RxPacks.isSafePackId(packId)) return false;
+        manifest = {...manifest, id: packId};
         packman__currentModpack = manifest;
         // Название и иконка
         RxPackManagerUI.loadModpackIcon(manifest);
@@ -315,14 +318,13 @@ class RxPackManagerUI {
         $("#modal-packManager .title-wrapper button.delete").click(() => {
             RxModals.hideModal("packManager");
             RxFlyout.setText(MESSAGES.packManager.deleting);
-            RxFlyout.changeMode("spinner").then(() => {
-                let modpackPath = path.join(GAME_DATA, "modpacks", packman__currentModpack.id);
-                fsExtra.remove(modpackPath, (err) => {
-                    if (err) return console.error(err);
-                    RxFlyout.changeMode("idle");
-                    RxPacksUI.refreshDirectorySelect();
-                    RxToasts.create(MESSAGES.packManager.deleted, "delete", packman__currentModpack.displayName);
-                });
+            RxFlyout.changeMode("spinner").then(async () => {
+                // Как в новом разделе «Сборки»: в корзину через главный процесс, он сам проверяет путь
+                const ok = await ipcRenderer.invoke("trash-instance-folder", {root: GAME_DATA, id: packman__currentModpack.id}).catch(() => false);
+                RxFlyout.changeMode("idle");
+                if (!ok) return RxToasts.create(MESSAGES.instances.deleteFailed, "error", packman__currentModpack.displayName, "error");
+                RxPacksUI.refreshDirectorySelect();
+                RxToasts.create(MESSAGES.packManager.deleted, "delete", packman__currentModpack.displayName);
             });
         })
         $("#modal-packManager .title-wrapper button.icon").click(() => {
@@ -345,12 +347,12 @@ class RxPackManagerUI {
 
     // Загрузить пак и показать окно
     static loadAndShow = async (packId) => {
-        if (!RxPacks.isModpackExists(packId)) {
+        if (!RxPacks.isSafePackId(packId) || !RxPacks.isModpackExists(packId)) {
             return false;
         }
 
         let modpackManifest = RxPacks.getModpackManifest(packId);
-        RxPackManagerUI.loadPackByManifest(modpackManifest);
+        if (!modpackManifest || !RxPackManagerUI.loadPackByManifest(modpackManifest, packId)) return false;
         await RxModals.showModal("packManager");
         return true;
     }

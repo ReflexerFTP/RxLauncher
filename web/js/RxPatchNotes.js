@@ -1,6 +1,38 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.11.0-security-audit",
+            version: "3.11.0",
+            date: "2026-10-29T18:00:00+03:00",
+            image: "assets/version-heroes/1.20.png",
+            tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
+            title: {ru: "Исправления по аудиту безопасности", en: "Security audit fixes"},
+            summary: {
+                ru: "Токены Ely.by больше не попадают в журнал, загрузки сборок не ходят в локальную сеть и не превышают заявленный размер.",
+                en: "Ely.by tokens no longer reach the log, modpack downloads never reach the local network or exceed their declared size."
+            },
+            changes: {
+                ru: [
+                    "Токены сессии Ely.by не попадают в журнал и архив отладки ни под каким именем аргумента.",
+                    "Файлы сборок не скачиваются с адресов локальной сети, даже если на неё указывает обычное доменное имя.",
+                    "Размер каждого скачанного файла сверяется с заявленным; у загрузки есть общий лимит и проверка свободного места.",
+                    "Импорт из других лаунчеров сравнивает большие файлы по содержимому — изменённые моды больше не пропускаются.",
+                    "Импорт CurseForge: папка overrides только из архива, точная версия Forge/NeoForge/Fabric сохраняется.",
+                    "Старое окно сборок удаляет сборку в корзину и только по проверенному имени папки.",
+                    "Сервер аккаунтов: одновременные попытки входа больше не обходят лимит."
+                ],
+                en: [
+                    "Ely.by session tokens never reach the log or the debug archive under any argument name.",
+                    "Modpack files are never downloaded from local network addresses, even through a normal domain name.",
+                    "Every downloaded file is checked against its declared size; downloads have a total limit and a free space check.",
+                    "Import from other launchers compares large files by content, so changed mods are no longer skipped.",
+                    "CurseForge import: the overrides folder only from the archive, the exact Forge/NeoForge/Fabric version is kept.",
+                    "The old modpack window moves a modpack to the Recycle Bin and only by its verified folder name.",
+                    "Account server: simultaneous login attempts no longer bypass the limit."
+                ]
+            }
+        },
+        {
             id: "3.10.0-announcements-recommended",
             version: "3.10.0",
             date: "2026-10-29T12:00:00+03:00",

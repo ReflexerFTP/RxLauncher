@@ -120,11 +120,41 @@ class RxDownloader {
     // Скачать много файлов параллельно (файлы сборки): повтор при обрыве, проверка хеша, общий прогресс.
     // items: [{url, fallbackUrl, path, hashes, size, displayName}]; вторая попытка идёт через fallbackUrl (зеркало), если он есть.
     // Ошибка любого файла после всех попыток — ошибка всей загрузки
+    // Общий бюджет одной загрузки (сборка или файлы версии) и запас свободного места на диске
+    static MAX_BATCH_BYTES = 24 * 1024 ** 3;
+    static UNKNOWN_FILE_BUDGET = 512 * 1024 ** 2;
+    static DISK_RESERVE = 512 * 1024 ** 2;
+
+    static assertBudget = (items) => {
+        let declared = 0;
+        for (const item of items) {
+            const size = item.size === undefined || item.size === null ? null : Number(item.size);
+            if (size !== null && (!Number.isSafeInteger(size) || size < 0)) throw new Error("Invalid download size in metadata");
+            declared += size || 0;
+        }
+        if (declared > RxDownloader.MAX_BATCH_BYTES) throw new Error(`Download is too large (${RxUtils.humanFileSize(declared)})`);
+        try {
+            const target = items.find(item => item.path)?.path;
+            let dir = target ? path.dirname(target) : GAME_DATA;
+            while (!fs.existsSync(dir) && path.dirname(dir) !== dir) dir = path.dirname(dir);
+            const disk = fs.statfsSync(dir);
+            const free = Number(disk.bavail) * Number(disk.bsize);
+            const known = items.reduce((sum, item) => sum + (Number(item.size) || 0), 0);
+            if (Number.isFinite(free) && free < known + RxDownloader.DISK_RESERVE) {
+                throw Object.assign(new Error(`Not enough disk space: need ${RxUtils.humanFileSize(known)}, free ${RxUtils.humanFileSize(free)}`), {code: "ENOSPC"});
+            }
+        } catch (error) {
+            if (error.code === "ENOSPC") throw error;
+        }
+        return declared;
+    };
+
     static downloadMany = async (items, title, concurrency = 6) => {
         if (!Array.isArray(items)) throw new TypeError("Download items must be an array");
         if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error("Invalid download concurrency");
         concurrency = Math.min(concurrency, 16);
         if (!items.length) return true;
+        RxDownloader.assertBudget(items);
         const totalBytes = items.reduce((sum, item) => sum + (Number(item.size) || 0), 0);
         const received = new Map();
         let receivedBytes = 0;
@@ -161,9 +191,14 @@ class RxDownloader {
                     if (signal.aborted) throw new Error("Download aborted");
                     recordBytes(item, 0);
                     const url = item.fallbackUrl && attempt % 2 === 0 ? item.fallbackUrl : item.url;
+                    // Известный размер — жёсткий предел и обязательная сверка; неизвестный — ограничен бюджетом
+                    const size = Number.isSafeInteger(item.size) && item.size > 0 ? item.size : null;
                     await RxHttp.download(url, item.path, {
-                        hashes: item.hashes, signal, urlPolicy: item.urlPolicy, onProgress: (bytes) => {
+                        hashes: item.hashes, signal, urlPolicy: item.urlPolicy, expectedSize: size,
+                        maxBytes: size === null ? RxDownloader.UNKNOWN_FILE_BUDGET : undefined, onProgress: (bytes) => {
                             recordBytes(item, bytes);
+                            // Фактически записанное за всю загрузку — не больше общего бюджета
+                            if (receivedBytes > RxDownloader.MAX_BATCH_BYTES) throw new Error("Download exceeds the size budget");
                             updateUI();
                         }
                     });
