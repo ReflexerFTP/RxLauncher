@@ -429,7 +429,16 @@ class RxImport {
                         const saved = RxImport.resolveInside(path.join(dir, "files"), rel);
                         if (!target || !saved || !RxImport.isFile(saved)) { stats.failed++; continue; }
                         await fsPromises.mkdir(path.dirname(target), {recursive: true});
-                        await fsPromises.copyFile(saved, target);
+                        // Атомарно: копируем во временный файл и переименовываем поверх.
+                        // Иначе обрыв копирования оставил бы текущий файл игрока наполовину переписанным.
+                        const temp = `${target}.rx-restore-${crypto.randomUUID()}`;
+                        try {
+                            await fsPromises.copyFile(saved, temp);
+                            await fsPromises.rename(temp, target);
+                        } catch (copyError) {
+                            await fsPromises.rm(temp, {force: true}).catch(() => {});
+                            throw copyError;
+                        }
                         stats.restored++;
                     }
                 }

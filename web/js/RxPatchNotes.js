@@ -1,6 +1,30 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.12.0-reliability",
+            version: "3.12.0",
+            date: "2026-10-29T22:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "НАДЁЖНОСТЬ", en: "RELIABILITY"},
+            title: {ru: "Отключённые моды и безопасный откат", en: "Disabled mods and safe rollback"},
+            summary: {
+                ru: "Отключённые моды больше не включаются сами при запуске, а откат импорта не портит файлы при обрыве.",
+                en: "Disabled mods no longer turn themselves back on at launch, and import rollback can't corrupt files if interrupted."
+            },
+            changes: {
+                ru: [
+                    "Отключённый мод (foo.jar → foo.jar.disabled) больше не считается пропавшим и не скачивается заново — он остаётся выключенным и не задваивается.",
+                    "Откат импорта восстанавливает файлы атомарно: даже если копирование оборвётся, текущий файл игрока не пострадает.",
+                    "Пройден чек-лист безопасности Electron: изоляция страницы, проверка отправителя у всех IPC, запрет навигации и внешнего кода — всё на месте."
+                ],
+                en: [
+                    "A disabled mod (foo.jar → foo.jar.disabled) is no longer treated as missing and re-downloaded — it stays off and isn't duplicated.",
+                    "Import rollback restores files atomically: even if the copy is interrupted, the player's current file is kept intact.",
+                    "Passed the Electron security checklist: page isolation, sender checks on every IPC, blocked navigation and external code — all in place."
+                ]
+            }
+        },
+        {
             id: "3.11.0-security-audit",
             version: "3.11.0",
             date: "2026-10-29T18:00:00+03:00",

@@ -148,6 +148,19 @@ class RxPacks {
         }
     }
 
+    // Отключён ли мод-файл вручную: рядом лежит та же версия под именем .jar.disabled или .jar.dis.
+    // Отключают только моды (папка mods), поэтому к остальным файлам это не применяется.
+    static isIntentionallyDisabled = async (filePath, hashes) => {
+        if (!/\.jar$/i.test(filePath)) return false;
+        const dir = path.dirname(filePath);
+        if (path.basename(dir).toLowerCase() !== "mods") return false;
+        for (const suffix of [".disabled", ".dis"]) {
+            // Если есть хеши — сверяем, что это ровно тот же мод; иначе довольно самого факта наличия копии
+            if (await RxHttp.isFileValid(filePath + suffix, hashes)) return true;
+        }
+        return false;
+    };
+
     // Файлы сборки, которых нет или которые не совпадают по хешу. Проверяем по 4 файла сразу, не блокируя окно
     static verifyFiles = async (modpackId) => {
         if (!RxPacks.isSafePackId(modpackId)) throw new Error("Invalid modpack ID");
@@ -166,6 +179,9 @@ class RxPacks {
                 RxPacks.assertSafePackTarget(root, filePath);
                 const url = RxPacks.safety().safePackUrl(item.url);
                 if (!(await RxHttp.isFileValid(filePath, item.hashes || {}))) {
+                    // Мод мог быть сознательно отключён игроком (foo.jar -> foo.jar.disabled/.dis).
+                    // Тогда его нельзя считать пропавшим и качать заново — иначе он снова включится и задвоится.
+                    if (await RxPacks.isIntentionallyDisabled(filePath, item.hashes || {})) continue;
                     missing.push({path: filePath, url, hashes: item.hashes || {}, size: item.size,
                         displayName: item.displayName, urlPolicy: RxPacks.safety().safePackUrl});
                 }
