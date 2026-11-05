@@ -1,0 +1,24 @@
+{
+  "identifier": "xyz.rxlauncher.launcher.dev",
+  "productName": "RxLauncher Dev",
+  "build": {
+    "frontendDist": "http://127.0.0.1:1420"
+  },
+  "app": {
+    "security": {
+      "capabilities": [
+        {
+          "identifier": "dev-remote",
+          "description": "Отладочная сборка: интерфейс с локального сервера tauri/dev/serve.cjs",
+          "windows": ["main"],
+          "remote": {"urls": ["http://127.0.0.1:1420/*", "http://127.0.0.1:1420"]},
+          "permissions": ["core:event:default"]
+        },
+        "default"
+      ]
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}

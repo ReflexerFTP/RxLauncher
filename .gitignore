@@ -39,3 +39,10 @@ site/
 server/
 
 bot/
+
+# Tauri: сгенерированный интерфейс и сборка
+dist-tauri/
+src-tauri/target/
+src-tauri/gen/
+src-tauri/resources/
+tauri/.deps/
