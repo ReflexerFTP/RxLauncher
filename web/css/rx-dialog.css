@@ -66,7 +66,7 @@
     background: var(--theme-primaryBgLight);
 }
 
-.rx-dialog-item > .material-symbols-outlined { font-size: 19px; color: var(--theme-primaryLighter); }
+.rx-dialog-item > .material-symbols-outlined { flex: 0 0 auto; font-size: 19px; color: var(--theme-primaryLighter); }
 .rx-dialog-item.error > .material-symbols-outlined { color: var(--error); }
 .rx-dialog-item.warn > .material-symbols-outlined { color: var(--warning); }
 .rx-dialog-item.ok > .material-symbols-outlined { color: var(--success); }

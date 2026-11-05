@@ -672,6 +672,8 @@ const commandHistoryVault = require("./commandHistoryVault").createCommandHistor
 let commandHistoryDirectory = null;
 // Вход через Discord: браузер возвращает одноразовый код на 127.0.0.1 (RFC 8252)
 const discordLoopback = require("./discordLoopback").createDiscordLoopback();
+// Проверка модов на стилеры: worker, результаты кешируются по SHA-1
+const modScanner = require("./modScanner").createModScanner({cachePath: path.join(userDataPath, "mod-scan-cache.json")});
 const readLauncherSetting = (key, fallback) => {
     try {
         const value = JSON.parse(fs.readFileSync(launcherConfigPath, "utf8"))[key];
@@ -1625,6 +1627,8 @@ app.whenReady().then(() => {
         discordLoopback.stop();
         return true;
     });
+
+    handleTrusted("mod-scan", (_event, payload = {}) => modScanner.scan(payload?.dir, {onlyEnabled: payload?.onlyEnabled === true}));
 
     handleTrusted("curseforge-key-status", () => ({
         configured: readCurseForgeApiKey().length > 0,

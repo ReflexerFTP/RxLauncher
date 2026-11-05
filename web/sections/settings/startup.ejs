@@ -121,6 +121,21 @@
     </label>
 </div>
 
+<!-- Режим слабого ПК: лаунчер без анимаций, игра с облегчённой графикой и бережной Java -->
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">speed</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.startup.lowEndMode.title}}</span>
+        <div class="description">{{settings.startup.lowEndMode.description}}</div>
+    </div>
+    <label class="switch" data-setting="lowEndMode">
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
 <div class="flex flex-center flex-gap-8 settings-item">
     <div class="icon">
         <span class="material-symbols-outlined">bolt</span>

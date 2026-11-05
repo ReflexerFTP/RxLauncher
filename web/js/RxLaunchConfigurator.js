@@ -1139,6 +1139,11 @@ variable {
     static applyRuntimeEnhancements = (config) => {
         let configResult = config;
 
+        // Режим слабого ПК — раньше профиля оптимизации, чтобы его значения были главными
+        if (RxConfig.read("lowEndMode", false) === true) {
+            configResult = RxLaunchConfigurator.applyLowEndProfile(configResult);
+        }
+
         if (RxConfig.read("rxPerformanceMode", false) === true) {
             configResult = RxLaunchConfigurator.applyRxPerformanceProfile(configResult);
         }
@@ -1163,6 +1168,19 @@ variable {
         ];
         networkFlags.forEach((flag) => RxLaunchConfigurator.pushUniqueJvmFlag(config.customArgs, flag));
         RxCollector.writeLog("Config: Network compatibility mode enabled (IPv4 preference and safe timeouts)");
+        return config;
+    }
+
+    static applyLowEndProfile = (config) => {
+        if (!Array.isArray(config.customArgs)) {
+            config.customArgs = [];
+        }
+        // Если в параметрах выбран другой сборщик мусора, флаги G1 не добавляем — иначе Java не запустится
+        const otherGc = config.customArgs.some(arg => /^-XX:\+Use(?!G1GC)\w+GC$/.test(arg));
+        require("../lowEndOptions").JVM_FLAGS
+            .filter(flag => !otherGc || ["-XX:+DisableExplicitGC", "-XX:+PerfDisableSharedMem"].includes(flag))
+            .forEach(flag => RxLaunchConfigurator.pushUniqueJvmFlag(config.customArgs, flag));
+        RxCollector.writeLog(`Config: Low-end mode JVM profile enabled [otherGc=${otherGc}]`);
         return config;
     }
 

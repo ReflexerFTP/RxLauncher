@@ -472,6 +472,10 @@
           "title": "Send technical statistics",
           "description": "Optional: Windows and launcher versions, CPU, memory and installed version counts. Uses a random identifier; disabled by default."
         },
+        "scanMods": {
+          "title": "Scan mods for stealers",
+          "description": "Before launch, looks in mods for Discord webhooks, Discord and Telegram bots, token, password and session theft, startup entries and hidden commands. Dangerous mods can be disabled with one click; the full report is in the mods window"
+        },
         "antiTheft": {
           "title": "Command history anti-theft",
           "description": "command_history.txt stays in the game folder only while the game is running. After you quit, it is hidden in the launcher's encrypted storage under a new random name in a new random folder each time. It comes back before launch, so the ↑ key in chat works as usual",
@@ -614,6 +618,13 @@
         "javaStartParams": {
           "title": "Java CLI arguments",
           "description": "For example, -XX:+UseG1GC"
+        },
+        "lowEndMode": {
+          "title": "Low-end PC mode",
+          "description": "For weak and old computers: the launcher without animations and effects, the game with lighter graphics (render distance up to 8 chunks, fast graphics, fewer particles, no shadows or clouds) and gentle Java settings. Graphics are only lowered: anything you already have lower stays as is",
+          "enabled": "Low-end PC mode on",
+          "disabled": "Low-end PC mode off",
+          "suggest": "Looks like this PC isn't very powerful — try “Low-end PC mode” in the launch settings"
         },
         "rxPerformanceMode": {
           "title": "Rx performance mode",
@@ -1175,6 +1186,83 @@
         "fantasy": "Fantasy",
         "cartoon": "Cartoon",
         "game-mechanics": "Game mechanics"
+      }
+    },
+    "modScan": {
+      "button": "Scan for stealers",
+      "checking": "Scanning mods for stealers",
+      "title": "Dangerous mods found",
+      "text": "Dangerous mods: {0}. They look like stealers: they can steal accounts, Discord tokens and passwords, or run malware. It's best to disable and delete them.",
+      "disableAndPlay": "Disable and play",
+      "trustAndPlay": "I trust them — play",
+      "disabled": "Dangerous mods disabled",
+      "disableDangerous": "Disable dangerous",
+      "more": "and {0} more",
+      "failed": "Couldn't scan mods",
+      "noMods": "This version has no mods",
+      "cleanTitle": "Nothing suspicious",
+      "cleanText": "Mods scanned: {0}. No signs of stealers (Discord webhooks, Discord and Telegram bots, token or password theft) found.",
+      "reportTitle": "Stealer scan",
+      "reportText": "Mods scanned: {0}. Dangerous: {1}, suspicious: {2}. Suspicious doesn't always mean harmful: check where the mod came from.",
+      "off": "disabled",
+      "trusted": "trusted by you",
+      "reasons": {
+        "discordWebhook": "Sends data to a Discord webhook",
+        "discordWebhookLib": "Bundles a library for sending to Discord webhooks",
+        "discordBotApi": "Uses the Discord API as a bot or checks tokens",
+        "discordBotLib": "Bundles a Discord bot (JDA etc.) — normal for server chat bridges, odd for a regular mod",
+        "discordCdn": "Downloads files from Discord attachments",
+        "telegramBotApi": "Sends data to a Telegram bot",
+        "telegramBotLib": "Bundles a Telegram bot library",
+        "otherExfil": "Talks to services used to leak data or load code (pastebin, ngrok, webhook.site…)",
+        "ipLookup": "Looks up your public IP address",
+        "rawIpUrl": "Connects to a server by bare IP address",
+        "discordToken": "Searches for Discord tokens",
+        "discordApps": "Searches for Discord folders",
+        "browserData": "Reads browser data (saved passwords, cookies)",
+        "cryptUnprotect": "Decrypts protected Windows data (how browser passwords are extracted)",
+        "rxAccounts": "Reads RxLauncher accounts",
+        "mcAccounts": "Reads launcher account files",
+        "wallets": "Searches for crypto wallets",
+        "telegramSession": "Searches for the Telegram Desktop session (tdata)",
+        "steam": "Searches for Steam login data",
+        "screenCapture": "Takes screenshots",
+        "session": "Takes the Minecraft session token",
+        "autorun": "Adds programs to Windows startup",
+        "hiddenShell": "Runs hidden PowerShell commands or turns off Windows protection",
+        "shell": "Runs the command prompt or PowerShell",
+        "fractureiser": "Known fractureiser malware",
+        "remoteLoader": "Loads code at runtime",
+        "obfuscator": "Code is obfuscated — a common way to hide stealers (forbidden on Modrinth)",
+        "obfNames": "Code is obfuscated: most classes have meaningless names",
+        "scriptFile": "Contains a Windows script (.bat, .ps1, .vbs…)",
+        "exeFile": "Contains an .exe program",
+        "stealer": "Looks like a stealer: searches for {0} and can send it via {1}",
+        "hiddenStealer": "Looks like a hidden stealer: obfuscated code that searches for {0}",
+        "dropper": "Downloads and runs code from the internet"
+      },
+      "labels": {
+        "discordWebhook": "a Discord webhook",
+        "discordWebhookLib": "a Discord webhook",
+        "discordBotApi": "a Discord bot",
+        "discordBotLib": "a Discord bot",
+        "discordCdn": "Discord",
+        "telegramBotApi": "a Telegram bot",
+        "telegramBotLib": "a Telegram bot",
+        "otherExfil": "third-party services",
+        "ipLookup": "the internet",
+        "rawIpUrl": "a server by IP",
+        "discordToken": "Discord tokens",
+        "discordApps": "Discord",
+        "browserData": "browser passwords",
+        "cryptUnprotect": "protected Windows passwords",
+        "rxAccounts": "RxLauncher accounts",
+        "mcAccounts": "launcher accounts",
+        "wallets": "crypto wallets",
+        "telegramSession": "the Telegram session",
+        "steam": "Steam",
+        "screenCapture": "screenshots",
+        "session": "the Minecraft session"
       }
     },
     "launchCheck": {

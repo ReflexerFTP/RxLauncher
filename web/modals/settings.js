@@ -128,6 +128,10 @@ $(function () {
             }
         }
 
+        if (setting === "lowEndMode") {
+            RxOptimizer.setLowEndMode(currentValue);
+        }
+
         // Анти-кража: спрятать истории команд сейчас или вернуть их в папки игры
         if (setting === "antiTheftCommandHistory" || setting === "stripCommandPasswords") {
             ipcRenderer.invoke("command-history-setting").then(() => {

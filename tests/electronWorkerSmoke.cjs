@@ -18,7 +18,7 @@ const cleanup = () => {
 };
 app.whenReady().then(async () => {
     const source = path.join(temp, 'source'); fs.mkdirSync(path.join(source, 'web', 'js'), {recursive: true});
-    for (const file of ['nbtWorker.js', 'archiveWorker.js', 'archiveSafety.js', 'tarGuard.js', 'web/js/RxNbt.js']) fs.copyFileSync(path.join(root, file), path.join(source, file));
+    for (const file of ['nbtWorker.js', 'archiveWorker.js', 'archiveSafety.js', 'tarGuard.js', 'modScanner.js', 'web/js/RxNbt.js']) fs.copyFileSync(path.join(root, file), path.join(source, file));
     fs.symlinkSync(path.join(root, 'node_modules'), path.join(temp, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
     const asar = path.join(temp, 'workers.asar'); await require('@electron/asar').createPackage(source, asar);
     const entry = path.join(temp, 'index.html'); fs.writeFileSync(entry, '<title>Worker smoke</title>');
@@ -28,9 +28,15 @@ app.whenReady().then(async () => {
     const zip = new (require('adm-zip'))(); zip.addFile('canary.txt', Buffer.from('SAFE'));
     const archive = path.join(temp, 'chosen.zip'); zip.writeZip(archive);
     const destination = path.join(game, 'unpacked');
+    // Мод-стилер для проверки модов (worker из ASAR)
+    const mods = path.join(game, 'mods'); fs.mkdirSync(mods);
+    const evil = new (require('adm-zip'))(); evil.addFile('a/Send.class', Buffer.from('https://discord.com/api/webhooks/1/2'));
+    evil.writeZip(path.join(mods, 'evil.jar'));
+    const modScanner = require(path.join(asar, 'modScanner')).createModScanner({cachePath: path.join(temp, 'mod-scan-cache.json')});
     const policy = require('../workerFileSafety').createWorkerFileSafety(() => game); policy.approveDialog([archive]);
     const {handleTrusted} = require('../ipcSecurity').createTrustedIpc(ipcMain, () => trustedWindow, entry);
     handleTrusted('safe-nbt-read', (_event, value) => require(path.join(asar, 'nbtWorker')).readLevelDat(policy.readNbt(value)));
+    handleTrusted('mod-scan', (_event, value) => modScanner.scan(value.dir));
     handleTrusted('safe-archive-unpack', (_event, value) => {
         const args = policy.archive(value); return require(path.join(asar, 'archiveWorker')).unpack(args.archive, args.destination, args.type);
     });
@@ -50,10 +56,13 @@ app.whenReady().then(async () => {
         await unpack(${JSON.stringify(archive)},${JSON.stringify(destination)},'zip');
         if(require('fs').readFileSync(${JSON.stringify(path.join(destination, 'canary.txt'))},'utf8')!=='SAFE')throw Error('Invalid extraction');
         let denied=false;try{await unpack(${JSON.stringify(archive)},${JSON.stringify(path.join(temp, 'forbidden'))},'zip');}catch(_){denied=true;}
-        if(!denied)throw Error('External destination accepted');return true;`, true);
+        if(!denied)throw Error('External destination accepted');
+        const scan=await ipcRenderer.invoke('mod-scan',{dir:${JSON.stringify(mods)}});
+        if(scan.files[0]?.verdict!=='danger'||!scan.files[0].findings.some(item=>item.id==='discordWebhook'))throw Error('Mod scan missed the webhook: '+JSON.stringify(scan));
+        return true;`, true);
     if (result.result !== true) throw Error(result.error || 'Trusted worker calls failed');
     const denied = await fromPreload(`try{await ipcRenderer.invoke('safe-nbt-read',${JSON.stringify(file)});return false;}catch(error){return /Untrusted sender/.test(error.message);}`, false);
     if (denied.result !== true) throw Error('Untrusted renderer accepted');
-    console.log(JSON.stringify({ok: true, nbtFromAsar: true, archiveFromAsar: true, rendererIpc: true, outsideDestinationDenied: true, untrustedWindowDenied: true}));
+    console.log(JSON.stringify({ok: true, nbtFromAsar: true, archiveFromAsar: true, modScanFromAsar: true, rendererIpc: true, outsideDestinationDenied: true, untrustedWindowDenied: true}));
     clearTimeout(timeout); cleanup(); app.exit(0);
 }).catch(error => { console.error(error); clearTimeout(timeout); cleanup(); app.exit(1); });

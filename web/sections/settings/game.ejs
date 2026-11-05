@@ -20,6 +20,21 @@
     </label>
 </div>
 
+<!-- Проверка модов на стилеры (Discord/Telegram-боты, вебхуки, кража токенов и паролей) -->
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">shield</span>
+    </div>
+    <div class="flex-grow">
+        <span class="name">{{settings.game.scanMods.title}}</span>
+        <div class="description">{{settings.game.scanMods.description}}</div>
+    </div>
+    <label class="switch" data-setting="scanModsForStealers" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
 <div class="flex flex-center flex-gap-8 settings-item">
     <div class="icon">
         <span class="material-symbols-outlined">backup</span>

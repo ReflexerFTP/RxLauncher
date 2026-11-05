@@ -458,6 +458,7 @@ class RxModsManager {
             if (action === "add") RxModsManager.add();
             if (action === "backup") RxModsManager.backup();
             if (action === "folder") RxModsManager.openFolder();
+            if (action === "stealer-scan") RxModScan.showReport();
             if (action === "delete-all") RxModsManager.removeAll();
             if (action === "last-crash") RxCrashUI.show(RxCrashAnalyzer.loadLastReport());
         });

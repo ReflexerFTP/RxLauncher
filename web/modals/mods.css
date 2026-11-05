@@ -111,6 +111,11 @@
 .mods-overview small { grid-area: label; color: var(--text-sub); font-size: 8pt; }
 .mods-overview .mods-path { display: flex; gap: 9px; }
 .mods-path code { color: var(--text-sub); font: 9pt "Fira Code"; white-space: nowrap; text-overflow: ellipsis; }
+/* Проверка модов на стилеры — справа в плашке с папкой, чтобы ряд кнопок не переполнялся */
+.mods-path { align-items: center; }
+.mods-path code { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.mods-path .mods-stealer-scan { flex: 0 0 auto; font-size: 9.5pt; height: 36px; padding: 0 12px !important; border-radius: 10px !important; display: flex; align-items: center; gap: 6px; }
+.mods-path .mods-stealer-scan .material-symbols-outlined { font-size: 18px; }
 
 .mods-list-head,
 .mods-row {

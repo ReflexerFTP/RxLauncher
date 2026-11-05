@@ -191,6 +191,25 @@ class RxStarter {
             RxCollector.writeLog(`Servers: Could not sync Minecraft list [error=${error}]`);
             RxToasts.create(RxServersUI.message("syncFailed", "Не удалось обновить список серверов Minecraft"), "warning");
         }
+        // Моды проверяются на стилеры прямо перед стартом — в той папке, которую загрузит игра
+        if (!(await RxModScan.beforeLaunch(path.join(gameDirectory, "mods")))) {
+            RxCollector.writeLog("Starter: Launch stopped by mod scan");
+            $("#cancelLaunchButton").hide();
+            RxFlyout.setUIStartMode(false);
+            await RxFlyout.changeMode("idle");
+            RxStarter.finishCancel();
+            return false;
+        }
+        RxFlyout.setText(MESSAGES.starter.preparingGame, versionDisplayName);
+        // Режим слабого ПК: облегчённая графика (только понижаем то, что выше)
+        if (RxOptimizer.isLowEnd()) {
+            try {
+                const changed = require("../lowEndOptions").applyToGameDirectory(gameDirectory);
+                if (changed?.length) RxCollector.writeLog(`LowEnd: options.txt [${changed.join(",")}]`);
+            } catch (error) {
+                RxCollector.writeLog(`LowEnd: options.txt failed [error=${error?.message || error}]`);
+            }
+        }
         // История команд (command_history.txt) возвращается в папку игры только на время игры
         try {
             await ipcRenderer.invoke("command-history-prepare", {gameDirectory});

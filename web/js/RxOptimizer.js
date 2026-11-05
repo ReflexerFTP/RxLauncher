@@ -96,5 +96,42 @@ class RxOptimizer {
         try {
             RxCollector.writeLog("Optimizer: RAM optimization initialized");
         } catch (_) {}
+        try {
+            RxOptimizer.suggestLowEndMode();
+        } catch (_) {}
+    }
+
+    // Режим слабого ПК: лаунчер без анимаций и эффектов; прежние значения возвращаются при выключении.
+    // Игру облегчает запуск: JVM-профиль (RxLaunchConfigurator) и options.txt (lowEndOptions.js)
+    static isLowEnd() {
+        return typeof RxConfig !== "undefined" && RxConfig.read("lowEndMode", false) === true;
+    }
+
+    static setLowEndMode(enabled) {
+        const keys = ["disableAnimations", "disableCssEffects"];
+        if (enabled) {
+            RxConfig.write("lowEndPrevious", Object.fromEntries(keys.map(key => [key, RxConfig.read(key, false) === true])));
+            keys.forEach(key => RxOptimizer.setLauncherSetting(key, true));
+        } else {
+            const previous = RxConfig.read("lowEndPrevious", null) || {};
+            keys.forEach(key => RxOptimizer.setLauncherSetting(key, previous[key] === true));
+        }
+        RxCollector.writeLog(`Optimizer: Low-end mode ${enabled ? "enabled" : "disabled"}`);
+        RxToasts.create(enabled ? MESSAGES.settings.startup.lowEndMode.enabled : MESSAGES.settings.startup.lowEndMode.disabled, "speed");
+    }
+
+    static setLauncherSetting(key, value) {
+        RxConfig.write(key, value);
+        document.documentElement.classList.toggle(key === "disableAnimations" ? "noAnimations" : "noEffects", value);
+        $(`#modal-settings [data-setting="${key}"] input`).prop("checked", value);
+    }
+
+    // Один раз подсказать режим слабого ПК, если памяти мало или ядер немного
+    static suggestLowEndMode() {
+        if (RxOptimizer.isLowEnd() || RxConfig.read("lowEndSuggested", false) === true) return;
+        const weak = os.totalmem() <= 6 * 1024 ** 3 || os.cpus().length <= 2;
+        if (!weak) return;
+        RxConfig.write("lowEndSuggested", true);
+        setTimeout(() => RxToasts.create(MESSAGES.settings.startup.lowEndMode.suggest, "speed"), 8000);
     }
 }
