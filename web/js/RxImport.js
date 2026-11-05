@@ -45,10 +45,41 @@ class RxImport {
     };
 
     // Путь внутри папки по относительному пути из манифеста; null — если он выходит наружу
+    static assertUnlinkedPath = target => {
+        const root = path.resolve(GAME_DATA);
+        const rel = path.relative(root, path.resolve(target));
+        if (rel === '..' || rel.startsWith('..' + path.sep) || path.isAbsolute(rel)) throw new Error('Import path leaves game data');
+        let current = root;
+        for (const part of rel.split(path.sep).filter(Boolean)) {
+            current = path.join(current, part);
+            try { if (fs.lstatSync(current).isSymbolicLink()) throw new Error('Linked import path'); }
+            catch (error) { if (error.code !== 'ENOENT') throw error; }
+        }
+        return path.resolve(target);
+    };
+    static trustedTarget = target => {
+        if (typeof target !== 'string' || !path.isAbsolute(target)) throw new Error('Invalid import target');
+        const rel = path.relative(path.resolve(GAME_DATA), path.resolve(target));
+        const parts = rel.split(path.sep);
+        if (rel && !(parts.length === 2 && ['home', 'modpacks'].includes(parts[0])
+            && /^[A-Za-z0-9_][A-Za-z0-9._+-]{0,127}$/.test(parts[1]) && !parts[1].endsWith('.'))) throw new Error('Unknown import target');
+        return RxImport.assertUnlinkedPath(target);
+    };
+    static allowedPartPath = (id, rel) => {
+        const part = RxImport.PARTS.find(item => item.id === id);
+        if (!part || part.shared || typeof rel !== 'string') return false;
+        const portable = rel.replaceAll('\\', '/');
+        if (part.files) return part.files.includes(portable);
+        return (part.dirs || []).some(dir => portable.startsWith(dir + '/'));
+    };
     static resolveInside = (base, relative) => {
-        if (typeof relative !== "string" || !relative || path.isAbsolute(relative)) return null;
+        if (typeof relative !== 'string' || !relative || path.isAbsolute(relative)
+            || /[:\x00-\x1f]/.test(relative)
+            || relative.replaceAll('\\', '/').split('/').some(part => !part || part === '.' || part === '..'
+                || /[. ]$/.test(part) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part))) return null;
         const target = path.resolve(base, relative);
-        return RxImport.isInside(base, target) ? target : null;
+        if (!RxImport.isInside(base, target)) return null;
+        try { return RxImport.assertUnlinkedPath(target); } catch (_) { return null; }
     };
 
     static isDirectory = (dir) => {
@@ -118,6 +149,7 @@ class RxImport {
     // Все файлы папки (без ссылок): [{full, rel, size}]
     static walk = async (dir, base = dir, out = []) => {
         let entries = [];
+        try { if (fs.lstatSync(dir).isSymbolicLink()) return out; } catch (_) { return out; }
         try { entries = await fsPromises.readdir(dir, {withFileTypes: true}); } catch (_) { return out; }
         for (const entry of entries) {
             const full = path.join(dir, entry.name);
@@ -267,6 +299,7 @@ class RxImport {
     static run = async (source, partIds, {backup = true, onProgress = () => {}} = {}) => {
         const sourceDir = path.resolve(source.path);
         const target = path.resolve(RxImport.targetDirectory());
+        RxImport.trustedTarget(target);
         if (RxImport.samePath(sourceDir, target) || RxImport.isInside(sourceDir, target) || RxImport.isInside(target, sourceDir)) {
             throw new Error("Source and target folders overlap");
         }
@@ -322,6 +355,7 @@ class RxImport {
         try {
             for (const job of jobs) {
                 try {
+                    RxImport.assertUnlinkedPath(job.to);
                     const exists = fs.existsSync(job.to);
                     if (exists && (job.keepExisting || await RxImport.sameFile(job.from, job.to))) {
                         stats.skipped++;
@@ -381,7 +415,9 @@ class RxImport {
     static readManifest = (id) => {
         if (!/^[\w-]+$/.test(String(id))) return null;
         try {
-            const manifest = JSON.parse(fs.readFileSync(path.join(RxImport.backupRoot(), id, "manifest.json"), "utf8"));
+            const file = RxImport.assertUnlinkedPath(path.join(RxImport.backupRoot(), id, 'manifest.json'));
+            if (fs.statSync(file).size > 2 * 1024 * 1024) return null;
+            const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
             return manifest?.version === 1 && manifest.parts && typeof manifest.target === "string" ? manifest : null;
         } catch (_) {
             return null;
@@ -403,7 +439,21 @@ class RxImport {
     static restore = async (id, partIds) => {
         const manifest = RxImport.readManifest(id);
         if (!manifest) throw new Error("Backup not found");
-        const dir = path.join(RxImport.backupRoot(), id);
+        manifest.target = RxImport.trustedTarget(manifest.target);
+        const dir = RxImport.assertUnlinkedPath(path.join(RxImport.backupRoot(), id));
+        // Validate the whole operation before any destructive filesystem action.
+        for (const partId of partIds) {
+            if (['servers', 'accounts'].includes(partId)) continue;
+            const part = manifest.parts[partId];
+            if (!part) continue;
+            for (const key of ['added', 'overwritten']) {
+                if (part[key] !== undefined && !Array.isArray(part[key])) throw new Error('Invalid import backup entries');
+                for (const rel of part[key] || []) {
+                    if (!RxImport.allowedPartPath(partId, rel) || !RxImport.resolveInside(manifest.target, rel)
+                        || (key === 'overwritten' && !RxImport.resolveInside(path.join(dir, 'files'), rel))) throw new Error('Unsafe import backup path');
+                }
+            }
+        }
         const stats = {removed: 0, restored: 0, failed: 0};
         for (const partId of partIds) {
             const part = manifest.parts[partId];
@@ -420,7 +470,8 @@ class RxImport {
                 } else {
                     for (const rel of part.added || []) {
                         const target = RxImport.resolveInside(manifest.target, rel);
-                        if (!target || !fs.existsSync(target)) continue;
+                        if (!target) throw new Error("Unsafe import restore target");
+                        if (!fs.existsSync(target)) continue;
                         await fsPromises.rm(target, {recursive: true, force: true});
                         stats.removed++;
                     }

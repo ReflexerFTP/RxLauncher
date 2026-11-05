@@ -136,23 +136,22 @@ class RxUtils {
     // Обёртка для compressing
     static unpackArchive = async (archivePath, unpackPath) => {
         let archiveType = "zip";
-        if (path.extname(archivePath) === ".tar") {
+        if (path.extname(archivePath).toLowerCase() === ".tar") {
             archiveType = "tar";
         }
-        if (path.extname(archivePath) === ".tar.gz" || path.extname(archivePath) === ".tgz") {
+        if (/\.(?:tar\.gz|tgz)$/i.test(archivePath)) {
             archiveType = "tgz";
         }
-        if (archiveType === "zip") await require("../archiveSafety").validateZip(archivePath, unpackPath);
-        return await compressing[archiveType].uncompress(archivePath, unpackPath);
+        return await require('../archiveWorker').unpack(archivePath, unpackPath, archiveType);
     }
 
     // Обёртка для compressing
     static compressDirectory = async (archivePath, directoryPath) => {
         let archiveType = "zip";
-        if (path.extname(archivePath) === ".tar") {
+        if (path.extname(archivePath).toLowerCase() === ".tar") {
             archiveType = "tar";
         }
-        if (path.extname(archivePath) === ".tar.gz" || path.extname(archivePath) === ".tgz") {
+        if (/\.(?:tar\.gz|tgz)$/i.test(archivePath)) {
             archiveType = "tgz";
         }
         return await compressing[archiveType].compressDir(directoryPath, archivePath);

@@ -3,19 +3,22 @@ let javaInstallationDirectory;
 class RxJavaManager {
     // Установить версию Java
     static install = async (version, restoreStartMode = false) => {
-        if (RxJavaManager.isInstalled(version)) {
-            return true;
-        }
+        const integrity = require('../runtimeSecurity');
+        const cached = RxJavaManager.isInstalled(version);
+        let info = RxJavaManager.getByVersion(version);
+        if (!info) throw new Error('Unsupported Java platform');
+        try { info = await integrity.resolveJavaRelease(info, RxHttp.json); }
+        catch (error) { if (cached) return true; throw error; }
+        if (cached && integrity.validateRuntime(info.unpackPath, version, info.release)) return true;
         // Готовим UI
         RxFlyout.setUIStartMode(true);
         RxFlyout.setText();
         RxFlyout.setProgress(-1);
         await RxFlyout.changeMode("spinner");
         // Получаем информацию
-        let info = RxJavaManager.getByVersion(version);
-        if (!info) throw new Error("Unsupported Java platform");
+        // Release metadata and checksum have already been validated.
         // Скачиваем
-        await RxDownloader.downloadFile(info.url, info.downloadPath, `Java ${version}`);
+        await RxDownloader.downloadFile(info.url, info.downloadPath, `Java ${version}`, true, {sha256: info.sha256}, {expectedSize: info.size, maxBytes: 2 * 1024 ** 3});
         // Меняем UI
         await RxFlyout.changeMode("spinner");
         RxFlyout.setText(`${MESSAGES.java.unpacking} ${version}`);
@@ -27,6 +30,7 @@ class RxJavaManager {
         try {
             await RxUtils.unpackArchive(info.downloadPath, staging);
             if (!RxJavaManager.findJava(staging)) throw new Error("Java executable is missing from the archive");
+            integrity.writeRuntimeReceipt(staging, info);
             if (fs.existsSync(destination)) fs.renameSync(destination, previous);
             fs.renameSync(staging, destination);
             installed = true;
@@ -86,30 +90,17 @@ class RxJavaManager {
 
         if (process.arch === "x64") {
             platformArch = "x64";
-        } else if (process.arch === "x32") {
+        } else if (process.arch === "ia32" || process.arch === "x32") {
             platformArch = "x86";
+        } else if (process.arch === 'arm64') {
+            platformArch = 'aarch64';
         } else {
             return false;
         }
 
-        let resultURL;
-        if (javaVersion == 8) {
-            resultURL =
-                "https://api.adoptium.net/v3/binary/version/jdk8u312-b07/" +
-                platformName +
-                "/" +
-                platformArch +
-                "/jdk/hotspot/normal/eclipse?project=jdk";
-        } else {
-            resultURL =
-                "https://api.adoptium.net/v3/binary/latest/" +
-                javaVersion +
-                "/ga/" +
-                platformName +
-                "/" +
-                platformArch +
-                "/jdk/hotspot/normal/eclipse?project=jdk";
-        }
+        if (!/^\d{1,2}$/.test(String(javaVersion))) return false;
+        const resultURL = 'https://api.adoptium.net/v3/binary/latest/' + javaVersion + '/ga/'
+            + platformName + '/' + platformArch + '/jdk/hotspot/normal/eclipse?project=jdk';
 
         let filename = "Java-" + javaVersion + "-" + platformArch + fileExtension;
         return {
@@ -139,7 +130,8 @@ class RxJavaManager {
     // Получить путь к скачанной версии Java (возвращает false, если версия не существует)
     static getPath = (javaVersion) => {
         if (!/^\d+$/.test(String(javaVersion))) return false;
-        return this.findJava(path.join(javaInstallationDirectory, String(javaVersion)));
+        const dir = path.join(javaInstallationDirectory, String(javaVersion));
+        return require('../runtimeSecurity').validateRuntime(dir, javaVersion) ? this.findJava(dir) : false;
     }
 
     static findJava = (javaDirPath) => {
@@ -151,8 +143,11 @@ class RxJavaManager {
             if (fs.existsSync(javaSearchPath1) && fs.statSync(javaSearchPath1).isFile()) {
                 return javaSearchPath1;
             } else {
-                let javaReaddir = fs.readdirSync(javaDirPath);
-                if (fs.readdirSync(javaDirPath).length === 1) {
+                let javaReaddir = fs.readdirSync(javaDirPath).filter(name => {
+                    const full = path.join(javaDirPath, name);
+                    return fs.lstatSync(full).isDirectory() && !fs.lstatSync(full).isSymbolicLink();
+                });
+                if (javaReaddir.length === 1) {
                     let javaChkPath = path.join(javaDirPath, javaReaddir[0], "bin", "java");
                     if (process.platform === "win32") {
                         javaChkPath += ".exe";

@@ -96,7 +96,9 @@ class RxCustomVersions {
                     found = {dir: path.dirname(sourcePath), jsonFile: path.basename(sourcePath), manifest};
                 }
             } else if (ext === ".zip") {
-                tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "rx-version-"));
+                tempDir = typeof process !== "undefined" && process.type === "renderer"
+                    ? await ipcRenderer.invoke("safe-create-staging", "custom-version")
+                    : fs.mkdtempSync(path.join(os.tmpdir(), "rx-version-"));
                 await RxUtils.unpackArchive(sourcePath, tempDir);
                 found = RxCustomVersions.findVersionFolder(tempDir);
                 copyWholeFolder = true;

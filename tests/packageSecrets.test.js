@@ -6,8 +6,8 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
-// Сервер и сайт — только локально и на VPS
-for (const folder of ["server", "site"]) {
+// Сервер, сайт и Discord-бот — только локально и на VPS
+for (const folder of ["server", "site", "bot"]) {
     assert.ok(pkg.build.files.includes(`!${folder}{,/**/*}`), `${folder}/ must be excluded from the build`);
     assert.ok(fs.readFileSync(path.join(root, ".gitignore"), "utf8").split(/\r?\n/).includes(`${folder}/`), `${folder}/ must be gitignored`);
 }
@@ -30,7 +30,7 @@ const SECRET = [
     /rx1_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/,
     /-----BEGIN [A-Z ]*PRIVATE KEY-----/
 ];
-const skip = new Set(["node_modules", "dist", "dist-design", "server", "site", ".git", "tests", "resources", "logs"]);
+const skip = new Set(["node_modules", "dist", "dist-design", "server", "site", "bot", ".git", "tests", "resources", "logs"]);
 const scan = dir => {
     for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
         if (skip.has(entry.name)) continue;

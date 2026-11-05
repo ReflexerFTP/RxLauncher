@@ -208,6 +208,8 @@ class RxMinecraftServers {
     };
 
     static parseDocument = (buffer) => {
+        // Preflight every byte before handing bounded input to the editable tag library.
+        require('../web/js/RxNbt').read(buffer);
         const document = new NBT();
         let parseError = null;
         document.loadFromBuffer(buffer, (error) => {

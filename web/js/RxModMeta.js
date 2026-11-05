@@ -1,7 +1,5 @@
 // Метаданные модов из JAR (Fabric, Quilt, Forge, NeoForge) и примерная оценка совместимости.
 // JAR читается выборочно через yauzl: в память попадают только нужные файлы, а не весь архив.
-const yauzl = require("yauzl");
-
 class RxModMeta {
     static cache = new Map();          // fullPath -> {stamp, meta}
     static MAX_CACHE_ENTRIES = 128;
@@ -20,42 +18,9 @@ class RxModMeta {
     ]);
 
     // ---------- чтение ZIP ----------
-    static readEntries = (source, wanted, maxBytes = RxModMeta.MAX_ENTRY_BYTES) => new Promise((resolve) => {
-        const result = {};
-        const open = Buffer.isBuffer(source)
-            ? (cb) => yauzl.fromBuffer(source, {lazyEntries: true}, cb)
-            : (cb) => yauzl.open(source, {lazyEntries: true, autoClose: true}, cb);
-        open((error, zip) => {
-            if (error || !zip) return resolve(result);
-            let retained = 0;
-            let scanned = 0;
-            const finish = () => { try { zip.close(); } catch (_) {} resolve(result); };
-            zip.on("entry", (entry) => {
-                if (++scanned > 50000) return finish();
-                if (!wanted(entry.fileName) || entry.uncompressedSize > maxBytes) return zip.readEntry();
-                if (retained + entry.uncompressedSize > maxBytes * 2) return zip.readEntry();
-                zip.openReadStream(entry, (streamError, stream) => {
-                    if (streamError || !stream) return zip.readEntry();
-                    const chunks = [];
-                    let bytes = 0;
-                    stream.on("data", (chunk) => {
-                        bytes += chunk.length;
-                        if (bytes > maxBytes || retained + bytes > maxBytes * 2) stream.destroy(new Error("Metadata size limit"));
-                        else chunks.push(chunk);
-                    });
-                    stream.on("end", () => {
-                        retained += bytes;
-                        result[entry.fileName] = Buffer.concat(chunks, bytes);
-                        zip.readEntry();
-                    });
-                    stream.on("error", () => zip.readEntry());
-                });
-            });
-            zip.on("end", finish);
-            zip.on("error", finish);
-            zip.readEntry();
-        });
-    });
+    static readEntries = (source, wanted, maxBytes = RxModMeta.MAX_ENTRY_BYTES) =>
+        require('../archiveMetadata').readEntries(source, wanted, maxBytes);
+    static array = value => Array.isArray(value) ? value.slice(0, 512) : [];
 
     static parseJson = (buffer) => {
         if (!buffer) return null;
@@ -85,7 +50,7 @@ class RxModMeta {
     // Запасной разбор mods.toml, если строгий парсер не справился с новым синтаксисом
     static parseTomlLoose = (text) => {
         const value = (key) => (text.match(new RegExp(`^\\s*${key}\\s*=\\s*["']([^"'\\n]*)["']`, "m")) || [])[1];
-        const dependencies = {};
+        const dependencies = Object.create(null);
         const depBlocks = text.split(/\[\[\s*dependencies\.([\w-]+)\s*]]/).slice(1);
         for (let i = 0; i < depBlocks.length; i += 2) {
             const owner = depBlocks[i];
@@ -142,15 +107,15 @@ class RxModMeta {
     static fromQuilt = (json) => {
         const loader = json.quilt_loader || {};
         const normalizeDep = (dep) => typeof dep === "string" ? {id: dep, range: "*"} : {id: dep?.id, range: dep?.versions ?? "*", optional: dep?.optional === true};
-        const deps = (loader.depends || []).map(normalizeDep).filter((dep) => dep.id).map((dep) => ({...dep, required: !dep.optional}));
+        const deps = RxModMeta.array(loader.depends).map(normalizeDep).filter((dep) => dep.id).map((dep) => ({...dep, required: !dep.optional}));
         const mc = deps.find((dep) => dep.id === "minecraft");
         return {
             loaders: ["quilt"], id: String(loader.id || ""), name: loader.metadata?.name || loader.id, version: loader.version,
             description: loader.metadata?.description || "", authors: RxModMeta.authorsToList(loader.metadata?.contributors),
             icon: typeof loader.metadata?.icon === "string" ? loader.metadata.icon.replace(/^\/+/, "") : "",
-            provides: (loader.provides || []).map((item) => typeof item === "string" ? item : item?.id).filter(Boolean),
+            provides: RxModMeta.array(loader.provides).map((item) => typeof item === "string" ? item : item?.id).filter(Boolean),
             mcRange: mc ? mc.range : null, rangeKind: "semver",
-            deps, breaks: (loader.breaks || []).map(normalizeDep).filter((dep) => dep.id), nested: []
+            deps, breaks: RxModMeta.array(loader.breaks).map(normalizeDep).filter((dep) => dep.id), nested: []
         };
     };
 
@@ -182,7 +147,11 @@ class RxModMeta {
     };
 
     // ---------- чтение одного мода ----------
-    static read = async (fullPath) => {
+    static read = async fullPath => {
+        try { return await RxModMeta.readUnchecked(fullPath); }
+        catch (_) { RxModMeta.cache.delete(fullPath); return null; }
+    };
+    static readUnchecked = async (fullPath) => {
         let stat;
         try { stat = fs.statSync(fullPath); } catch (_) { RxModMeta.cache.delete(fullPath); return null; }
         const stamp = `${stat.size}:${stat.mtimeMs}`;
@@ -213,22 +182,37 @@ class RxModMeta {
             meta = {...parts[0], loaders: [...new Set(parts.flatMap((part) => part.loaders))]};
         }
 
+        for (const field of ['id', 'name', 'version', 'description']) {
+            meta[field] = typeof meta[field] === 'string' ? meta[field].slice(0, field === 'description' ? 8192 : 256) : '';
+        }
+        meta.authors = RxModMeta.array(meta.authors).filter(item => typeof item === 'string').map(item => item.slice(0, 256));
+        const range = value => typeof value === 'string' ? value.slice(0, 4096)
+            : Array.isArray(value) ? value.filter(item => typeof item === 'string').slice(0, 128).map(item => item.slice(0, 4096)) : null;
+        meta.mcRange = range(meta.mcRange);
+        meta.provides = RxModMeta.array(meta.provides).filter(item => typeof item === 'string').map(item => item.slice(0, 256));
+        for (const key of ['deps', 'breaks']) meta[key] = RxModMeta.array(meta[key])
+            .filter(item => item && typeof item.id === 'string' && item.id.length > 0 && item.id.length <= 256)
+            .map(item => ({id: item.id, range: range(item.range), required: item.required === true}));
+        meta.nested = RxModMeta.array(meta.nested).filter(require('../archiveMetadata').safeName).slice(0, 32);
+        if (!require('../archiveMetadata').safeName(meta.icon)) meta.icon = '';
+
         // Вложенные моды (jar-in-jar) тоже «предоставляют» свои id
         const nestedIds = [];
         const jarjar = RxModMeta.parseJson(files["META-INF/jarjar/metadata.json"]);
-        (jarjar?.jars || []).forEach((jar) => { if (jar?.identifier?.artifact) nestedIds.push(String(jar.identifier.artifact).toLowerCase()); });
+        RxModMeta.array(jarjar?.jars).forEach((jar) => { if (jar?.identifier?.artifact) nestedIds.push(String(jar.identifier.artifact).toLowerCase()); });
         const second = await RxModMeta.readEntries(fullPath, (name) => name === meta.icon || meta.nested.includes(name), RxModMeta.MAX_NESTED_BYTES);
         for (const nestedName of meta.nested) {
             if (!second[nestedName]) continue;
             const inner = await RxModMeta.readEntries(second[nestedName], (name) => name === "fabric.mod.json" || name === "quilt.mod.json");
             const innerFabric = RxModMeta.parseJson(inner["fabric.mod.json"]);
-            if (innerFabric?.id) nestedIds.push(String(innerFabric.id), ...(innerFabric.provides || []).map(String));
+            if (innerFabric?.id) nestedIds.push(String(innerFabric.id), ...RxModMeta.array(innerFabric.provides).map(String));
             const innerQuilt = RxModMeta.parseJson(inner["quilt.mod.json"]);
             if (innerQuilt?.quilt_loader?.id) nestedIds.push(String(innerQuilt.quilt_loader.id));
         }
-        meta.nestedIds = nestedIds;
+        meta.nestedIds = nestedIds.slice(0, 512).map(item => item.slice(0, 256));
         const iconBuffer = meta.icon ? second[meta.icon] : null;
-        meta.iconData = iconBuffer && iconBuffer.length <= RxModMeta.MAX_ICON_BYTES ? `data:image/png;base64,${iconBuffer.toString("base64")}` : "";
+        const icon = require('../archiveMetadata').pngBase64(iconBuffer, RxModMeta.MAX_ICON_BYTES);
+        meta.iconData = icon ? 'data:image/png;base64,' + icon : '';
         delete meta.nested;
 
         RxModMeta.cache.delete(fullPath);

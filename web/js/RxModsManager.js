@@ -141,7 +141,9 @@ class RxModsManager {
             while (next < files.length) {
                 const file = files[next++];
                 if (!file.valid) continue;
-                file.meta = await RxModMeta.read(file.fullPath);
+                try { file.meta = await RxModMeta.read(file.fullPath); }
+                catch (_) { file.meta = null; }
+                file.metadataFailed = !file.meta;
                 if (generation !== RxModsManager.metaGeneration) return;
                 RxModsManager.updateRow(file);
             }
@@ -160,7 +162,7 @@ class RxModsManager {
     };
 
     static statusFor = (file) => {
-        if (!file.valid) return {cls: "invalid", icon: "error", text: RxModsManager.message("invalidFile", "Повреждён")};
+        if (!file.valid || file.metadataFailed) return {cls: "invalid", icon: "error", text: RxModsManager.message("invalidFile", "Повреждён")};
         if (!file.enabled) return {cls: "off", icon: "pause_circle", text: RxModsManager.message("disabled", "Отключён")};
         if (!file.compat) return {cls: "checking", icon: "hourglass_empty", text: RxModsManager.message("checking", "Проверка…")};
         return {

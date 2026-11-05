@@ -25,104 +25,41 @@ class RxWorldsManager {
     }
 
     // Получить список сейвов из директории с данными о них
-    static savesFromDirectory = (directory) => {
-        return new Promise(resolve => {
-            if (!fs.existsSync(directory)) {
-                return resolve(false);
-            }
+    static savesFromDirectory = async directory => {
+        let entries;
+        try { entries = fs.readdirSync(directory, {withFileTypes: true}); }
+        catch (_) { return false; }
+        const result = [];
+        for (const entry of entries) {
+            if (!entry.isDirectory() || entry.isSymbolicLink()) continue;
+            const full = path.join(directory, entry.name);
+            const info = await RxWorldsManager.getWorldInfo(full);
+            if (info) result.push({...info, path: full});
+        }
+        return result;
+    };
 
-            var saves = fs.readdirSync(directory);
-            var result = [];
-            var currentWorld = -1;
-            var savesResolve = resolve;
+    static getAllWorlds = async () => {
+        const result = [];
+        for (const directory of RxWorldsManager.getSavesDirectories()) {
+            result.push({path: directory, worlds: await RxWorldsManager.savesFromDirectory(directory) || []});
+        }
+        return result;
+    };
 
-            nextWorld();
-
-            function nextWorld() {
-                currentWorld++;
-                if (typeof saves[currentWorld] !== "undefined") {
-                    var fullWorldPath = path.join(directory, saves[currentWorld]);
-                    RxWorldsManager.getWorldInfo(fullWorldPath).then(data => {
-                        if (data !== false) {
-                            data.path = fullWorldPath;
-                            result.push(data);
-                        }
-                        nextWorld();
-                    })
-                } else {
-                    return savesResolve(result);
-                }
-            }
-        })
-    }
-
-    // Получить все миры из директории игры
-    static getAllWorlds = () => {
-        return new Promise(resolve => {
-            let savesDirectories = RxWorldsManager.getSavesDirectories();
-            if (savesDirectories.length === 0) {
-                return resolve([]);
-            }
-
-            var result = [];
-            var savesResolve = resolve;
-            var currentSave = -1;
-
-            nextSave();
-
-            function nextSave() {
-                currentSave++;
-                if (typeof savesDirectories[currentSave] !== "undefined") {
-                    RxWorldsManager.savesFromDirectory(savesDirectories[currentSave]).then(saves => {
-                        if (saves === false) {
-                            saves = [];
-                        }
-                        result.push({
-                            path: savesDirectories[currentSave],
-                            worlds: saves
-                        })
-                        nextSave();
-                    })
-                } else {
-                    return savesResolve(result);
-                }
-            }
-        })
-    }
-
-    // Получить информацию о мире
-    static getWorldInfo = (worldPath) => {
-        return new Promise(resolve => {
-            let levelDat = path.join(worldPath, "level.dat");
-            let iconPath = path.join(worldPath, "icon.png");
-            if (!fs.existsSync(levelDat)) {
-                return resolve(false);
-            }
-            if (!fs.existsSync(iconPath)) {
-                iconPath = "assets/world.webp";
-            }
-
-            let nbtData = new NBT();
-            nbtData.loadFromZlibCompressedFile(levelDat, function (err) {
-                if (err) {
-                    console.log(err);
-                    return resolve(false);
-                }
-                // В старых и серверных мирах части полей нет — не роняем весь список
-                const data = nbtData.root?.[""]?.value?.Data?.value;
-                if (!data) return resolve(false);
-                return resolve({
-                    icon: iconPath,
-                    name: data.LevelName?.value || path.basename(worldPath),
-                    dataPacks: data.DataPacks?.value,
-                    dataVersion: data.DataVersion?.value,
-                    difficulty: data.Difficulty?.value,
-                    version: data.Version?.value?.Name?.value || "",
-                    gamemode: data.Player?.value?.playerGameType?.value ?? data.GameType?.value
-                });
-            });
-        })
-    }
+    static getWorldInfo = async worldPath => {
+        try {
+            const root = await require('./js/RxNbt').readLevelDatAsync(path.join(worldPath, 'level.dat'));
+            const data = root?.['']?.value?.Data?.value;
+            if (!data) return false;
+            const icon = path.join(worldPath, 'icon.png');
+            return {icon: fs.existsSync(icon) ? icon : 'assets/world.webp',
+                name: typeof data.LevelName?.value === 'string' ? data.LevelName.value : path.basename(worldPath),
+                dataPacks: data.DataPacks?.value, dataVersion: data.DataVersion?.value,
+                difficulty: data.Difficulty?.value, version: data.Version?.value?.Name?.value || '',
+                gamemode: data.Player?.value?.playerGameType?.value ?? data.GameType?.value};
+        } catch (_) { return false; }
+    };
 
     // Установить мир из zip-архива
     static installFromZip = async (savesDirectory, zipPath) => {

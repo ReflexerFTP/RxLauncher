@@ -109,45 +109,28 @@ class RxPackManagerUI {
     }
 
     // Загрузить список ресурс-паков в UI
-    static loadRPList = () => {
-        let $rpList = $("#modal-packManager .layout-tab .rps-list");
-        let rpsPath = path.join(GAME_DATA, "modpacks", packman__currentModpack.id, "resourcepacks");
-        if (!fs.existsSync(rpsPath)) {
-            return false;
+    static loadRPList = async () => {
+        const generation = RxPackManagerUI.rpGeneration = (RxPackManagerUI.rpGeneration || 0) + 1;
+        const $list = $('#modal-packManager .layout-tab .rps-list').empty();
+        const dir = path.join(GAME_DATA, 'modpacks', packman__currentModpack.id, 'resourcepacks');
+        let entries;
+        try { entries = fs.readdirSync(dir, {withFileTypes: true}).filter(item => item.isFile() && /\.zip$/i.test(item.name)); }
+        catch (_) { return false; }
+        for (const entry of entries) {
+            let result = false;
+            try { result = await RxAssetsParsers.readResourcePackV2(path.join(dir, entry.name)); } catch (_) {}
+            if (generation !== RxPackManagerUI.rpGeneration) return false;
+            const icon = result?.icon ? 'data:image/png;base64,' + result.icon : 'assets/modIcon.webp';
+            const description = result ? RxUtils.removeColorsFromString(result.mcmeta.description) : '';
+            $list.append(`<div data-filename="${packManagerEscape(entry.name)}" class="item custom-select icon-and-description">
+                <img class="icon" src="${packManagerEscape(icon)}" />
+                <span class="title">${packManagerEscape(entry.name)}</span>
+                <span class="description">${packManagerEscape(description)}</span>
+                <button class="square small button" data-pack-remove><span class="material-symbols-outlined">delete</span></button>
+            </div>`);
         }
-        let rpList = fs.readdirSync(rpsPath);
-
-        let currentRp = -1;
-
-        $rpList.html("");
-        loadNextRp();
-
-        function loadNextRp() {
-            currentRp++;
-            if (typeof rpList[currentRp] !== "undefined") {
-                let rpFullPath = path.join(rpsPath, rpList[currentRp]);
-                if (fs.existsSync(rpFullPath) && (path.parse(rpFullPath).ext === ".zip")) {
-                    RxAssetsParsers.readResourcePackV2(rpFullPath).then(result => {
-                        let icon = "assets/modIcon.webp";
-                        let description = "";
-                        if (result !== false) {
-                            icon = "data:image/png;base64," + result.icon;
-                            description = RxUtils.removeColorsFromString(result.mcmeta.description);
-                        }
-                        $rpList.append(`<div data-filename="${packManagerEscape(rpList[currentRp])}" class='item custom-select icon-and-description'>
-                    <img class="icon" src="${packManagerEscape(icon)}" />
-                    <span class="title">${packManagerEscape(path.parse(rpList[currentRp]).base)}</span>
-                    ${description !== "" ? `<span class="description">${packManagerEscape(description)}</span>` : ""}
-                    <button class="square small button" data-pack-remove>
-                        <span class="material-symbols-outlined">delete</span>
-                    </button>
-                    </div>`);
-                        loadNextRp();
-                    })
-                }
-            }
-        }
-    }
+        return true;
+    };
 
     // Загрузить список модов в UI
     static loadModsList = () => {

@@ -737,50 +737,93 @@ class RxPlayStats {
         return timestamp - previous < 2500;
     };
 
+    // Серверы пишут сообщения «стилизованными» буквами (ᴀ ᴋ ᴛ ʜ ᴘ…), чтобы обойти фильтры.
+    // Это отдельные символы Юникода, поэтому перед разбором приводим их к обычным буквам.
+    static SMALL_CAPS = {
+        "ᴀ": "а", "ʙ": "в", "ᴄ": "с", "ᴅ": "д", "ᴇ": "е", "ꜰ": "f", "ɢ": "g", "ʜ": "н", "ɪ": "i",
+        "ᴊ": "j", "ᴋ": "к", "ʟ": "l", "ᴍ": "м", "ɴ": "n", "ᴏ": "о", "ᴘ": "р", "ǫ": "q", "ʀ": "r",
+        "ꜱ": "s", "ᴛ": "т", "ᴜ": "u", "ᴠ": "v", "ᴡ": "w", "ʏ": "y", "ᴢ": "z"
+    };
+
+    static normalizeChatText = (text) => String(text)
+        .normalize("NFKC")
+        .replace(/[ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡʏᴢ]/gu, letter => RxPlayStats.SMALL_CAPS[letter])
+        .replace(/ё/g, "е").replace(/Ё/g, "Е")
+        .replace(/\s+/gu, " ")
+        .trim();
+
+    // Начало системного сообщения: теги вида [🗡] или значки ⚔/🔥, затем необязательное «Игрок».
+    static COMBAT_PREFIX = "^(?:\\[[^\\]]{1,24}\\]\\s*|[^\\p{L}\\p{N}\\s\\[]{1,4}\\s+)*(?:Игрок\\s+|Player\\s+)?";
+    static COMBAT_NAME = "([A-Za-z0-9_]{2,16})";
+
+    // [регулярка, номер группы убийцы, номер группы жертвы]
+    static COMBAT_PATTERNS = (() => {
+        const start = RxPlayStats.COMBAT_PREFIX + RxPlayStats.COMBAT_NAME;
+        const name = RxPlayStats.COMBAT_NAME;
+        const pattern = (middle) => new RegExp(`${start}\\s+${middle}\\s+${name}`, "iu");
+        return [
+            // «X был убит игроком Y», «X погиб от руки Y», «X умер от руки игрока Y»
+            [pattern("(?:был[аи]?\\s+)?(?:убит|застрелен|взорван|заколот|сражен|поражен|повержен|уничтожен|запинан|зарезан)[аы]?\\s+(?:игроком|от\\s+руки(?:\\s+игрока)?)"), 2, 1],
+            [pattern("(?:погиб(?:ла)?|умер(?:ла)?)\\s+от(?:\\s+руки)?(?:\\s+игрока)?"), 2, 1],
+            // Ванильные английские сообщения
+            [pattern("(?:was slain by|was shot by|was blown up by|was fireballed by|was impaled by|was pummeled by|was killed by|was squashed by|was poked to death by|was skewered by)"), 2, 1],
+            [pattern("didn't want to live in the same world as"), 2, 1],
+            // «Игрок X убил Y!», «X запинал игрока Y серия: x2», «⚔ X убил Y и забирает яйцо!»
+            [pattern("(?:убил|запинал|завалил|прикончил|уничтожил|зарезал|победил|убивает)а?(?:\\s+игрока)?"), 1, 2],
+            [pattern("(?:killed|slew|eliminated)"), 1, 2]
+        ];
+    })();
+
+    static FIRST_PERSON_KILL = new RegExp(
+        `${RxPlayStats.COMBAT_PREFIX}(?:(?:Вы|Ты)\\s+убил[аи]?(?:\\s+игрока)?|You\\s+(?:killed|slew))\\s+${RxPlayStats.COMBAT_NAME}`, "iu");
+    static FIRST_PERSON_DEATH = new RegExp(
+        `${RxPlayStats.COMBAT_PREFIX}(?:Вы\\s+(?:погибли|умерли)|Ты\\s+погиб(?:ла)?|You\\s+died|You\\s+were\\s+killed|You\\s+have\\s+died)(?:\\s|[.,!:;)]|$)`, "iu");
+
     static detectCombatEvent = (line, timestamp = Date.now()) => {
         const session = RxPlayStats.currentSession;
         if (!session || !/(?:\[CHAT\]|ChatComponent|Server thread\/INFO)/i.test(line)) return false;
         const nickname = session.nickname.toLocaleLowerCase("en-US");
+        const message = RxPlayStats.normalizeChatText(
+            line.replace(/^.*?(?:\[CHAT\]\s*|ChatComponent\/\]:\s*|Server thread\/INFO\]:\s*)/i, "")
+        );
         let killer = "";
         let victim = "";
-        let match = line.match(/\[🗡\]\s*Игрок\s+([A-Za-z0-9_]{2,16})\s+убил\s+([A-Za-z0-9_]{2,16})!/iu);
-        if (match) {
-            killer = match[1];
-            victim = match[2];
-        } else {
-            match = line.match(/\[🗡\]\s*Игрок\s+([A-Za-z0-9_]{2,16})\s+погиб!/iu);
-            if (match && match[1].toLocaleLowerCase("en-US") === nickname) {
-                if (!RxPlayStats.isDuplicateEvent(`death:${nickname}`, timestamp)) RxPlayStats.recordDeath("server-log", timestamp);
-                return true;
-            }
 
-            const message = line.replace(/^.*?(?:\[CHAT\]\s*|ChatComponent\/\]:\s*)/i, "");
-            const englishPatterns = [
-                /^(?:\[[^\]]{1,24}\]\s*)*([A-Za-z0-9_]{2,16})\s+(?:was slain by|was shot by|was blown up by|was fireballed by|was impaled by|was pummeled by|was killed by|was squashed by|was poked to death by|was skewered by)\s+([A-Za-z0-9_]{2,16})(?:\b|\s+using)/i,
-                /^(?:\[[^\]]{1,24}\]\s*)*([A-Za-z0-9_]{2,16})\s+didn't want to live in the same world as\s+([A-Za-z0-9_]{2,16})/i
-            ];
-            for (const pattern of englishPatterns) {
-                const englishMatch = message.match(pattern);
-                if (englishMatch) {
-                    victim = englishMatch[1];
-                    killer = englishMatch[2];
+        // Сообщения от первого лица: многие серверы шлют их в чат самому игроку,
+        // и только в начале строки, чтобы фраза из чужого сообщения в чате не засчиталась.
+        const firstPersonKill = message.match(RxPlayStats.FIRST_PERSON_KILL);
+        if (firstPersonKill) {
+            killer = session.nickname;
+            victim = firstPersonKill[1];
+        } else if (RxPlayStats.FIRST_PERSON_DEATH.test(message)) {
+            if (!RxPlayStats.isDuplicateEvent(`death:${nickname}`, timestamp)) RxPlayStats.recordDeath("chat-firstperson", timestamp);
+            return true;
+        } else {
+            for (const [pattern, killerGroup, victimGroup] of RxPlayStats.COMBAT_PATTERNS) {
+                const match = message.match(pattern);
+                if (match) {
+                    killer = match[killerGroup];
+                    victim = match[victimGroup];
                     break;
-                }
-            }
-            if (!killer && !victim) {
-                const ownDeathPattern = new RegExp(`^(?:\\[[^\\]]{1,24}\\]\\s*)*${RxPlayStats.escapeRegExp(session.nickname)}\\s+(?:died|drowned|burned to death|went up in flames|hit the ground too hard|fell from a high place|blew up|starved to death|suffocated in a wall|withered away|froze to death|was killed by magic|tried to swim in lava|was struck by lightning)`, "i");
-                if (ownDeathPattern.test(message)) {
-                    if (!RxPlayStats.isDuplicateEvent(`death:${nickname}`, timestamp)) RxPlayStats.recordDeath("vanilla-log", timestamp);
-                    return true;
                 }
             }
         }
 
-        if (!killer && !victim) return false;
+        if (!killer && !victim) {
+            // Своя смерть без убийцы-игрока: «Игрок X погиб!», «X был убит!», ванильные смерти от окружения
+            const ownDeathPattern = new RegExp(`${RxPlayStats.COMBAT_PREFIX}${RxPlayStats.escapeRegExp(session.nickname)}\\s+(?:погиб(?:ла)?|был[а]?\\s+убит[а]?|умер(?:ла)?|died|drowned|burned to death|went up in flames|hit the ground too hard|fell from a high place|blew up|starved to death|suffocated in a wall|withered away|froze to death|was killed|was slain|tried to swim in lava|was struck by lightning|утонул(?:а)?|сгорел(?:а)?|разбил(?:ся|ась)|упал[а]?\\s+с|взорвал(?:ся|ась)|задохнул(?:ся|ась)|иссох(?:ла)?|замерз(?:ла)?|попытал(?:ся|ась)\\s+переплыть)(?:\\s|[.,!:;)]|$)`, "iu");
+            if (ownDeathPattern.test(message)) {
+                if (!RxPlayStats.isDuplicateEvent(`death:${nickname}`, timestamp)) RxPlayStats.recordDeath("server-log", timestamp);
+                return true;
+            }
+            return false;
+        }
+
         const killerLower = killer.toLocaleLowerCase("en-US");
         const victimLower = victim.toLocaleLowerCase("en-US");
         if (killerLower === nickname && victimLower !== nickname) {
-            if (!RxPlayStats.isDuplicateEvent(`kill:${killerLower}:${victimLower}`, timestamp)) {
+            // Ключ по жертве: одно убийство, о котором сервер пишет несколькими сообщениями, не задваивается
+            if (!RxPlayStats.isDuplicateEvent(`kill:self:${victimLower}`, timestamp)) {
                 RxPlayStats.recordKill("server-log", timestamp);
             }
         } else if (victimLower === nickname && killerLower !== nickname) {

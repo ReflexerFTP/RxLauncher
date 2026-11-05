@@ -87,7 +87,7 @@ class RxDownloader {
     }
 
     // Скачать файл
-    static downloadFile = async (url, filePath, displayName = null, updateProgress = true, hashes = {}) => {
+    static downloadFile = async (url, filePath, displayName = null, updateProgress = true, hashes = {}, limits = {}) => {
         RxCollector.writeLog(`New download [url=${url}] [displayName=${displayName}]`);
         if (displayName === null) {
             displayName = path.basename(filePath);
@@ -95,6 +95,8 @@ class RxDownloader {
         await RxDownloader.prepareUIToDownload(displayName);
         await RxDownloader.abortable(signal => RxHttp.download(url, filePath, {
             hashes,
+            ...(limits.expectedSize !== undefined ? {expectedSize: limits.expectedSize} : {}),
+            ...(limits.maxBytes !== undefined ? {maxBytes: limits.maxBytes} : {}),
             signal,
             onProgress: (received, total) => {
                 if (updateProgress && total > 0) {

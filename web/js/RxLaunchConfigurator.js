@@ -1050,10 +1050,13 @@ variable {
             return configResult;
         }
 
-        const authlibInjectorPath = path.join(GAME_DATA, "cache", "authlib-injector.jar");
-        if (!fs.existsSync(authlibInjectorPath)) {
-            await RxDownloader.downloadFile(AUTHLIB_INJECTOR_URL, authlibInjectorPath);
+        const trusted = require('../runtimeSecurity').AUTHLIB;
+        const authlibInjectorPath = path.join(GAME_DATA, 'cache', 'authlib-injector-' + trusted.version + '.jar');
+        const hashes = {sha256: trusted.sha256};
+        if (!await RxHttp.isFileValid(authlibInjectorPath, hashes)) {
+            await RxDownloader.downloadFile(trusted.url, authlibInjectorPath, 'authlib-injector ' + trusted.version, true, hashes, {expectedSize: trusted.size, maxBytes: trusted.size});
         }
+        if (!await RxHttp.isFileValid(authlibInjectorPath, hashes)) throw new Error('Unverified authentication agent');
 
         configResult.customArgs.push(`-javaagent:${authlibInjectorPath.replaceAll(/\\/gi, "/")}=ely.by`);
         if (IS_APP_IN_DEV) {

@@ -202,5 +202,58 @@ assert.strictEqual(recovered.totals.kills, 6, "backup recovery must preserve det
 assert.strictEqual(recovered.totals.sessions, 101, "backup recovery must not repeat legacy migration");
 assert.ok(fs.readdirSync(tempRoot).some(name => name.startsWith("play-statistics.corrupt-")), "corrupt data must be backed up");
 
+// ---------- распознавание боёв: русский ванильный интерфейс и универсальные сообщения от первого лица ----------
+const totals = () => RxPlayStats.getDashboard({period: "all", nickname: "all"}).totals;
+const chat = (text) => RxPlayStats.handleGameLog(`[20:00:00] [Render thread/INFO]: [System] [CHAT] ${text}\n`);
+
+// Разные никнеймы для сессий, чтобы ключ дедупа смерти (death:<ник>) не схлопнул соседние сессии
+let before = totals();
+RxPlayStats.onGameLaunch({versionId: "vanilla-1.21.4", nickname: "Igrok_RU", pid: 4321});
+chat("Enemy_One был убит игроком Igrok_RU");   // наше убийство, русское ванильное сообщение
+chat("Вы убили Enemy_Two");                      // наше убийство от первого лица (формат многих серверов)
+chat("You killed Enemy_Three");                  // то же по-английски
+chat("Enemy_Four был убит игроком Enemy_Five");  // чужой бой — не считается
+chat("Igrok_RU утонул");                          // наша смерть, русское ванильное сообщение
+let after = totals();
+assert.strictEqual(after.kills - before.kills, 3, "RU vanilla + first-person kills must count, others' kills must not");
+assert.strictEqual(after.deaths - before.deaths, 1, "RU vanilla death counts (near-simultaneous signals collapse by design)");
+assert.ok(RxPlayStats.currentSession.bestKillStreak >= 3, "kill streak must grow from recognised kills");
+RxPlayStats.onGameClose({exitCode: 0, reason: "closed"});
+
+// Отдельная сессия: универсальная смерть от первого лица засчитывается сама по себе
+before = totals();
+RxPlayStats.onGameLaunch({versionId: "vanilla-1.21.4", nickname: "Diver_RU", pid: 4322});
+chat("Вы погибли");
+after = totals();
+assert.strictEqual(after.deaths - before.deaths, 1, "first-person death must count on its own");
+RxPlayStats.onGameClose({exitCode: 0, reason: "closed"});
+
+// Форматы реальных серверов (sun-box): стилизованные буквы ᴛ ᴋ ᴀ ʜ ᴘ вместо обычных
+let clock = Date.now();
+const serverChat = (text) => {
+    clock += 5000;
+    RxPlayStats.detectCombatEvent(`[20:00:00] [Render thread/INFO]: [System] [CHAT] ${text}`, clock);
+};
+before = totals();
+RxPlayStats.onGameLaunch({versionId: "fabric-1.21.4", nickname: "Reflexskid", pid: 4323});
+serverChat("[🗡] Игрок Reflexskid убил Enemy_A!");
+serverChat("[🗡] Reflexskid зᴀпиʜᴀл игᴘᴏᴋᴀ Enemy_B серия: x2 🔥");
+serverChat("[🗡] Enemy_C был убиᴛ игроᴋом Reflexskid");
+serverChat("⚔ Reflexskid убил Enemy_D и забирает яйцо!");
+serverChat("[🗡] Enemy_E зᴀпиʜᴀл игᴘᴏᴋᴀ Other_F серия: x1 🔥");  // чужой бой
+serverChat("● ᴀᴅᴍɪɴ Enemy_G ▶ Игрок Reflexskid убил Enemy_H");      // сообщение игрока, не система
+serverChat("● ᴀᴅᴍɪɴ Enemy_G ▶ Вы погибли");                          // тоже чат, смерть не засчитывается
+assert.strictEqual(RxPlayStats.currentSession.bestKillStreak, 4, "four server-format kills make a streak of 4");
+serverChat("[🗡] Reflexskid был убиᴛ игроᴋом Enemy_A");
+serverChat("[🗡] Enemy_B зᴀпиʜᴀл игᴘᴏᴋᴀ Reflexskid серия: x1 🔥");
+serverChat("[🗡] Игрок Reflexskid погиб!");
+serverChat("Reflexskid был убит!");
+after = totals();
+assert.strictEqual(after.kills - before.kills, 4, "styled server kill messages must count, others' and player chat must not");
+assert.strictEqual(after.deaths - before.deaths, 4, "styled server death messages must count");
+assert.strictEqual(RxPlayStats.currentSession.currentKillStreak, 0, "death resets the current streak");
+assert.ok(after.bestKillStreak >= 4, "best streak is kept after death");
+RxPlayStats.onGameClose({exitCode: 0, reason: "closed"});
+
 fs.rmSync(tempRoot, {recursive: true, force: true});
 console.log("RxPlayStats tests passed");

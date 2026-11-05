@@ -7,7 +7,7 @@ const vm = require('node:vm');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rx-java-test-'));
 const executable = path.join(root, 'manual-java.exe'); fs.writeFileSync(executable, 'fixture');
 let installed = 0;
-const ctx = vm.createContext({fs, path, crypto, process, fsPromises: fs.promises, console,
+const ctx = vm.createContext({fs, path, crypto, process, require, fsPromises: fs.promises, console,
     GAME_DATA: root, IS_APP_IN_DEV: false,
     RxConfig: {read: (key, fallback) => ({autoSelectJava: false, selectedJava: executable}[key] ?? fallback)},
     RxUtils: {getGameRoot: () => root, createMissingDirectories: dir => fs.mkdirSync(dir, {recursive: true})},
@@ -30,6 +30,10 @@ const ctx = vm.createContext({fs, path, crypto, process, fsPromises: fs.promises
     assert.equal(ctx.Java.isInstalled('21'), false, 'An empty directory is not an installed runtime');
     const bin = path.join(root, 'javaDownloads', '21', 'jdk', 'bin'); fs.mkdirSync(bin, {recursive: true});
     fs.writeFileSync(path.join(bin, process.platform === 'win32' ? 'java.exe' : 'java'), 'fixture');
+    assert.equal(ctx.Java.isInstalled('21'), false, 'Unverified legacy runtimes are not trusted');
+    require('../runtimeSecurity').writeRuntimeReceipt(path.join(root, 'javaDownloads', '21'), {major:21,release:'test-21',sha256:'a'.repeat(64)});
     assert.equal(ctx.Java.isInstalled('21'), true);
+    fs.appendFileSync(path.join(bin, process.platform === 'win32' ? 'java.exe' : 'java'), 'tampered');
+    assert.equal(ctx.Java.isInstalled('21'), false, 'Modified runtime must be reinstalled');
     console.log('Manual Java selection and incomplete runtime tests passed');
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => fs.rmSync(root, {recursive: true, force: true}));

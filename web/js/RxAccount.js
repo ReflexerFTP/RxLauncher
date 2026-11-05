@@ -115,37 +115,33 @@ class RxAccount {
         }
     };
 
-    // Вход через Discord: браузер открывает сайт, лаунчер раз в 2 секунды спрашивает, чем закончилось (до 5 минут)
+    // Вход через Discord (RFC 8252 + PKCE): браузер открывает сайт, а после входа сайт отправляет его на 127.0.0.1
+    // этого ПК с одноразовым кодом. Токен выдаётся только за код + verifier, который знает лишь этот лаунчер (до 5 минут)
     static discordWait = null;
     static loginDiscord = async () => {
         RxAccount.cancelDiscord();
-        const launcher = crypto.randomBytes(24).toString("base64url");
         const wait = {cancelled: false};
         RxAccount.discordWait = wait;
-        openExternal(`${SITE_URL}/api/auth/discord/start?mode=login&launcher=${launcher}`);
-        const until = Date.now() + 5 * 60e3;
-        await new Promise(resolve => setTimeout(resolve, 2500));
-        while (!wait.cancelled && Date.now() < until) {
-            try {
-                const data = await RxAccount.call("auth/discord/poll", {launcher});
-                if (data.token) {
-                    await RxAccount.remember(data.token, data.user);
-                    RxAccount.useProfile(data.user.nick);
-                    RxCollector.writeLog(`RxAccount: Logged in with Discord [nick=${data.user.nick}]`);
-                    return data.user;
-                }
-            } catch (error) {
-                // expired — браузер ещё не дошёл до сайта; ждём дальше
-                if (error.code !== "expired" && error.code !== "offline") throw error;
-            }
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
+        const verifier = crypto.randomBytes(32).toString("base64url");
+        const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
+        const {id, port} = await ipcRenderer.invoke("discord-loopback", {action: "start"});
         if (wait.cancelled) return null;
-        throw Object.assign(new Error("discordTimeout"), {code: "discordTimeout"});
+        openExternal(`${SITE_URL}/api/auth/discord/start?mode=login&port=${port}&challenge=${challenge}`);
+        const code = await ipcRenderer.invoke("discord-loopback", {action: "wait", id});
+        if (wait.cancelled) return null;
+        if (RxAccount.discordWait === wait) RxAccount.discordWait = null;
+        if (!code) throw Object.assign(new Error("discordTimeout"), {code: "discordTimeout"});
+        const data = await RxAccount.call("auth/discord/exchange", {code, verifier});
+        await RxAccount.remember(data.token, data.user);
+        RxAccount.useProfile(data.user.nick);
+        RxCollector.writeLog(`RxAccount: Logged in with Discord [nick=${data.user.nick}]`);
+        return data.user;
     };
     static cancelDiscord = () => {
-        if (RxAccount.discordWait) RxAccount.discordWait.cancelled = true;
+        if (!RxAccount.discordWait) return;
+        RxAccount.discordWait.cancelled = true;
         RxAccount.discordWait = null;
+        ipcRenderer.invoke("discord-loopback", {action: "stop"}).catch(() => {});
     };
 
     static logout = async () => {

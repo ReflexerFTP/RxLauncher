@@ -19,6 +19,8 @@ if (!fs.existsSync(csc)) throw new Error(`C# compiler not found: ${csc}`);
 
 const payload = path.join(distDir, `RxLauncher-Core-${version}.exe`);
 if (withPayload && !fs.existsSync(payload)) throw new Error(`NSIS installer not found: ${payload}`);
+const signer = require('../../scripts/sign-windows-artifact');
+if (withPayload) signer.verify(payload);
 
 // Объём распакованного лаунчера — для полосы прогресса
 const dirSize = (dir) => fs.readdirSync(dir, {withFileTypes: true}).reduce((sum, entry) => {
@@ -56,6 +58,7 @@ try {
     fs.mkdirSync(path.dirname(output), {recursive: true});
     const log = execFileSync(csc, args, {encoding: "utf8"});
     if (log.trim()) console.log(log.trim());
+    if (withPayload || process.argv.includes('--signed')) signer.sign(output);
     console.log(`INSTALLER OK ${output} (${(fs.statSync(output).size / 1024 / 1024).toFixed(1)} MB)`);
 } finally {
     fs.rmSync(temp, {recursive: true, force: true});

@@ -34,6 +34,7 @@ const userDataPath = app.getPath("userData");
 const accountStore = require("./accountStore").createAccountStore(path.join(userDataPath, "accounts.json"), safeStorage);
 const launcherConfigPath = path.join(userDataPath, "config.json");
 const gameFileSafety = require("./gameFileSafety").createGameFileSafety(launcherConfigPath);
+const workerFileSafety = require("./workerFileSafety").createWorkerFileSafety(() => gameFileSafety.configuredRoot());
 const launcherBranding = createLauncherBranding({app, shell, nativeImage});
 const initialLauncherAvatarId = launcherBranding.readSelectedAvatarId(launcherConfigPath);
 launcherBranding.applyAppUserModelId();
@@ -669,6 +670,8 @@ const commandHistoryVault = require("./commandHistoryVault").createCommandHistor
     vaultRoot: path.join(userDataPath, "vault"), safeStorage, log: message => console.log(message)
 });
 let commandHistoryDirectory = null;
+// Вход через Discord: браузер возвращает одноразовый код на 127.0.0.1 (RFC 8252)
+const discordLoopback = require("./discordLoopback").createDiscordLoopback();
 const readLauncherSetting = (key, fallback) => {
     try {
         const value = JSON.parse(fs.readFileSync(launcherConfigPath, "utf8"))[key];
@@ -754,7 +757,7 @@ const DISCORD_RPC_CLIENT_ID = process.env.RX_DISCORD_CLIENT_ID || "1531981667160
 const DISCORD_RPC_LARGE_IMAGE_KEY = process.env.RX_DISCORD_RPC_LARGE_IMAGE_KEY
     || "https://rxlauncher.xyz/assets/rpc/rxlauncher-rpc-3d-v3.gif";
 const DISCORD_RPC_TELEGRAM_URL = "https://t.me/rxlauncher";
-const DISCORD_RPC_DISCORD_URL = "https://discord.gg/bpRwXsXeuj";
+const DISCORD_RPC_DISCORD_URL = "https://discord.gg/eDF6cUmAfN";
 const DISCORD_RPC_RETRY_DELAY = 15000;
 const DISCORD_RPC_MIN_UPDATE_INTERVAL = 4200;
 const DISCORD_RPC_SMALL_IMAGE_KEYS = {
@@ -1562,11 +1565,19 @@ app.whenReady().then(() => {
     });
 
     // Диалог открытия файлов
+    handleTrusted("safe-nbt-read", (_event, file) => require("./nbtWorker").readLevelDat(workerFileSafety.readNbt(file)));
+    handleTrusted("safe-create-staging", (_event, purpose) => workerFileSafety.createStaging(purpose));
+    handleTrusted("safe-archive-unpack", (_event, payload) => {
+        const {archive, destination, type} = workerFileSafety.archive(payload);
+        return require("./archiveWorker").unpack(archive, destination, type);
+    });
+
     handleTrusted("open-dialog", async (event, options) => {
         let result = await dialog.showOpenDialog(options);
         if (result.canceled === true) {
             return false;
         }
+        workerFileSafety.approveDialog(result.filePaths || (result.filePath ? [result.filePath] : []));
         return result.filePaths || result.filePath;
     });
 
@@ -1606,6 +1617,13 @@ app.whenReady().then(() => {
         } catch (_) {
             return "";
         }
+    });
+
+    handleTrusted("discord-loopback", (_event, payload = {}) => {
+        if (payload?.action === "start") return discordLoopback.start();
+        if (payload?.action === "wait") return discordLoopback.wait(payload.id);
+        discordLoopback.stop();
+        return true;
     });
 
     handleTrusted("curseforge-key-status", () => ({

@@ -21,8 +21,10 @@ if ([string]::IsNullOrWhiteSpace($PublisherName)) {
 $targets = @(
     # NSIS-ядро (его же скачивает автообновление). «RxLauncher Setup» — собственная обёртка, подписывается отдельно
     (Join-Path $DistPath "RxLauncher-Core-$Version.exe"),
+    (Join-Path $DistPath "RxLauncher Setup $Version.exe"),
     (Join-Path $DistPath 'win-unpacked\RxLauncher.exe'),
-    (Join-Path $DistPath 'win-unpacked\resources\elevate.exe')
+    (Join-Path $DistPath 'win-unpacked\resources\elevate.exe'),
+    (Join-Path $projectRoot 'resources\installer\build\RxUninstall.exe')
 )
 
 $results = foreach ($target in $targets) {

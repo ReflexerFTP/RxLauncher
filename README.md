@@ -8,7 +8,7 @@
 
 - [Последний релиз (установщик для Windows)](https://github.com/ReflexerFTP/RxLauncher/releases/latest)
 - [Сайт лаунчера](https://rxlauncher.xyz)
-- [Discord](https://discord.gg/bpRwXsXeuj) · [Telegram](https://t.me/rxlauncher)
+- [Discord](https://discord.gg/eDF6cUmAfN) · [Telegram](https://t.me/rxlauncher)
 - [Плагин на сервер для поддержки системы скинов лаунчера](https://github.com/MaxRx/RxLauncher-Skins-Plugin)
 
 ## Возможности

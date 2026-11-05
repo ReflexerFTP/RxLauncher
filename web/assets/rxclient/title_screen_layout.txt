@@ -1331,7 +1331,7 @@ element {
 
 element {
   button_element_executable_block_identifier = rx-social-discord-block
-  [executable_action_instance:rx-social-discord-action-1][action_type:openlink] = https://discord.gg/bpRwXsXeuj
+  [executable_action_instance:rx-social-discord-action-1][action_type:openlink] = https://discord.gg/eDF6cUmAfN
   [executable_block:rx-social-discord-block][type:generic] = [executables:rx-social-discord-action-1;]
   backgroundnormal = [source:local]/config/fancymenu/assets/rxclient/discord_icon.png
   backgroundhovered = [source:local]/config/fancymenu/assets/rxclient/discord_icon.png

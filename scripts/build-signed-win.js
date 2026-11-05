@@ -19,6 +19,12 @@ if ((!pfxCredentialsReady && !certificateStoreReady) || !publisherName) {
 
 const builder = path.join(root, "node_modules", "electron-builder", "out", "cli", "cli.js");
 const config = path.join(root, "electron-builder.signed.config.js");
+const runNode = args => {
+    const result = spawnSync(process.execPath, args, {cwd: root, env: process.env, stdio: 'inherit', windowsHide: true});
+    if (result.error) throw result.error;
+    if (result.status !== 0) process.exit(result.status || 1);
+};
+runNode([path.join(root, 'resources/installer/build-installer.cjs'), '--uninstaller', '--signed']);
 const build = spawnSync(process.execPath, [builder, "build", "--win", "--publish", "never", "--config", config], {
     cwd: root,
     env: process.env,
@@ -26,6 +32,7 @@ const build = spawnSync(process.execPath, [builder, "build", "--win", "--publish
 });
 if (build.error) throw build.error;
 if (build.status !== 0) process.exit(build.status || 1);
+runNode([path.join(root, 'resources/installer/build-installer.cjs'), path.join(root, 'dist')]);
 
 const verifier = path.join(root, "scripts", "verify-windows-signatures.ps1");
 const verify = spawnSync("powershell.exe", [

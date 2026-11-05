@@ -207,7 +207,7 @@ const {RxImport, RxGameFiles} = context;
         const evilDir = path.join(RxImport.backupRoot(), "evil");
         write(path.join(evilDir, "manifest.json"), JSON.stringify({version: 1, id: "evil", createdAt: 1, sourceName: "x", target: gameData,
             parts: {mods: {added: ["../outside.txt", path.join("..", "outside.txt"), outside]}}, restored: {}}));
-        await RxImport.restore("evil", ["mods"]);
+        await assert.rejects(RxImport.restore("evil", ["mods"]), /Unsafe import backup path/);
         assert.strictEqual(fs.readFileSync(outside, "utf8"), "keep");
         assert.strictEqual(RxImport.readManifest("../evil"), null, "backup ids cannot leave the backup folder");
 

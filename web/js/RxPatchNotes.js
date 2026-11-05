@@ -1,6 +1,32 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "3.13.0-security",
+            version: "3.13.0",
+            date: "2026-11-06T12:00:00+03:00",
+            image: "assets/version-heroes/1.20.png",
+            tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
+            title: {ru: "Защищённый вход через Discord", en: "Secure Discord sign-in"},
+            summary: {
+                ru: "Вход через Discord переделан: чужая ссылка больше не может увести аккаунт. Плюс защита от повреждённых миров, модов и архивов.",
+                en: "Discord sign-in was rebuilt so a stranger's link can no longer steal your account. Plus protection against broken worlds, mods and archives."
+            },
+            changes: {
+                ru: [
+                    "Вход через Discord: после входа браузер возвращает одноразовый код прямо в лаунчер на этом ПК, а токен выдаётся только вместе с секретом, который знает лишь ваш лаунчер. Ссылка «войти через Discord» от постороннего больше ничего не даёт.",
+                    "В старых версиях вход через Discord в лаунчере отключён — обновитесь. Вход по паролю работает как раньше.",
+                    "Миры (level.dat), моды, ресурспаки и архивы читаются с ограничениями по размеру, глубине и времени в отдельном потоке — «бомба» из файла больше не подвесит лаунчер.",
+                    "Java проверяется по SHA-256 и ставится через временную папку с откатом; authlib закреплён по хешу. Откат импорта не идёт по ссылкам и обходам пути."
+                ],
+                en: [
+                    "Discord sign-in: after signing in, the browser hands a one-time code straight to the launcher on this PC, and a token is issued only together with a secret that only your launcher knows. A \"sign in with Discord\" link from a stranger no longer gives them anything.",
+                    "Older versions can no longer sign in with Discord in the launcher — please update. Password sign-in works as before.",
+                    "Worlds (level.dat), mods, resource packs and archives are read with size, depth and time limits in a separate thread, so a malicious file can't freeze the launcher.",
+                    "Java is verified by SHA-256 and installed through a staging folder with rollback; authlib is pinned by hash. Import rollback no longer follows links or path traversal."
+                ]
+            }
+        },
+        {
             id: "3.12.0-reliability",
             version: "3.12.0",
             date: "2026-10-29T22:00:00+03:00",
@@ -304,7 +330,7 @@ class RxPatchNotes {
             changes: {
                 ru: [
                     "Настройки → «О лаунчере»: новый блок «Сообщество» с Discord, Telegram, GitHub и сайтом.",
-                    "Новый Discord: discord.gg/bpRwXsXeuj, новый Telegram: t.me/rxlauncher.",
+                    "Новый Discord: discord.gg/eDF6cUmAfN, новый Telegram: t.me/rxlauncher.",
                     "Исходный код лаунчера теперь на GitHub: ReflexerFTP/RxLauncher.",
                     "Сайт лаунчера: rxlauncher.xyz.",
                     "В статусе Discord две кнопки — Discord и Telegram RxLaunch.",
@@ -312,7 +338,7 @@ class RxPatchNotes {
                 ],
                 en: [
                     "Settings → About: a new Community block with Discord, Telegram, GitHub and the website.",
-                    "New Discord: discord.gg/bpRwXsXeuj, new Telegram: t.me/rxlauncher.",
+                    "New Discord: discord.gg/eDF6cUmAfN, new Telegram: t.me/rxlauncher.",
                     "The launcher source code now lives on GitHub: ReflexerFTP/RxLauncher.",
                     "Launcher website: rxlauncher.xyz.",
                     "Discord status shows two buttons — RxLaunch Discord and Telegram.",
