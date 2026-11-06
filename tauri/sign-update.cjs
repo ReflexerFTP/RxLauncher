@@ -13,7 +13,8 @@ if (!key) {
     process.exit(0);
 }
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "src-tauri", "tauri.conf.json"), "utf8")).version;
-const file = fs.readdirSync(dir).find(name => /setup\.exe$/i.test(name) && name.includes(version));
+// Автообновление ставит сам NSIS Tauri (RxLauncher_<версия>_x64-setup.exe), а не «RxLauncher Setup <версия>.exe»
+const file = fs.readdirSync(dir).find(name => /_x64-setup\.exe$/i.test(name) && name.includes(version));
 if (!file) throw new Error(`Installer for ${version} not found in ${dir}`);
 const data = fs.readFileSync(path.join(dir, file));
 const sha256 = crypto.createHash("sha256").update(data).digest("hex");

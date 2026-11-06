@@ -48,6 +48,7 @@ pub fn run() {
                 if hidden > 0 {
                     logs::write("info", &format!("CommandHistory: swept {hidden} folder(s) at startup"));
                 }
+                system::keep_custom_uninstaller();
             });
             logs::write("info", &format!("RxLauncher {} started (Tauri {})", app.package_info().version, tauri::VERSION));
             updater::start(app.handle());

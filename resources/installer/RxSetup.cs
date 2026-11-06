@@ -4,6 +4,7 @@
 // Без встроенного NSIS (или с --uninstall) программа работает как деинсталлятор: её открывает
 // «Uninstall RxLauncher.exe» при обычном запуске, а удаление файлов идёт тем же NSIS в тихом режиме.
 // Собирается скриптом build-installer.cjs (csc из .NET Framework 4.x, C# 5).
+// С символом TAURI (tauri/build-setup.cjs) внутри лежит NSIS-установщик Tauri: другие аргументы, папка и деинсталлятор.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -371,6 +372,47 @@ namespace RxSetup
         }
 
         // ---------- поиск прошлой установки ----------
+#if TAURI
+        // NSIS Tauri (режим currentUser) пишет ключ Uninstall\RxLauncher. Версия на Electron живёт под своим ключом
+        // в другой папке — ставить поверх неё нельзя
+        private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\RxLauncher";
+        private const string NsisUninstaller = "uninstall.exe";
+
+        private static string DetectInstallDir(out bool existing)
+        {
+            existing = false;
+            using (RegistryKey app = Registry.CurrentUser.OpenSubKey(UninstallKey))
+            {
+                string location = app == null ? "" : (app.GetValue("InstallLocation") as string ?? "").Trim('"');
+                if (location != "" && File.Exists(Path.Combine(location, NsisUninstaller)))
+                {
+                    existing = true;
+                    return location;
+                }
+            }
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RxLauncher");
+        }
+
+        // Окно удаления кладём в папку лаунчера, и «Приложения» Windows открывают его вместо голого NSIS
+        private void RegisterUninstaller()
+        {
+            string target = Path.Combine(installDir, "resources", "RxUninstall.exe");
+            using (Stream source = Assembly.GetExecutingAssembly().GetManifestResourceStream("uninstaller.exe"))
+            {
+                if (source == null) return;
+                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                using (FileStream file = File.Create(target)) source.CopyTo(file);
+            }
+            using (RegistryKey app = Registry.CurrentUser.OpenSubKey(UninstallKey, true))
+            {
+                if (app == null) return;
+                app.SetValue("UninstallString", "\"" + target + "\"");
+                app.SetValue("QuietUninstallString", "\"" + Path.Combine(installDir, NsisUninstaller) + "\" /S");
+            }
+        }
+#else
+        private const string NsisUninstaller = "Uninstall RxLauncher.exe";
+
         private static string DetectInstallDir(out bool existing)
         {
             existing = false;
@@ -404,6 +446,7 @@ namespace RxSetup
             }
             return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "RxLauncher");
         }
+#endif
 
         private static string DesktopShortcutPath()
         {
@@ -799,9 +842,13 @@ namespace RxSetup
             Invalidate();
         }
 
-        // Мешает только лаунчер, запущенный из папки установки; копия в другом месте — нет
+        // Мешает только лаунчер, запущенный из папки установки; копия в другом месте — нет.
+        // NSIS Tauri закрывает все RxLauncher.exe по имени, поэтому там предупреждаем о любом запущенном
         private List<Process> RunningInTarget()
         {
+#if TAURI
+            return Process.GetProcessesByName("RxLauncher").ToList();
+#else
             List<Process> result = new List<Process>();
             string target = Path.GetFullPath(installDir).TrimEnd('\\') + "\\";
             foreach (Process process in Process.GetProcessesByName("RxLauncher"))
@@ -816,6 +863,7 @@ namespace RxSetup
                 }
             }
             return result;
+#endif
         }
 
         private void SetProgress(float value, string text)
@@ -872,7 +920,11 @@ namespace RxSetup
                 bool sawCleanup = before < expectedBytes / 4; // при обновлении NSIS сначала удаляет старые файлы
                 float part = 0f;
                 Stopwatch clock = Stopwatch.StartNew();
+#if TAURI
+                ProcessStartInfo info = new ProcessStartInfo(payload, "/S /D=" + installDir) { UseShellExecute = false, CreateNoWindow = true };
+#else
                 ProcessStartInfo info = new ProcessStartInfo(payload, "/S /currentuser /D=" + installDir) { UseShellExecute = false, CreateNoWindow = true };
+#endif
                 using (Process process = Process.Start(info))
                 {
                     while (!process.WaitForExit(250))
@@ -898,6 +950,9 @@ namespace RxSetup
                 string shortcut = DesktopShortcutPath();
                 if (!desktopShortcut && File.Exists(shortcut)) { try { File.Delete(shortcut); } catch { } }
                 SaveTabsChoice();
+#if TAURI
+                try { RegisterUninstaller(); } catch { }
+#endif
                 Thread.Sleep(300);
                 SetProgress(1f, null);
                 Thread.Sleep(450);
@@ -929,13 +984,17 @@ namespace RxSetup
         {
             try
             {
-                string uninstaller = Path.Combine(installDir, "Uninstall RxLauncher.exe");
+                string uninstaller = Path.Combine(installDir, NsisUninstaller);
                 if (!File.Exists(uninstaller)) throw new InstallException("no-uninstaller");
                 long before = Math.Max(1, DirectorySize(installDir));
                 float part = 0f;
                 Stopwatch clock = Stopwatch.StartNew();
                 // _?= — NSIS работает на месте и ждёт завершения, а не перезапускается из временной папки
+#if TAURI
+                ProcessStartInfo info = new ProcessStartInfo(uninstaller, "/S _?=" + installDir) { UseShellExecute = false, CreateNoWindow = true };
+#else
                 ProcessStartInfo info = new ProcessStartInfo(uninstaller, "/S /currentuser _?=" + installDir) { UseShellExecute = false, CreateNoWindow = true };
+#endif
                 using (Process process = Process.Start(info))
                 {
                     while (!process.WaitForExit(200))
@@ -951,6 +1010,10 @@ namespace RxSetup
 
                 // Сам деинсталлятор NSIS с _?= остаётся в папке — убираем его и пустую папку
                 try { File.Delete(uninstaller); } catch { }
+#if TAURI
+                // Окно удаления работает из временной копии, так что исходник в папке лаунчера можно стереть
+                try { File.Delete(Path.Combine(installDir, "resources", "RxUninstall.exe")); } catch { }
+#endif
                 try
                 {
                     if (Directory.Exists(installDir) && !Directory.EnumerateFiles(installDir, "*", SearchOption.AllDirectories).Any())
@@ -962,6 +1025,10 @@ namespace RxSetup
                 if (deleteSettings && canDeleteSettings)
                 {
                     try { Directory.Delete(UserDataDir(), true); } catch { }
+#if TAURI
+                    // Данные WebView2 (кеш, localStorage) — отдельно от настроек лаунчера
+                    try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "xyz.rxlauncher.launcher"), true); } catch { }
+#endif
                 }
                 SetProgress(1f, null);
                 Thread.Sleep(450);

@@ -94,6 +94,31 @@ pub fn info(app: &AppHandle) -> Value {
     })
 }
 
+// Окно удаления из «RxLauncher Setup» (resources\RxUninstall.exe): автообновление запускает NSIS Tauri,
+// а тот возвращает в «Приложения» свой деинсталлятор — указываем снова на окно RxLauncher
+pub fn keep_custom_uninstaller() {
+    let Some(dir) = std::env::current_exe().ok().and_then(|exe| exe.parent().map(|p| p.to_path_buf())) else { return };
+    let custom = dir.join("resources").join("RxUninstall.exe");
+    if !custom.is_file() {
+        return;
+    }
+    let Ok(key) = winreg::RegKey::predef(winreg::enums::HKEY_CURRENT_USER).open_subkey_with_flags(
+        r"Software\Microsoft\Windows\CurrentVersion\Uninstall\RxLauncher",
+        winreg::enums::KEY_READ | winreg::enums::KEY_WRITE,
+    ) else { return };
+    // Только запись этой копии лаунчера
+    let location = key.get_value::<String, _>("InstallLocation").unwrap_or_default();
+    if !location.trim_matches('"').eq_ignore_ascii_case(&dir.to_string_lossy()) {
+        return;
+    }
+    let wanted = format!("\"{}\"", custom.display());
+    if key.get_value::<String, _>("UninstallString").ok().as_deref() != Some(wanted.as_str()) {
+        let _ = key.set_value("UninstallString", &wanted);
+        let _ = key.set_value("QuietUninstallString", &format!("\"{}\" /S", dir.join("uninstall.exe").display()));
+        crate::logs::write("info", "Uninstall entry points to RxUninstall again");
+    }
+}
+
 // Завершить процесс со всеми дочерними (Minecraft запускает Java, та — свои процессы)
 pub fn kill_tree(pid: u32) -> BridgeResult {
     if pid == 0 || pid == std::process::id() {

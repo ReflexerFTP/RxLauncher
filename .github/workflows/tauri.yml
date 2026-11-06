@@ -63,6 +63,8 @@ jobs:
         run: |
           node tauri/.deps/node_modules/@tauri-apps/cli/tauri.js build
           cp src-tauri/target/release/bundle/nsis/*.exe out/
+          # Красивый установщик (окно RxSetup) поверх NSIS — основной файл для скачивания
+          node tauri/build-setup.cjs "$(ls src-tauri/target/release/bundle/nsis/*_x64-setup.exe)" out
 
       - name: Sign update manifest
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.bundle }}
