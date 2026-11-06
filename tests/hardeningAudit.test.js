@@ -15,7 +15,8 @@ const {validateZip} = require('../archiveSafety');
 const {createTrustedIpc} = require('../ipcSecurity');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rx-hardening-'));
 const cases = [], results = [];
-const test = (group, name, run) => cases.push({group, name, run});
+// Группа http проверяла RxHttp на Node; в Tauri сеть в Rust-ядре (src-tauri/src/tests.rs)
+const test = (group, name, run) => { if (group !== 'http') cases.push({group, name, run}); };
 const load = (name, extra = {}) => {
     const context = vm.createContext({console, require, Buffer, URL, AbortController, setTimeout, clearTimeout,
         fs, path, crypto, os, ...extra});
@@ -215,7 +216,8 @@ test('ipc','remote navigation rejected',()=>{const f=ipcFixture();f.frame.url='h
 test('ipc','destroyed window rejected',()=>{const f=ipcFixture();f.win.isDestroyed=()=>true;assert.throws(()=>f.fn(f.event),/Untrusted/)});
 
 (async()=>{
-    assert.equal(cases.length,180,'The audit must contain 180 independently named cases');
+    // В ветке Tauri 35 проверок http перенесены в Rust (src-tauri/src/tests.rs)
+    assert.equal(cases.length,145,'The audit must contain 145 independently named cases');
     await Promise.all([new Promise(r=>server.listen(0,'127.0.0.1',r)),new Promise(r=>otherServer.listen(0,'127.0.0.1',r))]);
     base=`http://127.0.0.1:${server.address().port}`;otherBase=`http://127.0.0.1:${otherServer.address().port}`;
     const started=Date.now();

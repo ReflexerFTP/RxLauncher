@@ -1,6 +1,34 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.0.0-tauri",
+            version: "4.0.0",
+            date: "2026-11-06T15:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "НОВЫЙ ДВИЖОК", en: "NEW ENGINE"},
+            title: {ru: "RxLauncher на Tauri и Rust", en: "RxLauncher on Tauri and Rust"},
+            summary: {
+                ru: "Лаунчер переехал с Electron на Tauri: ядро на Rust, интерфейс прежний. Установщик в разы меньше, памяти уходит меньше, обновления подписаны.",
+                en: "The launcher moved from Electron to Tauri: a Rust core with the same interface. A far smaller installer, less memory, and signed updates."
+            },
+            changes: {
+                ru: [
+                    "Ядро переписано на Rust: запуск игры, загрузка файлов, Java, Fabric/Quilt/Forge/NeoForge, архивы, проверка модов на стилеры и шифрование данных.",
+                    "Интерфейс остался тем же — все вкладки, настройки, друзья и сборки на месте. Данные, аккаунты и статистика подхватываются от прошлой версии.",
+                    "Установщик весит в несколько раз меньше, лаунчер быстрее запускается и меньше занимает памяти: вместо своего Chromium используется встроенный в Windows WebView2.",
+                    "Автообновление с подписью Ed25519: лаунчер ставит только обновления, подписанные ключом RxLauncher.",
+                    "Логи игры в консоли — обычным текстом, а защитный конфиг логов (Log4Shell) включён для всех версий."
+                ],
+                en: [
+                    "The core was rewritten in Rust: game launch, downloads, Java, Fabric/Quilt/Forge/NeoForge, archives, the stealer scan and data encryption.",
+                    "The interface is the same — every tab, setting, friend and pack is in place. Data, accounts and statistics carry over from the previous version.",
+                    "The installer is several times smaller, the launcher starts faster and uses less memory: Windows' built-in WebView2 replaces a bundled Chromium.",
+                    "Auto-update signed with Ed25519: the launcher installs only updates signed with the RxLauncher key.",
+                    "Game logs in the console are plain text, and the protective logging config (Log4Shell) is on for every version."
+                ]
+            }
+        },
+        {
             id: "3.13.0-security",
             version: "3.13.0",
             date: "2026-11-06T12:00:00+03:00",

@@ -538,8 +538,11 @@ pub type Sink = std::sync::Arc<dyn Fn(&str, Value) + Send + Sync>;
 
 // Конфиг логов из JSON версии (защита от Log4Shell) пишет события log4j в XML — как официальный лаунчер,
 // превращаем их в обычные строки «[время] [поток/уровень]: сообщение»
+#[cfg(test)]
+pub type Log4jTextForTest = Log4jText;
+
 #[derive(Default)]
-struct Log4jText {
+pub struct Log4jText {
     event: Option<(String, String, String)>, // время, поток, уровень
     field: Option<&'static str>,
     message: String,
@@ -555,7 +558,7 @@ fn xml_attribute(line: &str, name: &str) -> String {
 }
 
 impl Log4jText {
-    fn push(&mut self, line: &str) -> Option<String> {
+    pub fn push(&mut self, line: &str) -> Option<String> {
         let trimmed = line.trim();
         if self.event.is_none() {
             if trimmed.starts_with("<log4j:Event") {

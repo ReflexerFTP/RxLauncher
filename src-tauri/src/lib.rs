@@ -22,6 +22,9 @@ mod updater;
 mod vault;
 mod window;
 
+#[cfg(test)]
+mod tests;
+
 use tauri::{Manager, WindowEvent};
 
 pub fn run() {

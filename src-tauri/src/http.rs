@@ -53,6 +53,11 @@ fn guarded_url_ok(url: &reqwest::Url) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(test)]
+pub fn guarded_url_ok_for_test(url: &str) -> bool {
+    reqwest::Url::parse(url).map(|u| guarded_url_ok(&u).is_ok()).unwrap_or(false)
+}
+
 // DNS для guarded: соединение только с проверенными внешними адресами
 struct SafeResolver;
 

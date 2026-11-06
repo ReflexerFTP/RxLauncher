@@ -70,18 +70,21 @@ const {RxCollector, RxHttp, RxImport, RxCurseForge, RxDownloader} = context;
         assert.equal(safety.isLocalAddress("1.1.1.1"), false);
         const blocked = await new Promise(resolve => safety.safeLookup("localhost", {}, error => resolve(error)));
         assert.equal(blocked?.code, "ELOCALADDRESS");
-        // через RxHttp: с политикой URL (данные сборки) — отказ при соединении, без политики (наши запросы) — работает
-        await assert.rejects(RxHttp.open(`http://localhost:${port}/file`, {urlPolicy: () => {}}), /local network/);
-        const plain = await RxHttp.open(`http://localhost:${port}/file`, {});
-        plain.stream.resume();
-        assert.equal(plain.status, 200);
+        // RxHttp в ветке Tauri работает через Rust-ядро — эти проверки там в src-tauri/src/tests.rs
+        if (typeof window !== 'undefined') {
+            // через RxHttp: с политикой URL (данные сборки) — отказ при соединении, без политики (наши запросы) — работает
+            await assert.rejects(RxHttp.open(`http://localhost:${port}/file`, {urlPolicy: () => {}}), /local network/);
+            const plain = await RxHttp.open(`http://localhost:${port}/file`, {});
+            plain.stream.resume();
+            assert.equal(plain.status, 200);
 
-        // ---------- RX-04: заявленный размер — жёсткий предел, общий бюджет загрузки ----------
-        await assert.rejects(RxHttp.download(`http://127.0.0.1:${port}/file`, path.join(temp, "dl", "one.bin"), {expectedSize: 1}), /size limit|Size mismatch/);
-        assert.ok(!fs.existsSync(path.join(temp, "dl", "one.bin")), "oversized file is not kept");
-        await assert.rejects(RxHttp.download(`http://127.0.0.1:${port}/file`, path.join(temp, "dl", "two.bin"), {expectedSize: 200 * 1024}), /Incomplete|Size mismatch/);
-        const ok = await RxHttp.download(`http://127.0.0.1:${port}/file`, path.join(temp, "dl", "three.bin"), {expectedSize: 128 * 1024});
-        assert.equal(ok.bytes, 128 * 1024);
+            // ---------- RX-04: заявленный размер — жёсткий предел, общий бюджет загрузки ----------
+            await assert.rejects(RxHttp.download(`http://127.0.0.1:${port}/file`, path.join(temp, "dl", "one.bin"), {expectedSize: 1}), /size limit|Size mismatch/);
+            assert.ok(!fs.existsSync(path.join(temp, "dl", "one.bin")), "oversized file is not kept");
+            await assert.rejects(RxHttp.download(`http://127.0.0.1:${port}/file`, path.join(temp, "dl", "two.bin"), {expectedSize: 200 * 1024}), /Incomplete|Size mismatch/);
+            const ok = await RxHttp.download(`http://127.0.0.1:${port}/file`, path.join(temp, "dl", "three.bin"), {expectedSize: 128 * 1024});
+            assert.equal(ok.bytes, 128 * 1024);
+        }
         assert.throws(() => RxDownloader.assertBudget([1, 2, 3].map(i => ({path: path.join(temp, `big${i}`), size: 12 * 1024 ** 3}))), /too large/);
         assert.throws(() => RxDownloader.assertBudget([{path: path.join(temp, "neg"), size: -5}]), /Invalid download size/);
         assert.ok(RxDownloader.assertBudget([{path: path.join(temp, "small"), size: 1024}, {path: path.join(temp, "nosize")}]) >= 1024);

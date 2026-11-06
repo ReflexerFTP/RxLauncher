@@ -1,0 +1,145 @@
+// Проверки ядра (cargo test): то, что раньше проверяли тесты JS-реализации на Electron
+use std::collections::HashMap;
+use std::io::Write;
+use std::net::IpAddr;
+
+use serde_json::json;
+
+fn jar(entries: &[(&str, &[u8])]) -> Vec<u8> {
+    let mut buffer = std::io::Cursor::new(Vec::new());
+    {
+        let mut writer = zip::ZipWriter::new(&mut buffer);
+        for (name, data) in entries {
+            writer.start_file(*name, zip::write::SimpleFileOptions::default()).unwrap();
+            writer.write_all(data).unwrap();
+        }
+        writer.finish().unwrap();
+    }
+    buffer.into_inner()
+}
+
+fn scan(entries: &[(&str, &[u8])]) -> serde_json::Value {
+    let dir = std::env::temp_dir().join(format!("rx-test-{:016x}", rand::random::<u64>()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("mod.jar");
+    std::fs::write(&file, jar(entries)).unwrap();
+    let result = crate::modscan::scan_file(&file);
+    let _ = std::fs::remove_dir_all(&dir);
+    result
+}
+
+fn ids(result: &serde_json::Value) -> Vec<String> {
+    result["findings"].as_array().unwrap().iter().map(|f| f["id"].as_str().unwrap().to_string()).collect()
+}
+
+#[test]
+fn local_addresses_are_blocked() {
+    for ip in ["127.0.0.1", "10.1.2.3", "192.168.0.1", "172.16.5.4", "169.254.1.1", "100.64.0.1", "0.0.0.0", "::1", "fe80::1", "fc00::1", "::ffff:127.0.0.1"] {
+        assert!(crate::http::is_local_ip(ip.parse::<IpAddr>().unwrap()), "{ip} must be local");
+    }
+    for ip in ["8.8.8.8", "1.1.1.1", "2606:4700:4700::1111"] {
+        assert!(!crate::http::is_local_ip(ip.parse::<IpAddr>().unwrap()), "{ip} must be public");
+    }
+}
+
+#[test]
+fn guarded_urls() {
+    let ok = |u: &str| crate::http::guarded_url_ok_for_test(u);
+    assert!(ok("https://cdn.modrinth.com/data/x.jar"));
+    for bad in ["http://cdn.modrinth.com/x.jar", "https://localhost/x", "https://a.localhost/x", "https://printer.local/x", "https://127.0.0.1/x",
+        "https://user:pass@cdn.modrinth.com/x", "https://[::1]/x", "https://10.0.0.5/x"] {
+        assert!(!ok(bad), "{bad} must be rejected");
+    }
+}
+
+#[test]
+fn archive_paths() {
+    for bad in ["../x", "a/../../x", "C:/x", "/etc/x", "\\\\server\\x", "con.txt", "a/nul", "a/b.", "a/b ", "x\u{1}y"] {
+        assert!(crate::archive::safe_relative(bad).is_none(), "{bad:?} must be unsafe");
+    }
+    assert!(crate::archive::safe_relative("mods/sodium.jar").is_some());
+    assert!(crate::archive::safe_relative("overrides\\config\\a.toml").is_some());
+}
+
+#[test]
+fn os_rules() {
+    let features: HashMap<String, bool> = HashMap::new();
+    let allow_windows = json!([{"action": "allow", "os": {"name": "windows"}}]);
+    let allow_osx = json!([{"action": "allow", "os": {"name": "osx"}}]);
+    let disallow_osx = json!([{"action": "allow"}, {"action": "disallow", "os": {"name": "osx"}}]);
+    let demo = json!([{"action": "allow", "features": {"is_demo_user": true}}]);
+    assert!(crate::game::rules_allow(Some(&allow_windows), &features));
+    assert!(!crate::game::rules_allow(Some(&allow_osx), &features));
+    assert!(crate::game::rules_allow(Some(&disallow_osx), &features));
+    assert!(!crate::game::rules_allow(Some(&demo), &features));
+    assert!(crate::game::rules_allow(None, &features));
+}
+
+#[test]
+fn maven_paths() {
+    assert_eq!(crate::gamefiles::maven_path("net.fabricmc:fabric-loader:0.16.9").unwrap(), "net/fabricmc/fabric-loader/0.16.9/fabric-loader-0.16.9.jar");
+    assert_eq!(crate::gamefiles::maven_path("org.lwjgl:lwjgl:3.3.3:natives-windows").unwrap(), "org/lwjgl/lwjgl/3.3.3/lwjgl-3.3.3-natives-windows.jar");
+    assert_eq!(crate::gamefiles::maven_path("a.b:c:1@zip").unwrap(), "a/b/c/1/c-1.zip");
+    assert!(crate::gamefiles::maven_path("a:..:1").is_none());
+    assert!(crate::gamefiles::maven_path("only:two").is_none());
+}
+
+#[test]
+fn stealer_scan() {
+    let clean = scan(&[("fabric.mod.json", b"{\"id\":\"demo\"}"), ("demo/Mod.class", b"\x01PrismLauncher detected\x01https://modrinth.com/mod/demo")]);
+    assert_eq!(clean["verdict"], "clean", "{clean}");
+    let webhook = scan(&[("a/Send.class", b"\x01https://discord.com/api/webhooks/1/2")]);
+    assert_eq!(webhook["verdict"], "danger");
+    assert!(ids(&webhook).contains(&"discordWebhook".to_string()));
+    use base64::Engine;
+    let encoded = base64::engine::general_purpose::STANDARD.encode("xhttps://api.telegram.org/bot1:A/sendDocument");
+    let telegram = scan(&[("a/T.class", encoded.as_bytes())]);
+    assert!(ids(&telegram).contains(&"telegramBotApi".to_string()), "{telegram}");
+    // Адрес собран из массива байтов в байткоде (dup, bipush i, bipush c, bastore)
+    let mut bytecode = vec![0xca, 0xfe, 0xba, 0xbe];
+    for (index, byte) in b"https://discord.com/api/webhooks/1".iter().enumerate() {
+        bytecode.extend_from_slice(&[0x59, 0x10, index as u8, 0x10, *byte, 0x54]);
+    }
+    let bytes = scan(&[("a/L.class", &bytecode)]);
+    assert!(ids(&bytes).contains(&"discordWebhook".to_string()), "{bytes}");
+    let stealer = scan(&[("s/G.class", b"\x01Local State\x01encrypted_key\x01Login Data\x01https://api.ipify.org")]);
+    assert_eq!(stealer["findings"][0]["id"], "stealer");
+    let jda = scan(&[("net/dv8tion/jda/api/JDA.class", b"getSessionId\x01getAccessToken")]);
+    assert_eq!(jda["verdict"], "warning", "{jda}");
+    let nested_inner = jar(&[("evil/S.class", b"\x01https://discord.com/api/webhooks/9/9")]);
+    let nested = scan(&[("fabric.mod.json", b"{}"), ("META-INF/jars/inner.jar", &nested_inner)]);
+    assert!(ids(&nested).contains(&"discordWebhook".to_string()), "{nested}");
+    let script = scan(&[("run.bat", b"@echo off")]);
+    assert!(ids(&script).contains(&"scriptFile".to_string()));
+}
+
+#[test]
+fn command_history_passwords() {
+    for line in ["/l secret", "/login p4ss", "/reg a a", "/authme:login hunter2", "/CP old new", "/2fa 123456"] {
+        assert!(crate::vault::is_sensitive(line), "{line} must be hidden");
+    }
+    for line in ["/list", "/home", "/l", "/msg friend hi", "/logout", "/spawn"] {
+        assert!(!crate::vault::is_sensitive(line), "{line} must stay");
+    }
+}
+
+#[test]
+fn log4j_events_become_text() {
+    let mut log = crate::game::Log4jTextForTest::default();
+    assert_eq!(log.push("plain line").unwrap(), "plain line\n");
+    assert!(log.push(r#"<log4j:Event logger="x" timestamp="0" level="INFO" thread="Render thread">"#).is_none());
+    assert!(log.push("  <log4j:Message><![CDATA[Hello ]]></log4j:Message>").is_none());
+    let text = log.push("</log4j:Event>").unwrap();
+    assert!(text.ends_with("[Render thread/INFO]: Hello\n"), "{text}");
+}
+
+#[cfg(windows)]
+#[test]
+fn safe_storage_roundtrip() {
+    let dir = std::env::temp_dir().join(format!("rx-secure-{:016x}", rand::random::<u64>()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let sealed = crate::secure::encrypt(&dir, "rx1_secret-token").unwrap();
+    assert!(sealed.starts_with(b"v10"));
+    assert_eq!(crate::secure::decrypt(&dir, &sealed).unwrap(), "rx1_secret-token");
+    let _ = std::fs::remove_dir_all(&dir);
+}

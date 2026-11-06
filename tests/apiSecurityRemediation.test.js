@@ -1,4 +1,5 @@
 'use strict';
+if (!require('node:fs').existsSync(require('node:path').join(__dirname, '../server/api/server.js'))) { console.log('API: server.js is not in this checkout, skipped'); process.exit(0); }
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),net=require('node:net');
 const {spawn}=require('node:child_process');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'rx-api-remediation-'));

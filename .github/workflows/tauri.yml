@@ -77,3 +77,7 @@ jobs:
           path: out/
           compression-level: 9
           retention-days: 14
+
+      - name: Core tests (Rust)
+        shell: bash
+        run: cargo test --release --features devui --manifest-path src-tauri/Cargo.toml
