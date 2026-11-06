@@ -35,6 +35,8 @@ md-5 = "0.10"
 hex = "0.4"
 base64 = "0.22"
 flate2 = "1"
+tar = "0.4"
+aho-corasick = "1"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 dunce = "1"
 rand = "0.8"

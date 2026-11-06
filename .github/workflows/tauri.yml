@@ -36,7 +36,7 @@ jobs:
       - name: JS tools (ejs, jquery, toml, Tauri CLI)
         shell: bash
         run: |
-          npm install --prefix tauri/.deps --no-audit --no-fund ejs@3.1.10 jquery@3.7.1 toml@npm:@iarna/toml@2.2.5 @tauri-apps/cli@2
+          npm install --prefix tauri/.deps --no-audit --no-fund ejs@3.1.10 jquery@3.7.1 toml@npm:@iarna/toml@2.2.5 mcnbt@2.0.3 @tauri-apps/cli@2
 
       - name: Runtime tests
         shell: bash

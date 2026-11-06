@@ -267,18 +267,12 @@ class RxShare {
         const configDir = path.join(source.root, "config");
         const withConfig = fs.existsSync(configDir) && fs.readdirSync(configDir).length > 0
             && await RxWorldBackups.folderSize(configDir, 50 * 1024 * 1024) <= 50 * 1024 * 1024;
-        const zip = new compressing.zip.Stream();
-        zip.addEntry(Buffer.from(JSON.stringify(index, null, 2)), {relativePath: "modrinth.index.json"});
-        collected.unknown.forEach(item => zip.addEntry(item.file, {relativePath: `overrides/${item.dir}/${item.name}`}));
-        if (withConfig) zip.addEntry(configDir, {relativePath: "overrides/config", ignoreBase: true});
         const temp = `${target}.part`;
-        await new Promise((resolve, reject) => {
-            const output = fs.createWriteStream(temp);
-            zip.on("error", reject);
-            output.on("error", reject);
-            output.on("finish", resolve);
-            zip.pipe(output);
-        });
+        await compressing.zip.writeEntries(temp, [
+            {data: Buffer.from(JSON.stringify(index, null, 2)), relativePath: "modrinth.index.json"},
+            ...collected.unknown.map(item => ({file: item.file, relativePath: `overrides/${item.dir}/${item.name}`})),
+            ...(withConfig ? [{dir: configDir, relativePath: "overrides/config"}] : [])
+        ]);
         fs.renameSync(temp, target);
         RxCollector.writeLog(`Share: Exported ${source.name} to ${target} [modrinth=${files.length}] [embedded=${collected.unknown.length}] [loader=${dependencies[loaderKey] || "-"}]`);
         return {files: files.length, embedded: collected.unknown.length, loaderVersion: dependencies[loaderKey] || ""};

@@ -59,6 +59,18 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             ok(Value::Null)
         }
 
+        "safe-create-staging" => {
+            let purpose: String = arg(&args, 0).as_str().unwrap_or("staging").chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-').take(32).collect();
+            let dir = user_data.join("staging").join(format!("{purpose}-{:016x}", rand::random::<u64>()));
+            std::fs::create_dir_all(&dir).map_err(|e| crate::fsops::io_error(e, "mkdir", &dir.to_string_lossy(), None))?;
+            ok(dir)
+        }
+        "mod-scan" => {
+            let payload = arg(&args, 0);
+            let dir = payload.get("dir").and_then(Value::as_str).unwrap_or("").to_string();
+            let only_enabled = payload.get("onlyEnabled").and_then(Value::as_bool).unwrap_or(false);
+            blocking(move || crate::modscan::scan_dir(&user_data, &dir, only_enabled)).await
+        }
         "generate-mclc-config" => crate::loaders::generate_config(arg(&args, 0)).await,
         "open-dialog" => open_dialog(app, arg(&args, 0)).await,
         "save-dialog" => save_dialog(app, arg(&args, 0)).await,
@@ -68,8 +80,7 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
         "screenshot-action" => screenshot_action(app, arg(&args, 0)).await,
 
         "curseforge-key-status" => ok(json!({"configured": false, "managedByEnvironment": false, "secureStorageAvailable": crate::secure::available()})),
-        "discord-rpc-status" => ok(json!({"ready": false, "mode": "idle", "settings": {}, "game": {}, "presence": null})),
-        "install-update" | "discord-rpc-game-start" | "discord-rpc-game-update" | "discord-rpc-game-stop" | "discord-rpc-settings" => ok(Value::Null),
+        "install-update" => ok(Value::Null),
 
         other => {
             crate::logs::write("warn", &format!("IPC channel not implemented yet: {other}"));

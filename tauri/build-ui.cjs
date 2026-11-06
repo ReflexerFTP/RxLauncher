@@ -68,7 +68,7 @@ const parts = [fs.readFileSync(path.join(RUNTIME, "core.js"), "utf8")];
 const define = (id, source) => {
     parts.push(`__rxDef(${JSON.stringify(id)}, function (module, exports, require, __filename, __dirname) {\n${source}\n});`);
 };
-const RUNTIME_MODULES = ["bridge", "path", "buffer", "events", "fs", "system", "electron", "mclc", "loaders", "archive", "jimp", "nbt"];
+const RUNTIME_MODULES = ["bridge", "path", "buffer", "events", "fs", "system", "electron", "services", "mclc", "loaders", "archive", "jimp"];
 for (const name of RUNTIME_MODULES) {
     const file = path.join(RUNTIME, `${name}.js`);
     if (fs.existsSync(file)) define(`tauri/runtime/${name}.js`, fs.readFileSync(file, "utf8"));
@@ -78,7 +78,7 @@ define("tauri/runtime/os.js", "module.exports = require('./system').os;");
 define("tauri/runtime/process.js", "module.exports = require('./system').process;");
 const builtins = {
     fs: "fs", "fs/promises": "fs-promises", path: "path", buffer: "buffer", events: "events", os: "os", process: "process", electron: "electron",
-    "minecraft-launcher-core": "mclc", "tomate-loaders": "loaders", compressing: "archive", yauzl: "archive", jimp: "jimp", "jimp/fonts": "jimp", mcnbt: "nbt"
+    "minecraft-launcher-core": "mclc", "tomate-loaders": "loaders", compressing: "archive", jimp: "jimp", "jimp/fonts": "jimp"
 };
 for (const [name, file] of Object.entries(builtins)) {
     if (fs.existsSync(path.join(RUNTIME, `${file}.js`)) || ["fs-promises", "os", "process"].includes(file)) parts.push(`__rxBuiltin(${JSON.stringify(name)}, "tauri/runtime/${file}.js");`);
@@ -86,7 +86,7 @@ for (const [name, file] of Object.entries(builtins)) {
 parts.push(fs.readFileSync(path.join(RUNTIME, "node-misc.js"), "utf8"));
 
 // Корневые модули, которые интерфейс подключает через require; некоторые заменены версиями для Tauri
-const REPLACED = {"archiveMetadata.js": path.join(RUNTIME, "replacements", "archiveMetadata.js")};
+const REPLACED = Object.fromEntries(["archiveMetadata.js", "archiveWorker.js", "nbtWorker.js"].map(file => [file, path.join(RUNTIME, "replacements", file)]));
 for (const file of ["externalTargets.js", "lowEndOptions.js", "modrinthPackSafety.js", "runtimeSecurity.js", "archiveWorker.js", "nbtWorker.js", "archiveMetadata.js", "web/js/RxNbt.js"]) {
     const source = REPLACED[file] && fs.existsSync(REPLACED[file]) ? REPLACED[file] : path.join(ROOT, file);
     define(file, fs.readFileSync(source, "utf8"));
@@ -95,8 +95,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))
 parts.push(`__rxJson("package.json", ${JSON.stringify({name: pkg.name, version: pkg.version, description: pkg.description || "", productName: "RxLauncher"})});`);
 
 // Пакеты из node_modules (чистый JS)
-const addPackage = name => {
-    const dir = path.join(NODE_MODULES_ABS, name);
+const addPackage = (name, dir = path.join(NODE_MODULES_ABS, name)) => {
     const manifest = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
     const walk = folder => {
         for (const entry of fs.readdirSync(folder, {withFileTypes: true})) {
@@ -113,6 +112,9 @@ const addPackage = name => {
 };
 addPackage("jquery");
 addPackage("toml");
+addPackage("mcnbt");
+// mcnbt нужна long@4 (её собственная копия), а не long@5 из корня node_modules
+addPackage("long", fs.existsSync(path.join(NODE_MODULES_ABS, "mcnbt", "node_modules", "long")) ? path.join(NODE_MODULES_ABS, "mcnbt", "node_modules", "long") : path.join(NODE_MODULES_ABS, "long"));
 
 parts.push(fs.readFileSync(path.join(RUNTIME, "start.js"), "utf8"));
 

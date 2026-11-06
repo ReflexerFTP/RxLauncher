@@ -168,12 +168,19 @@ async fn dispatch(app: &AppHandle, op: &str, args: Value, payload: Vec<u8>) -> B
         let fs_op = fs_op.to_string();
         return blocking(move || crate::fsops::run(&app, &fs_op, &args, payload)).await;
     }
+    if let Some(archive_op) = op.strip_prefix("archive.") {
+        let archive_op = archive_op.to_string();
+        return blocking(move || crate::archive::run(&archive_op, args, payload)).await;
+    }
     if let Some(http_op) = op.strip_prefix("http.") {
         return crate::http::run(app, http_op, args, payload).await;
     }
     match op {
         "ipc" => crate::ipc::dispatch(app, args).await,
         "game.launch" => crate::game::launch(app, args).await,
+        "net.mcping" => crate::net::mcping(args).await,
+        "discord.setActivity" => crate::discord::set_activity(args.get("activity").cloned().unwrap_or(Value::Null)).await,
+        "discord.clear" => crate::discord::set_activity(Value::Null).await,
         "system.info" => ok(crate::system::info(app)),
         "system.freemem" => ok(crate::system::free_memory()),
         "system.uptime" => ok(crate::system::uptime()),

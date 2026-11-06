@@ -1,6 +1,8 @@
 // RxLauncher на Tauri: Rust-ядро (файлы, сеть, запуск игры, защита данных) + интерфейс на HTML/CSS/JS.
 // Интерфейс обращается к ядру через протокол rxsync:// (см. bridge.rs), ядро сообщает о событиях через Tauri events «rx:*»
+mod archive;
 mod bridge;
+mod discord;
 mod fsops;
 mod game;
 mod gamefiles;
@@ -8,6 +10,8 @@ mod http;
 mod ipc;
 mod loaders;
 mod logs;
+mod modscan;
+mod net;
 mod paths;
 mod secure;
 mod state;

@@ -2,9 +2,23 @@
 const bridge = require("./bridge");
 
 const subscriptions = new Map(); // listener -> отписка
+// Часть каналов обслуживает сам интерфейс (services.js), остальные — ядро
+let services = null;
+const local = channel => {
+    services = services || require("./services");
+    return Object.prototype.hasOwnProperty.call(services, channel) ? services[channel] : null;
+};
 const ipcRenderer = {
-    invoke: (channel, ...args) => bridge.value("ipc", {channel, args}),
+    invoke: (channel, ...args) => {
+        const handler = local(channel);
+        return handler ? Promise.resolve().then(() => handler(...args)) : bridge.value("ipc", {channel, args});
+    },
     send: (channel, ...args) => {
+        const handler = local(channel);
+        if (handler) {
+            Promise.resolve().then(() => handler(...args)).catch(error => console.warn(`IPC ${channel} failed:`, error && error.message ? error.message : error));
+            return;
+        }
         bridge.value("ipc", {channel, args}).catch(error => console.warn(`IPC ${channel} failed:`, error && error.message ? error.message : error));
     },
     sendSync: (channel, ...args) => bridge.syncValue("ipc", {channel, args}),
