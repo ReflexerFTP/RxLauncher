@@ -2,8 +2,11 @@
 // Интерфейс обращается к ядру через протокол rxsync:// (см. bridge.rs), ядро сообщает о событиях через Tauri events «rx:*»
 mod bridge;
 mod fsops;
+mod game;
+mod gamefiles;
 mod http;
 mod ipc;
+mod loaders;
 mod logs;
 mod paths;
 mod secure;

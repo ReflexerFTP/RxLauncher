@@ -173,6 +173,7 @@ async fn dispatch(app: &AppHandle, op: &str, args: Value, payload: Vec<u8>) -> B
     }
     match op {
         "ipc" => crate::ipc::dispatch(app, args).await,
+        "game.launch" => crate::game::launch(app, args).await,
         "system.info" => ok(crate::system::info(app)),
         "system.freemem" => ok(crate::system::free_memory()),
         "system.uptime" => ok(crate::system::uptime()),

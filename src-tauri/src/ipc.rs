@@ -59,6 +59,7 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             ok(Value::Null)
         }
 
+        "generate-mclc-config" => crate::loaders::generate_config(arg(&args, 0)).await,
         "open-dialog" => open_dialog(app, arg(&args, 0)).await,
         "save-dialog" => save_dialog(app, arg(&args, 0)).await,
 
