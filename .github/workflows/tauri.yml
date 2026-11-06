@@ -108,6 +108,16 @@ jobs:
           RX_UPDATE_SIGNING_KEY: ${{ secrets.RX_UPDATE_SIGNING_KEY }}
         run: node tauri/sign-update.cjs out
 
+      # Отдельно только красивый установщик — его и скачивают (медленный интернет)
+      - name: Upload setup
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.bundle }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: rxlauncher-setup
+          path: out/RxLauncher Setup *.exe
+          compression-level: 0
+          retention-days: 14
+
       - uses: actions/upload-artifact@v4
         with:
           name: rxlauncher-tauri
