@@ -271,7 +271,186 @@ const discordHandlers = {
         settings: {...rpc.settings}, game: {...rpc.game}, presence: rpc.last ? {...rpc.last} : null})
 };
 
+// ---------- скины Minecraft (minecraftSkinService.js, сеть — через ядро) ----------
+// fetch для сервиса скинов: ответ целиком от ядра в виде, похожем на Response
+const coreFetch = async (url, init = {}) => {
+    const {value, payload} = await bridge.call("http.request", {url: String(url), method: init.method || "GET", headers: init.headers || {}, timeout: 8000,
+        maxBytes: 8 * 1024 * 1024, compress: true}, null, {signal: init.signal});
+    const body = Buffer.from(payload);
+    const headers = value.headers || {};
+    return {status: value.status, ok: value.status >= 200 && value.status < 300, url: value.url, body: null,
+        headers: {get: name => headers[String(name).toLowerCase()] ?? null},
+        arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
+        text: async () => body.toString("utf8"), json: async () => JSON.parse(body.toString("utf8"))};
+};
+let skinService = null;
+const skinProfiles = new Map();
+let skinApplyQueue = Promise.resolve();
+const userDataPath = () => bridge.syncValue("app.paths").userData;
+const skins = () => {
+    if (!skinService) {
+        const {createMinecraftSkinService} = require("../../minecraftSkinService");
+        skinService = createMinecraftSkinService({cacheRoot: require("path").join(userDataPath(), "skins", "cache"), userAgent: USER_AGENT(), fetchImpl: coreFetch});
+    }
+    return skinService;
+};
+const SKIN_ERRORS = {invalid_png: "invalid_texture", hash_mismatch: "invalid_texture", invalid_texture_hash: "invalid_texture", untrusted_texture_url: "invalid_texture",
+    invalid_profile: "invalid_response", invalid_cache: "invalid_response", response_too_large: "invalid_response", untrusted_redirect: "invalid_response",
+    http_error: "service_unavailable", unknown_error: "unknown", invalid_destination: "export_failed", destination_exists: "export_failed"};
+const skinError = (code, fallback = "unknown") => {
+    const value = typeof code === "string" ? code : fallback;
+    return SKIN_ERRORS[value] || value || fallback;
+};
+const skinProfile = (payload = {}) => {
+    const profileId = String(payload.profileId || "").replaceAll("-", "").toLowerCase();
+    if (!/^[a-f0-9]{32}$/.test(profileId)) return null;
+    if (skinProfiles.has(profileId)) return skinProfiles.get(profileId);
+    if (typeof payload.nickname !== "string") return null;
+    try {
+        const cached = skins().getCachedSkin(payload.nickname);
+        return cached && cached.profileId === profileId ? cached : null;
+    } catch (_) {
+        return null;
+    }
+};
+const accountUuid = value => {
+    const uuid = String(value || "").trim().toLowerCase();
+    return /^(?:[a-f0-9]{32}|[a-f0-9]{8}-[a-f0-9]{4}-[1-5a-f0-9][a-f0-9]{3}-[89ab0-9a-f][a-f0-9]{3}-[a-f0-9]{12})$/i.test(uuid) ? uuid : "";
+};
+// Скин из поиска — на локальный профиль: текстура и голова 128×128 в папке лаунчера, ссылка в accounts.json
+const applySkin = async (uuidValue, profile) => {
+    const fs = require("fs"), path = require("path"), crypto = require("crypto");
+    const {Jimp, ResizeStrategy} = require("jimp");
+    const uuid = accountUuid(uuidValue);
+    if (!uuid) return {success: false, error: "no_active_account"};
+    const base = userDataPath();
+    const accountsPath = path.join(base, "accounts.json");
+    let accounts;
+    try {
+        const stat = fs.statSync(accountsPath);
+        if (!stat.isFile() || stat.size <= 0 || stat.size > 2 * 1024 * 1024) return {success: false, error: "no_active_account"};
+        accounts = JSON.parse(fs.readFileSync(accountsPath, "utf8"));
+    } catch (_) {
+        return {success: false, error: "no_active_account"};
+    }
+    const account = accounts?.[uuidValue] || accounts?.[uuid];
+    if (!account || !["local", "elyby"].includes(account.type)) return {success: false, error: "unsupported_account"};
+    const textureTarget = path.join(base, "skins", "profiles", `${uuid}.png`);
+    const headTarget = path.join(base, "skins", "heads", `${uuid}.png`);
+    fs.mkdirSync(path.dirname(textureTarget), {recursive: true});
+    fs.mkdirSync(path.dirname(headTarget), {recursive: true});
+    const operation = crypto.randomUUID();
+    const textureTemp = `${textureTarget}.${operation}.part`, headTemp = `${headTarget}.${operation}.part.png`, accountsTemp = `${accountsPath}.${operation}.part`;
+    try {
+        fs.copyFileSync(profile.texturePath, textureTemp);
+        const skin = await Jimp.read(profile.texturePath);
+        const head = skin.clone().crop({x: 8, y: 8, w: 8, h: 8});
+        const hat = skin.clone().crop({x: 40, y: 8, w: 8, h: 8});
+        head.composite(hat, 0, 0).resize({w: 128, h: 128, mode: ResizeStrategy.NEAREST_NEIGHBOR});
+        fs.writeFileSync(headTemp, await head.getBuffer("image/png"));
+        fs.renameSync(textureTemp, textureTarget);
+        fs.renameSync(headTemp, headTarget);
+        const launcherSkin = {version: 1, source: "mojang", sourceNickname: profile.nickname, profileId: profile.profileId,
+            model: profile.model === "slim" ? "slim" : "default", textureHash: profile.textureHash, sha256: profile.sha256, updatedAt: Date.now()};
+        // Аккаунт мог обновить токен, пока картинка обрабатывалась
+        const latest = JSON.parse(fs.readFileSync(accountsPath, "utf8"));
+        if (!latest[uuidValue]) return {success: false, error: "no_active_account"};
+        latest[uuidValue] = {...latest[uuidValue], launcherSkin};
+        fs.writeFileSync(accountsTemp, JSON.stringify(latest, null, "\t"));
+        fs.renameSync(accountsTemp, accountsPath);
+        return {success: true, path: textureTarget, headPath: headTarget};
+    } catch (error) {
+        console.warn(`Failed to apply launcher skin [error=${error.message}]`);
+        return {success: false, error: "apply_failed"};
+    } finally {
+        for (const temp of [textureTemp, headTemp, accountsTemp]) {
+            try { if (fs.existsSync(temp)) fs.unlinkSync(temp); } catch (_) {}
+        }
+    }
+};
+const skinHandlers = {
+    "minecraft-skin-lookup": async nickname => {
+        const result = await skins().lookupSkinSafe(nickname);
+        if (!result.ok) {
+            if (["not_found", "skin_not_set"].includes(result.error?.code)) return {success: true, found: false};
+            return {success: false, error: skinError(result.error?.code, "unknown")};
+        }
+        skinProfiles.set(result.profileId, result);
+        if (skinProfiles.size > 64) skinProfiles.delete(skinProfiles.keys().next().value);
+        return {success: true, found: true, profile: {name: result.nickname, id: result.profileId, model: result.model, skinPath: result.texturePath,
+            fromCache: result.source === "cache" || result.stale === true, updatedAt: result.cachedAt}};
+    },
+    "minecraft-skin-export": async (payload = {}) => {
+        const profile = skinProfile(payload);
+        if (!profile) return {success: false, error: "cache_miss"};
+        const name = String(profile.nickname || "minecraft-skin").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32) || "minecraft-skin";
+        const copy = String(payload.language || "").toLowerCase() === "en" ? {title: "Save Minecraft texture", filter: "PNG texture"} : {title: "Сохранить текстуру Minecraft", filter: "PNG-текстура"};
+        const target = await bridge.value("ipc", {channel: "save-dialog", args: [{title: copy.title, defaultPath: `${name}.png`, filters: [{name: copy.filter, extensions: ["png"]}]}]});
+        if (!target) return {success: false, canceled: true};
+        const exported = await skins().exportTextureSafe(profile.textureHash, target, {overwrite: true});
+        return exported.ok ? {success: true, path: exported.path} : {success: false, error: skinError(exported.error?.code, "export_failed")};
+    },
+    "minecraft-skin-apply": async (payload = {}) => {
+        const profile = skinProfile(payload);
+        if (!profile) return {success: false, error: "cache_miss"};
+        const task = skinApplyQueue.catch(() => undefined).then(() => applySkin(payload.accountUuid, profile));
+        skinApplyQueue = task.catch(() => undefined);
+        return task;
+    }
+};
+
+// ---------- скриншоты: миниатюра и копирование — средствами WebView ----------
+const screenshotFile = file => typeof file === "string" && /[\\/]screenshots[\\/][^\\/]+\.(png|jpe?g)$/i.test(file) ? file : "";
+const thumbnails = new Map();
+const screenshotHandlers = {
+    "screenshot-thumbnail": async file => {
+        const target = screenshotFile(file);
+        if (!target) return "";
+        try {
+            const fs = require("fs");
+            const key = `${target}|${fs.statSync(target).mtimeMs}`;
+            if (thumbnails.has(key)) return thumbnails.get(key);
+            const bytes = await fs.promises.readFile(target);
+            const bitmap = await createImageBitmap(new Blob([bytes]));
+            const width = Math.min(384, bitmap.width);
+            const height = Math.max(1, Math.round(bitmap.height * width / bitmap.width));
+            const canvas = new OffscreenCanvas(width, height);
+            const context = canvas.getContext("2d");
+            context.imageSmoothingQuality = "high";
+            context.drawImage(bitmap, 0, 0, width, height);
+            bitmap.close();
+            const blob = await canvas.convertToBlob({type: "image/jpeg", quality: 0.78});
+            const thumb = `data:image/jpeg;base64,${Buffer.from(new Uint8Array(await blob.arrayBuffer())).toString("base64")}`;
+            thumbnails.set(key, thumb);
+            if (thumbnails.size > 400) thumbnails.delete(thumbnails.keys().next().value);
+            return thumb;
+        } catch (_) {
+            return "";
+        }
+    },
+    "screenshot-action": async (payload = {}) => {
+        const target = screenshotFile(payload.file);
+        if (!target) return false;
+        if (payload.action === "copy") {
+            try {
+                const bytes = await require("fs").promises.readFile(target);
+                const bitmap = await createImageBitmap(new Blob([bytes]));
+                const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+                canvas.getContext("2d").drawImage(bitmap, 0, 0);
+                bitmap.close();
+                await navigator.clipboard.write([new ClipboardItem({"image/png": await canvas.convertToBlob({type: "image/png"})})]);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+        return bridge.value("ipc", {channel: "screenshot-action", args: [payload]});
+    }
+};
+
 module.exports = {
+    ...screenshotHandlers,
+    ...skinHandlers,
     ...discordHandlers,
     "network-compatibility-check": networkCompatibilityCheck,
     "server-status-query": serverStatusQuery,

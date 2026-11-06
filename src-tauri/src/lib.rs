@@ -2,6 +2,7 @@
 // Интерфейс обращается к ядру через протокол rxsync:// (см. bridge.rs), ядро сообщает о событиях через Tauri events «rx:*»
 mod archive;
 mod bridge;
+mod curseforge;
 mod discord;
 mod fsops;
 mod game;
@@ -10,12 +11,14 @@ mod http;
 mod ipc;
 mod loaders;
 mod logs;
+mod loopback;
 mod modscan;
 mod net;
 mod paths;
 mod secure;
 mod state;
 mod system;
+mod vault;
 mod window;
 
 use tauri::{Manager, WindowEvent};
@@ -34,6 +37,14 @@ pub fn run() {
         })
         .setup(|app| {
             app.manage(state::AppState::new(app.handle())?);
+            // История команд, оставшаяся в папках игры (например, после сбоя), — в хранилище
+            let user_data = app.state::<state::AppState>().user_data.clone();
+            std::thread::spawn(move || {
+                let hidden = vault::protect_everywhere(&user_data, None);
+                if hidden > 0 {
+                    logs::write("info", &format!("CommandHistory: swept {hidden} folder(s) at startup"));
+                }
+            });
             logs::write("info", &format!("RxLauncher {} started (Tauri {})", app.package_info().version, tauri::VERSION));
             Ok(())
         })

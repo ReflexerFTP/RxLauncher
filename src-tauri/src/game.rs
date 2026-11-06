@@ -77,14 +77,21 @@ pub fn rules_allow(rules: Option<&Value>, features: &HashMap<String, bool>) -> b
 }
 
 // ---------- версии ----------
-async fn read_or_fetch_version(root: &Path, id: &str, source: &str, events: &Events) -> Result<Value, BridgeError> {
+async fn read_or_fetch_version(root: &Path, id: &str, child: Option<&str>, source: &str, events: &Events) -> Result<Value, BridgeError> {
     if !valid_id(id) {
         return Err(BridgeError::new(format!("Invalid version id: {id}")));
     }
     let file = root.join("versions").join(id).join(format!("{id}.json"));
-    if let Ok(bytes) = std::fs::read(&file) {
-        if let Ok(value) = serde_json::from_slice::<Value>(&bytes) {
-            return Ok(value);
+    // Версия на Electron (minecraft-launcher-core) хранила JSON родителя в папке дочерней версии
+    let mut candidates = vec![file.clone()];
+    if let Some(child) = child.filter(|c| valid_id(c)) {
+        candidates.push(root.join("versions").join(child).join(format!("{id}.json")));
+    }
+    for candidate in &candidates {
+        if let Ok(bytes) = std::fs::read(candidate) {
+            if let Ok(value) = serde_json::from_slice::<Value>(&bytes) {
+                return Ok(value);
+            }
         }
     }
     events.debug(format!("Downloading version manifest for {id}"));
@@ -138,12 +145,12 @@ fn merge(child: Value, parent: Value) -> Value {
 }
 
 async fn resolve_version(root: &Path, id: &str, source: &str, events: &Events) -> Result<Value, BridgeError> {
-    let mut chain = vec![read_or_fetch_version(root, id, source, events).await?];
+    let mut chain = vec![read_or_fetch_version(root, id, None, source, events).await?];
     while let Some(parent) = chain.last().and_then(|v| str_of(v, "inheritsFrom")).map(str::to_string) {
         if chain.len() > 4 || chain.iter().any(|v| str_of(v, "id") == Some(parent.as_str())) {
             return Err(BridgeError::new("Version inheritance loop"));
         }
-        chain.push(read_or_fetch_version(root, &parent, source, events).await?);
+        chain.push(read_or_fetch_version(root, &parent, Some(id), source, events).await?);
     }
     let mut merged = chain.pop().unwrap();
     while let Some(child) = chain.pop() {
@@ -351,15 +358,24 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
 
     // Клиентский jar
     let jar_id = str_of(&version, "jar").filter(|s| !s.is_empty()).unwrap_or(version_id.as_str()).to_string();
-    let client_jar = root.join("versions").join(&jar_id).join(format!("{jar_id}.jar"));
+    let mut client_jar = root.join("versions").join(&jar_id).join(format!("{jar_id}.jar"));
     let mut downloads: Vec<Download> = Vec::new();
     if let Some(client) = version.get("downloads").and_then(|d| d.get("client")) {
-        let item = Download {
+        let mut item = Download {
             url: str_of(client, "url").unwrap_or("").to_string(),
             path: client_jar.clone(),
             sha1: str_of(client, "sha1").map(str::to_string),
             size: client.get("size").and_then(Value::as_u64),
         };
+        // Раскладка версии на Electron: клиент лежал как versions/<сборка>/<сборка>.jar
+        let legacy = root.join("versions").join(&version_id).join(format!("{version_id}.jar"));
+        if !gamefiles::present(&item, true) && legacy != client_jar {
+            let candidate = Download { path: legacy.clone(), ..item.clone() };
+            if gamefiles::present(&candidate, true) {
+                client_jar = legacy;
+                item = candidate;
+            }
+        }
         if !gamefiles::present(&item, true) {
             events.emit("download-status", json!({"name": format!("{jar_id}.jar"), "type": "version-jar", "current": 0, "total": item.size.unwrap_or(0)}));
             gamefiles::fetch(&item, &source).await?;
@@ -400,7 +416,7 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
     }
 
     // Ассеты
-    let (assets_root, asset_index_id, game_assets) = prepare_assets(&root, &game_dir, &version, &source, events).await?;
+    let (assets_root, asset_index_id, game_assets) = prepare_assets(&root, &game_dir, &version, &version_id, &source, events).await?;
 
     // Classpath: библиотеки (без чисто нативных старого формата) + клиент
     let mut classpath: Vec<String> = libs.iter()
@@ -525,7 +541,7 @@ pub fn events_sink(events: &Events) -> Sink {
     })
 }
 
-async fn prepare_assets(root: &Path, game_dir: &Path, version: &Value, source: &str, events: &Events) -> Result<(PathBuf, String, PathBuf), BridgeError> {
+async fn prepare_assets(root: &Path, game_dir: &Path, version: &Value, version_id: &str, source: &str, events: &Events) -> Result<(PathBuf, String, PathBuf), BridgeError> {
     let assets_root = root.join("assets");
     let Some(index) = version.get("assetIndex") else {
         return Ok((assets_root.clone(), str_of(version, "assets").unwrap_or("legacy").to_string(), assets_root));
@@ -534,10 +550,16 @@ async fn prepare_assets(root: &Path, game_dir: &Path, version: &Value, source: &
     if !valid_id(&index_id) {
         return Err(BridgeError::new("Invalid asset index id"));
     }
-    let index_path = assets_root.join("indexes").join(format!("{index_id}.json"));
+    let mut index_path = assets_root.join("indexes").join(format!("{index_id}.json"));
     let index_item = Download { url: str_of(index, "url").unwrap_or("").to_string(), path: index_path.clone(), sha1: str_of(index, "sha1").map(str::to_string), size: index.get("size").and_then(Value::as_u64) };
     if !gamefiles::present(&index_item, true) {
-        gamefiles::fetch(&index_item, source).await?;
+        // Версия на Electron называла индекс по имени сборки (fabric-1.21.4.json)
+        let legacy = Download { path: assets_root.join("indexes").join(format!("{version_id}.json")), ..index_item.clone() };
+        if valid_id(version_id) && gamefiles::present(&legacy, true) {
+            index_path = legacy.path;
+        } else {
+            gamefiles::fetch(&index_item, source).await?;
+        }
     }
     let data: Value = serde_json::from_slice(&std::fs::read(&index_path).map_err(|e| crate::fsops::io_error(e, "open", &index_path.to_string_lossy(), None))?)
         .map_err(|e| BridgeError::new(format!("Bad asset index: {e}")))?;

@@ -52,6 +52,8 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
                 return ok(Value::Null);
             }
             state.set_game(false, 0);
+            let vault_data = user_data.clone();
+            std::thread::spawn(move || crate::vault::finish(&vault_data));
             let visible = crate::window::main_window(app).and_then(|w| w.is_visible().ok()).unwrap_or(true);
             if !visible {
                 crate::window::show_launcher(app);
@@ -71,6 +73,32 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             let only_enabled = payload.get("onlyEnabled").and_then(Value::as_bool).unwrap_or(false);
             blocking(move || crate::modscan::scan_dir(&user_data, &dir, only_enabled)).await
         }
+        "discord-loopback" => {
+            let payload = arg(&args, 0);
+            match payload.get("action").and_then(Value::as_str) {
+                Some("start") => crate::loopback::start().await,
+                Some("wait") => crate::loopback::wait(payload.get("id").and_then(Value::as_u64).unwrap_or(0)).await,
+                _ => {
+                    crate::loopback::stop();
+                    ok(true)
+                }
+            }
+        }
+        "command-history-prepare" => {
+            let supplied = arg(&args, 0).get("gameDirectory").and_then(Value::as_str).unwrap_or("").to_string();
+            blocking(move || match crate::vault::accepted_dir(&user_data, &supplied) {
+                Some(dir) => {
+                    let result = crate::vault::prepare(&user_data, &dir);
+                    crate::logs::write("info", &format!("CommandHistory: ready for game {result}"));
+                    ok(true)
+                }
+                None => ok(false),
+            }).await
+        }
+        "command-history-setting" => {
+            let active = state.game_active();
+            blocking(move || ok(crate::vault::setting_changed(&user_data, active))).await
+        }
         "generate-mclc-config" => crate::loaders::generate_config(arg(&args, 0)).await,
         "open-dialog" => open_dialog(app, arg(&args, 0)).await,
         "save-dialog" => save_dialog(app, arg(&args, 0)).await,
@@ -79,7 +107,10 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
         "trash-version-folder" => trash_folder(arg(&args, 0), "versions", "name", |name| format!("{name}.json")).await,
         "screenshot-action" => screenshot_action(app, arg(&args, 0)).await,
 
-        "curseforge-key-status" => ok(json!({"configured": false, "managedByEnvironment": false, "secureStorageAvailable": crate::secure::available()})),
+        "curseforge-key-status" => crate::curseforge::status(&user_data),
+        "set-curseforge-api-key" => crate::curseforge::set_key(&user_data, arg(&args, 0).as_str().unwrap_or("")).await,
+        "clear-curseforge-api-key" => crate::curseforge::clear_key(&user_data),
+        "curseforge-request" => crate::curseforge::api_request(&user_data, &arg(&args, 0)).await,
         "install-update" => ok(Value::Null),
 
         other => {

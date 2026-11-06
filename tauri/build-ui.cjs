@@ -87,7 +87,7 @@ parts.push(fs.readFileSync(path.join(RUNTIME, "node-misc.js"), "utf8"));
 
 // Корневые модули, которые интерфейс подключает через require; некоторые заменены версиями для Tauri
 const REPLACED = Object.fromEntries(["archiveMetadata.js", "archiveWorker.js", "nbtWorker.js"].map(file => [file, path.join(RUNTIME, "replacements", file)]));
-for (const file of ["externalTargets.js", "lowEndOptions.js", "modrinthPackSafety.js", "runtimeSecurity.js", "archiveWorker.js", "nbtWorker.js", "archiveMetadata.js", "web/js/RxNbt.js"]) {
+for (const file of ["externalTargets.js", "lowEndOptions.js", "modrinthPackSafety.js", "runtimeSecurity.js", "archiveWorker.js", "nbtWorker.js", "archiveMetadata.js", "minecraftSkinService.js", "web/js/RxNbt.js"]) {
     const source = REPLACED[file] && fs.existsSync(REPLACED[file]) ? REPLACED[file] : path.join(ROOT, file);
     define(file, fs.readFileSync(source, "utf8"));
 }
