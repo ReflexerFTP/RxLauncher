@@ -513,8 +513,11 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
         let sink = events_sink(events);
         tauri::async_runtime::spawn(async move {
             let mut lines = BufReader::new(stream).lines();
+            let mut log = Log4jText::default();
             while let Ok(Some(line)) = lines.next_line().await {
-                sink("data", Value::String(format!("{line}\n")));
+                if let Some(text) = log.push(&line) {
+                    sink("data", Value::String(text));
+                }
             }
         });
     }
@@ -532,6 +535,112 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
 }
 
 pub type Sink = std::sync::Arc<dyn Fn(&str, Value) + Send + Sync>;
+
+// Конфиг логов из JSON версии (защита от Log4Shell) пишет события log4j в XML — как официальный лаунчер,
+// превращаем их в обычные строки «[время] [поток/уровень]: сообщение»
+#[derive(Default)]
+struct Log4jText {
+    event: Option<(String, String, String)>, // время, поток, уровень
+    field: Option<&'static str>,
+    message: String,
+    throwable: String,
+}
+
+fn xml_attribute(line: &str, name: &str) -> String {
+    let key = format!("{name}=\"");
+    line.find(&key).map(|start| {
+        let rest = &line[start + key.len()..];
+        rest[..rest.find('"').unwrap_or(rest.len())].to_string()
+    }).unwrap_or_default()
+}
+
+impl Log4jText {
+    fn push(&mut self, line: &str) -> Option<String> {
+        let trimmed = line.trim();
+        if self.event.is_none() {
+            if trimmed.starts_with("<log4j:Event") {
+                let millis: i64 = xml_attribute(trimmed, "timestamp").parse().unwrap_or(0);
+                let seconds = (millis / 1000).rem_euclid(86_400);
+                // Время по часовому поясу системы: только смещение, без внешних зависимостей
+                let offset = local_offset_seconds();
+                let local = (seconds + offset).rem_euclid(86_400);
+                let time = format!("{:02}:{:02}:{:02}", local / 3600, (local / 60) % 60, local % 60);
+                self.event = Some((time, xml_attribute(trimmed, "thread"), xml_attribute(trimmed, "level")));
+                self.message.clear();
+                self.throwable.clear();
+                return None;
+            }
+            return Some(format!("{line}\n"));
+        }
+        let mut rest = line.to_string();
+        loop {
+            if let Some(field) = self.field {
+                match rest.find("]]>") {
+                    Some(end) => {
+                        let target = if field == "message" { &mut self.message } else { &mut self.throwable };
+                        target.push_str(&rest[..end]);
+                        self.field = None;
+                        rest = rest[end + 3..].to_string();
+                    }
+                    None => {
+                        let target = if field == "message" { &mut self.message } else { &mut self.throwable };
+                        target.push_str(&rest);
+                        target.push('\n');
+                        return None;
+                    }
+                }
+            } else if let Some(start) = rest.find("<log4j:Message><![CDATA[") {
+                self.field = Some("message");
+                rest = rest[start + "<log4j:Message><![CDATA[".len()..].to_string();
+            } else if let Some(start) = rest.find("<log4j:Throwable><![CDATA[") {
+                self.field = Some("throwable");
+                rest = rest[start + "<log4j:Throwable><![CDATA[".len()..].to_string();
+            } else if rest.contains("</log4j:Event>") {
+                let (time, thread, level) = self.event.take().unwrap_or_default();
+                let mut text = format!("[{time}] [{thread}/{level}]: {}\n", self.message.trim_end());
+                if !self.throwable.trim().is_empty() {
+                    text.push_str(self.throwable.trim_end());
+                    text.push('\n');
+                }
+                return Some(text);
+            } else {
+                return None;
+            }
+        }
+    }
+}
+
+#[cfg(windows)]
+fn local_offset_seconds() -> i64 {
+    use std::sync::OnceLock;
+    static OFFSET: OnceLock<i64> = OnceLock::new();
+    *OFFSET.get_or_init(|| {
+        #[repr(C)]
+        struct SystemTime { year: u16, month: u16, dow: u16, day: u16, hour: u16, minute: u16, second: u16, ms: u16 }
+        #[link(name = "kernel32")]
+        extern "system" {
+            fn GetLocalTime(time: *mut SystemTime);
+            fn GetSystemTime(time: *mut SystemTime);
+        }
+        let mut local = SystemTime { year: 0, month: 0, dow: 0, day: 0, hour: 0, minute: 0, second: 0, ms: 0 };
+        let mut utc = SystemTime { year: 0, month: 0, dow: 0, day: 0, hour: 0, minute: 0, second: 0, ms: 0 };
+        unsafe {
+            GetLocalTime(&mut local);
+            GetSystemTime(&mut utc);
+        }
+        let to_minutes = |t: &SystemTime| (t.day as i64) * 1440 + (t.hour as i64) * 60 + t.minute as i64;
+        let mut diff = to_minutes(&local) - to_minutes(&utc);
+        // Переход через границу месяца
+        if diff > 14 * 60 { diff -= 1440 * ((diff + 720) / 1440); }
+        if diff < -14 * 60 { diff += 1440 * ((-diff + 720) / 1440); }
+        diff * 60
+    })
+}
+
+#[cfg(not(windows))]
+fn local_offset_seconds() -> i64 {
+    0
+}
 
 pub fn events_sink(events: &Events) -> Sink {
     let app = events.app.clone();

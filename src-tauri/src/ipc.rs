@@ -54,6 +54,7 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             state.set_game(false, 0);
             let vault_data = user_data.clone();
             std::thread::spawn(move || crate::vault::finish(&vault_data));
+            crate::updater::game_closed(app);
             let visible = crate::window::main_window(app).and_then(|w| w.is_visible().ok()).unwrap_or(true);
             if !visible {
                 crate::window::show_launcher(app);
@@ -111,7 +112,10 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
         "set-curseforge-api-key" => crate::curseforge::set_key(&user_data, arg(&args, 0).as_str().unwrap_or("")).await,
         "clear-curseforge-api-key" => crate::curseforge::clear_key(&user_data),
         "curseforge-request" => crate::curseforge::api_request(&user_data, &arg(&args, 0)).await,
-        "install-update" => ok(Value::Null),
+        "install-update" => {
+            crate::updater::install(app);
+            ok(Value::Null)
+        }
 
         other => {
             crate::logs::write("warn", &format!("IPC channel not implemented yet: {other}"));

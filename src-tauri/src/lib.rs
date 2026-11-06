@@ -18,6 +18,7 @@ mod paths;
 mod secure;
 mod state;
 mod system;
+mod updater;
 mod vault;
 mod window;
 
@@ -46,6 +47,7 @@ pub fn run() {
                 }
             });
             logs::write("info", &format!("RxLauncher {} started (Tauri {})", app.package_info().version, tauri::VERSION));
+            updater::start(app.handle());
             Ok(())
         })
         .on_page_load(|webview, payload| {
