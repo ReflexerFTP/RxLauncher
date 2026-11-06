@@ -158,7 +158,25 @@ class RxModsManager {
         });
         if (RxModsManager.getSort() === "problems") RxModsManager.render();
         else files.forEach(file => RxModsManager.updateRow(file));
+        RxModsManager.loadVerified(generation);
         return true;
+    };
+
+    // Значок «Проверено Modrinth»: SHA-1 берём из проверки на стилеры (кеш), сверка — одним запросом
+    static loadVerified = async (generation) => {
+        const context = RxModsManager.getContext();
+        if (!context || typeof RxModrinthVerify === "undefined" || RxPrivacy.isParanoid()) return;
+        let report;
+        try { report = await RxModScan.scan(context.modsPath); } catch (_) { return; }
+        const verified = await RxModScan.verified(report.files);
+        if (generation !== RxModsManager.metaGeneration) return;
+        const byName = new Map(report.files.map(item => [item.name, item]));
+        RxModsManager.files.forEach(file => {
+            const modrinth = verified.get(byName.get(file.fileName)?.sha1) || null;
+            if (Boolean(modrinth) === Boolean(file.modrinth)) return;
+            file.modrinth = modrinth;
+            RxModsManager.updateRow(file);
+        });
     };
 
     static statusFor = (file) => {
@@ -186,9 +204,12 @@ class RxModsManager {
         const $icon = $("<div>").addClass("mods-row-icon");
         if (meta?.iconData) $icon.append($("<img>").attr({src: meta.iconData, alt: ""}));
         else $icon.append($("<span>").addClass("material-symbols-outlined").text("extension"));
+        const $file = $("<span>").addClass("mods-row-file").text(file.fileName).attr("title", file.fileName);
+        if (file.modrinth) $file.prepend($("<span>").addClass("material-symbols-outlined mods-row-verified").text("verified")
+            .attr("title", RxModsManager.message("verified", "Проверено Modrinth: файл совпадает с опубликованным")));
         const $main = $("<div>").addClass("mods-row-main").append($icon, $("<div>").addClass("mods-row-copy")
             .append($("<span>").addClass("mods-row-title").text(meta?.name || file.title))
-            .append($("<span>").addClass("mods-row-file").text(file.fileName).attr("title", file.fileName)));
+            .append($file));
 
         const $details = $("<div>").addClass("mods-row-details");
         if (meta?.version) $details.append($("<span>").text(`v${meta.version}`).attr("title", meta.version));
@@ -284,18 +305,20 @@ class RxModsManager {
     };
 
     // Скопировать JAR-файлы в папку модов (общая логика для кнопки и перетаскивания)
-    static installFiles = (sources) => {
+    static installFiles = async (sources) => {
         const context = RxModsManager.getContext();
         if (!context) return {added: 0, skipped: 0, rejected: 0};
         RxModsManager.ensureDirectory(context.modsPath);
         let added = 0;
         let skipped = 0;
-        let rejected = 0;
-        for (const source of sources) {
-            if (!RxModsManager.isValidJar(source)) {
-                rejected++;
-                continue;
-            }
+        // Проверка на стилеры до того, как файл попадёт в моды
+        const jars = sources.filter(source => RxModsManager.isValidJar(source));
+        const rejected = sources.length - jars.length;
+        const root = path.resolve(context.modsPath);
+        const outside = jars.filter(source => path.dirname(path.resolve(source)) !== root);
+        const allowed = new Set([...jars.filter(source => !outside.includes(source)), ...await RxModScan.checkBeforeInstall(outside)]);
+        for (const source of jars) {
+            if (!allowed.has(source)) continue;
             const destination = path.join(context.modsPath, path.basename(source));
             if (path.resolve(source) === path.resolve(destination) || fs.existsSync(destination) || fs.existsSync(`${destination}.disabled`)) {
                 skipped++;
@@ -326,7 +349,7 @@ class RxModsManager {
             filters: [{name: "Minecraft JAR", extensions: ["jar"]}]
         });
         if (!selected) return false;
-        return RxModsManager.installFiles(selected).added > 0;
+        return (await RxModsManager.installFiles(selected)).added > 0;
     };
 
     static toggle = fileName => {

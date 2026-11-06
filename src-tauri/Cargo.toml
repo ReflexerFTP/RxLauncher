@@ -1,6 +1,6 @@
 [package]
 name = "rxlauncher"
-version = "4.0.0"
+version = "4.1.0"
 description = "RxLauncher — Minecraft launcher"
 authors = ["RxLauncher"]
 license = "GPL-3.0-only"

@@ -55,9 +55,16 @@ pub fn run() {
             Ok(())
         })
         .on_page_load(|webview, payload| {
+            // Окно показывает сам интерфейс (rx-window-show), когда готов первый кадр: так нет пустого тёмного окна.
+            // Если интерфейс не дошёл до этого (ошибка при запуске) — показываем сами через пару секунд
             if payload.event() == tauri::webview::PageLoadEvent::Finished {
-                let _ = webview.window().show();
-                let _ = webview.window().set_focus();
+                let app = webview.app_handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(2500));
+                    if !app.state::<state::AppState>().game_active() {
+                        window::reveal(&app);
+                    }
+                });
             }
         })
         .on_window_event(|window, event| {

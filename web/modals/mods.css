@@ -159,6 +159,7 @@
 .mods-row-icon { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; color: var(--theme-primaryLighter); background: color-mix(in srgb, var(--theme-primary) 15%, var(--theme-primaryBgLighter)); }
 .mods-row-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .mods-row-title { color: var(--text-color); font-size: 10.5pt; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.mods-row-verified { font-size: 13px !important; vertical-align: -2px; margin-right: 3px; color: var(--success); }
 .mods-row-file { color: var(--text-sub); font: 8.5pt "Fira Code"; white-space: nowrap; text-overflow: ellipsis; }
 .mods-row-details { color: var(--text-sub); font-size: 8.5pt; flex-wrap: wrap; }
 .mods-row-details span { padding: 4px 7px; border-radius: 999px; background: var(--theme-primaryBgLighter); }

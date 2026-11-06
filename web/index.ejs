@@ -78,6 +78,7 @@
     <script type="application/x-rx-script" src="./js/RxImportUI.js"></script>
     <script type="application/x-rx-script" src="./js/RxCatalog.js"></script>
     <script type="application/x-rx-script" src="./js/RxLaunchCheck.js"></script>
+    <script type="application/x-rx-script" src="./js/RxModrinthVerify.js"></script>
     <script type="application/x-rx-script" src="./js/RxModScan.js"></script>
     <script type="application/x-rx-script" src="./js/RxWorldBackups.js"></script>
     <script type="application/x-rx-script" src="./js/RxWorldsUI.js"></script>
@@ -202,6 +203,8 @@
             $("html").addClass("noEffects");
         }
 
+        // Окно появляется, когда интерфейс готов: без пустого тёмного окна, анимация видна с первого кадра
+        await RxUI.revealWindow();
         if (!IS_APP_IN_DEV && RxConfig.read("disableStartupAnimation", false) !== true) {
             // Запустить загрузочную анимацию
             RxUI.startLoadScreenAnimation();

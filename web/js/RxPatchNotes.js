@@ -1,6 +1,36 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.1.0-safer-mods",
+            version: "4.1.0",
+            date: "2026-11-06T22:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
+            title: {ru: "Моды под защитой и приглашения друзей", en: "Safer mods and friend invites"},
+            summary: {
+                ru: "Моды сверяются с Modrinth и проверяются на стилеры ещё до установки, вылеты указывают на виновный мод, а друга можно позвать на свой сервер.",
+                en: "Mods are checked against Modrinth and scanned for stealers before they are installed, crashes point to the guilty mod, and you can invite a friend to your server."
+            },
+            changes: {
+                ru: [
+                    "«Проверено Modrinth»: моды, которые совпадают с файлами на Modrinth, отмечены значком. Для файлов не с Modrinth проверка на стилеры строже — о подозрительных находках лаунчер спросит перед игрой.",
+                    "Проверка до установки: моды из каталога, обновления и добавленные вручную файлы сначала проверяются на стилеры и только потом попадают в папку модов.",
+                    "Обновления модов: проверка запускается сама при открытии окна модов, а новые обязательные зависимости ставятся вместе с обновлением.",
+                    "Разбор вылета находит мод по трассировке ошибки и предлагает «Отключить и запустить снова».",
+                    "Друзья: кнопка «Позвать на сервер» — друг получит приглашение и зайдёт к вам одной кнопкой.",
+                    "Окно лаунчера появляется, когда интерфейс уже готов: без пустого тёмного окна при запуске."
+                ],
+                en: [
+                    "“Verified by Modrinth”: mods that match files on Modrinth get a badge. Files not from Modrinth get a stricter stealer check — the launcher asks about suspicious findings before you play.",
+                    "Check before install: mods from the catalog, updates and manually added files are scanned for stealers before they reach the mods folder.",
+                    "Mod updates: the check runs by itself when you open the mods window, and new required dependencies are installed with the update.",
+                    "The crash report finds the mod from the error stack trace and offers “Disable and start again”.",
+                    "Friends: an “Invite to server” button — your friend gets an invite and joins you in one click.",
+                    "The launcher window appears once the interface is ready: no empty dark window on startup."
+                ]
+            }
+        },
+        {
             id: "4.0.0-tauri",
             version: "4.0.0",
             date: "2026-11-06T15:00:00+03:00",

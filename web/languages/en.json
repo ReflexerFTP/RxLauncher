@@ -225,7 +225,8 @@
       "catalogDone": "Mod installed",
       "catalogDeps": "{0} dependencies",
       "catalogNoVersion": "The mod has no build for your game and loader",
-      "catalogFailed": "Could not install the mod"
+      "catalogFailed": "Could not install the mod",
+      "verified": "Verified by Modrinth: the file matches the published one"
     },
     "loading": {
       "progress": "Loading content",
@@ -1051,7 +1052,8 @@
       "installMod": "Install",
       "installing": "Installing…",
       "installed": "Installed",
-      "installFailed": "Could not install automatically"
+      "installFailed": "Could not install automatically",
+      "disableRelaunch": "Disable and start again"
     },
     "instances": {
       "title": "Instances",
@@ -1263,7 +1265,17 @@
         "steam": "Steam",
         "screenCapture": "screenshots",
         "session": "the Minecraft session"
-      }
+      },
+      "installTitle": "Dangerous mod",
+      "installText": "Dangerous files: {0}. They look like stealers: they can steal accounts, Discord tokens and passwords. Better not to install them.",
+      "suspectTitle": "Suspicious mods",
+      "suspectText": "Suspicious mods: {0}. These files are not on Modrinth, so the check is stricter. If you know where a mod comes from, you can trust it.",
+      "suspectInstallText": "Suspicious files: {0}. They are not on Modrinth, so the check is stricter. Install only if you know where the mod comes from.",
+      "installNone": "Install nothing",
+      "installAnyway": "I trust them — install",
+      "installOthers": "Install the rest",
+      "installSkip": "Don't install",
+      "installBlocked": "The mod was not installed: the check found signs of a stealer"
     },
     "launchCheck": {
       "title": "Some mods have problems",
@@ -1461,7 +1473,10 @@
         "needPassword": "Set a password first, or you will not be able to log in",
         "discordTaken": "This Discord is already linked to another account",
         "badSettings": "Invalid setting",
-        "badCode": "Could not send the setup"
+        "badCode": "Could not send the setup",
+        "notOnServer": "You can invite friends while you are playing on a server",
+        "friendOffline": "Your friend is offline",
+        "notFriend": "This player is not on your friends list"
       },
       "onSite": "Account on the website",
       "onSiteText": "rxlauncher.xyz/account — profile, password and nickname",
@@ -1591,7 +1606,12 @@
         "nobody": "Nobody",
         "friends": "All friends",
         "selected": "Selected"
-      }
+      },
+      "invite": "Invite to {0}",
+      "inviteSent": "Invite sent",
+      "inviteTitle": "{0} invites you to play",
+      "inviteText": "Server {0}. The invite is valid for 10 minutes.",
+      "inviteToast": "{0} invites you to a server"
     },
     "feed": {
       "kinds": {

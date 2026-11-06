@@ -11,6 +11,58 @@ class RxModScan {
 
     static scan = (dir, onlyEnabled = false) => ipcRenderer.invoke("mod-scan", {dir, onlyEnabled});
 
+    static verified = async (files) => {
+        if (typeof RxModrinthVerify === "undefined") return new Map();
+        try { return await RxModrinthVerify.lookup(files.map(file => file.sha1).filter(Boolean)); } catch (_) { return new Map(); }
+    };
+
+    // Опасные — всегда. Подозрительные — только если файла нет на Modrinth: там такие находки обычно легальные интеграции
+    static flagged = (files, verified) => {
+        const trusted = RxModScan.trusted();
+        return files.filter(file => !trusted.has(file.sha1)
+            && (file.verdict === "danger" || (file.verdict === "warning" && !verified.has(file.sha1))));
+    };
+
+    static items = (files) => {
+        const shown = files.slice(0, RxModScan.MAX_ITEMS);
+        return shown.map(file => ({icon: file.verdict === "danger" ? "error" : "warning", level: file.verdict === "danger" ? "error" : "warn",
+            title: file.name, text: RxModScan.summary(file)}))
+            .concat(files.length > shown.length ? [{icon: "more_horiz", title: RxModScan.t("more").replace("{0}", files.length - shown.length)}] : []);
+    };
+
+    // Перед установкой (файл ещё не в папке модов): какие из файлов можно ставить
+    static checkBeforeInstall = async (paths) => {
+        if (!RxModScan.isEnabled() || !paths.length) return paths;
+        let report;
+        try {
+            report = await ipcRenderer.invoke("mod-scan-files", {files: paths});
+        } catch (error) {
+            RxCollector.writeLog(`ModScan: Pre-install check skipped [error=${error?.message || error}]`);
+            return paths;
+        }
+        const files = report.files || [];
+        const flagged = RxModScan.flagged(files, await RxModScan.verified(files));
+        flagged.forEach(file => RxCollector.writeLog(`ModScan: Pre-install ${file.verdict} ${file.name} [${file.findings.map(item => item.id).join(",")}]`));
+        if (!flagged.length) return paths;
+        const danger = flagged.some(file => file.verdict === "danger");
+        const answer = await RxDialog.confirm({
+            icon: danger ? "gpp_bad" : "gpp_maybe",
+            title: RxModScan.t(danger ? "installTitle" : "suspectTitle"),
+            text: RxModScan.t(danger ? "installText" : "suspectInstallText").replace("{0}", flagged.length),
+            items: RxModScan.items(flagged),
+            cancelText: paths.length > flagged.length ? RxModScan.t("installNone") : MESSAGES.dialog.cancel,
+            extraButton: {text: RxModScan.t("installAnyway"), icon: "warning"},
+            confirmText: RxModScan.t(paths.length > flagged.length ? "installOthers" : "installSkip")
+        });
+        if (answer === "extra") {
+            RxModScan.trust(flagged);
+            return paths;
+        }
+        if (answer !== true) return [];
+        const blocked = new Set(flagged.map(file => file.path));
+        return paths.filter(item => !blocked.has(item));
+    };
+
     // «Похоже на стилер: ищет токены Discord и пароли браузеров, может отправить через Telegram-бота»
     static reasonText = (finding) => {
         const reasons = MESSAGES.modScan.reasons;
@@ -70,16 +122,15 @@ class RxModScan {
             return true;
         }
         RxModScan.logReport(report);
-        const trusted = RxModScan.trusted();
-        const dangerous = report.files.filter(file => file.verdict === "danger" && !trusted.has(file.sha1));
+        // Подозрительные моды не с Modrinth тоже показываем (проверка строже для файлов неизвестного происхождения)
+        const dangerous = RxModScan.flagged(report.files, await RxModScan.verified(report.files));
         if (!dangerous.length) return true;
-        const shown = dangerous.slice(0, RxModScan.MAX_ITEMS);
+        const danger = dangerous.some(file => file.verdict === "danger");
         const answer = await RxDialog.confirm({
-            icon: "gpp_bad",
-            title: RxModScan.t("title"),
-            text: RxModScan.t("text").replace("{0}", dangerous.length),
-            items: shown.map(file => ({icon: "error", level: "error", title: file.name, text: RxModScan.summary(file)}))
-                .concat(dangerous.length > shown.length ? [{icon: "more_horiz", title: RxModScan.t("more").replace("{0}", dangerous.length - shown.length)}] : []),
+            icon: danger ? "gpp_bad" : "gpp_maybe",
+            title: RxModScan.t(danger ? "title" : "suspectTitle"),
+            text: RxModScan.t(danger ? "text" : "suspectText").replace("{0}", dangerous.length),
+            items: RxModScan.items(dangerous),
             cancelText: MESSAGES.dialog.cancel,
             extraButton: {text: RxModScan.t("trustAndPlay"), icon: "warning"},
             confirmText: RxModScan.t("disableAndPlay")

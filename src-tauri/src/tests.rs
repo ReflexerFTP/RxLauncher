@@ -143,3 +143,22 @@ fn safe_storage_roundtrip() {
     assert_eq!(crate::secure::decrypt(&dir, &sealed).unwrap(), "rx1_secret-token");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn scan_files_before_install() {
+    let dir = std::env::temp_dir().join(format!("rx-stage-{:016x}", rand::random::<u64>()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let bad = dir.join("bad.jar");
+    std::fs::write(&bad, jar(&[("a/Send.class", b"\x01https://discord.com/api/webhooks/1/2")])).unwrap();
+    let missing = dir.join("missing.jar").to_string_lossy().to_string();
+    let result = crate::modscan::scan_files(&dir, &[bad.to_string_lossy().to_string(), missing]).unwrap().0;
+    let files = result["files"].as_array().unwrap();
+    assert_eq!(files[0]["verdict"], "danger");
+    assert_eq!(files[0]["name"], "bad.jar");
+    assert_eq!(files[0]["sha1"].as_str().unwrap().len(), 40);
+    assert_eq!(files[1]["error"], "notFound");
+    // Второй раз — из кеша по SHA-1
+    let again = crate::modscan::scan_files(&dir, &[bad.to_string_lossy().to_string()]).unwrap().0;
+    assert_eq!(again["files"][0]["verdict"], "danger");
+    let _ = std::fs::remove_dir_all(&dir);
+}

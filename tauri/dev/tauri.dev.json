@@ -10,13 +10,42 @@
         {
           "identifier": "dev-remote",
           "description": "Отладочная сборка: интерфейс с локального сервера tauri/dev/serve.cjs",
-          "windows": ["main"],
-          "remote": {"urls": ["http://127.0.0.1:1420/*", "http://127.0.0.1:1420"]},
-          "permissions": ["core:event:default"]
+          "windows": [
+            "main"
+          ],
+          "remote": {
+            "urls": [
+              "http://127.0.0.1:1420/*",
+              "http://127.0.0.1:1420"
+            ]
+          },
+          "permissions": [
+            "core:event:default"
+          ]
         },
         "default"
       ]
-    }
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "RxLauncher",
+        "url": "index.html",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 680,
+        "center": true,
+        "resizable": true,
+        "maximizable": true,
+        "decorations": false,
+        "visible": false,
+        "backgroundColor": "#091012",
+        "dragDropEnabled": true,
+        "useHttpsScheme": false,
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required --remote-debugging-port=9333"
+      }
+    ]
   },
   "bundle": {
     "active": false

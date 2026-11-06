@@ -85,6 +85,8 @@ class RxFriendsUI {
             if (person.online && person.server) actions += b("join", "login", RxFriendsUI.t("join"), {primary: true, label: RxFriendsUI.t("joinShort")});
             if (person.canCopy) actions += b("pack", "file_copy", RxFriendsUI.t("copyPack").replace("{0}", person.packName || RxFriendsUI.t("packFallback")), {label: RxFriendsUI.t("packShort")});
             if (person.online && person.server) actions += b("copy", "content_copy", RxFriendsUI.t("copyServer"));
+            const mine = RxFriends.myServer();
+            if (person.online && mine && person.server !== mine) actions += b("invite", "send", RxFriendsUI.t("invite").replace("{0}", mine));
             actions += b("remove", "person_remove", RxFriendsUI.t("remove"));
         } else if (kind === "incoming") {
             status = esc(RxFriendsUI.t("wantsToBeFriends"));
@@ -206,6 +208,11 @@ class RxFriendsUI {
             return RxToasts.create(RxFriendsUI.t("serverCopied"), "content_copy", person.server, "success");
         }
         if (action === "join") return RxFriendsUI.join(person);
+        if (action === "invite") {
+            const sent = await RxFriendsUI.busy($button, () => RxFriends.invite(id));
+            if (sent) RxToasts.create(RxFriendsUI.t("inviteSent"), "send", person.nick, "success");
+            return;
+        }
         if (action === "pack") return RxFriendsUI.copyPack($button, person);
         if (action === "remove") {
             const confirmed = await RxDialog.confirm({icon: "person_remove", title: RxFriendsUI.t("removeTitle").replace("{0}", person.nick),
@@ -274,9 +281,31 @@ class RxFriendsUI {
             confirmText: RxFriendsUI.t("joinPlay")
         });
         if (!confirmed) return;
-        selectedServerFromList = friend.server;
+        await RxFriendsUI.play(friend.server);
+    };
+
+    static play = async (server) => {
+        selectedServerFromList = server;
         await RxModals.switchModal("content");
         RxFlyout.startSelectedVersion();
+    };
+
+    // Друг позвал на свой сервер: в игре — только уведомление, иначе окно «Играть»
+    static showInvite = async (invite) => {
+        if (RxFriends.game) return RxToasts.create(RxFriendsUI.t("inviteToast").replace("{0}", invite.nick), "send", invite.server, "info");
+        const active = RxVersionsManager.getActiveVersion();
+        const mine = (RxVersionsUI.allVersions || []).find(version => version.id === active)?.displayName || active || "—";
+        const theirs = [RxFriendsUI.LOADERS[invite.loader] || "", invite.version].filter(Boolean).join(" ") || "—";
+        const confirmed = await RxDialog.confirm({
+            icon: "send", title: RxFriendsUI.t("inviteTitle").replace("{0}", invite.nick),
+            text: RxFriendsUI.t("inviteText").replace("{0}", invite.server),
+            items: [
+                {icon: "person", title: RxFriendsUI.t("friendVersion"), text: theirs},
+                {icon: "deployed_code", title: RxFriendsUI.t("yourVersion"), text: mine}
+            ],
+            confirmText: RxFriendsUI.t("joinPlay")
+        });
+        if (confirmed && !RxFriends.game) await RxFriendsUI.play(invite.server);
     };
 
     // ---------- профиль ----------

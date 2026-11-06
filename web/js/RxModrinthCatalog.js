@@ -202,11 +202,20 @@ class RxModrinthCatalog {
 
     static primaryFile = (version) => (version.files || []).find(file => file.primary) || (version.files || [])[0];
 
-    // Файл проверяется по хешу из Modrinth, прежде чем лечь в моды
+    // Файл проверяется по хешу из Modrinth и на стилеры во временной папке, и только потом ложится в моды
     static download = async (file, modsPath) => {
         const fileName = path.basename(String(file.filename || ""));
         if (!/\.jar$/i.test(fileName)) throw new Error("Not a jar file");
-        await RxHttp.download(file.url, path.join(modsPath, fileName), {hashes: file.hashes});
+        const stage = path.join(GAME_DATA, "cache", "mod-stage", crypto.randomUUID());
+        const staged = path.join(stage, fileName);
+        try {
+            await RxHttp.download(file.url, staged, {hashes: file.hashes});
+            if (!(await RxModScan.checkBeforeInstall([staged])).length) throw new Error("blockedByScan");
+            const target = path.join(modsPath, fileName);
+            try { fs.renameSync(staged, target); } catch (_) { fs.copyFileSync(staged, target); }
+        } finally {
+            try { fs.rmSync(stage, {recursive: true, force: true}); } catch (_) {}
+        }
         return fileName;
     };
 
@@ -279,7 +288,8 @@ class RxModrinthCatalog {
             RxModrinthCatalog.installedKey = "";
         } catch (error) {
             RxCollector.writeLog(`Modrinth: Install failed [project=${projectId}] [error=${error}]`);
-            RxToasts.create(error?.message === "noVersion" ? MESSAGES.mods.catalogNoVersion : MESSAGES.mods.catalogFailed, "error", "", "error");
+            if (error?.message === "blockedByScan") RxToasts.create(MESSAGES.modScan.installBlocked, "gpp_bad", "", "error");
+            else RxToasts.create(error?.message === "noVersion" ? MESSAGES.mods.catalogNoVersion : MESSAGES.mods.catalogFailed, "error", "", "error");
         } finally {
             RxModrinthCatalog.installing.delete(projectId);
             RxModrinthCatalog.refreshCard(projectId);
@@ -301,10 +311,23 @@ class RxModrinthCatalog {
     };
 
     // ---------- обновления установленных модов ----------
-    static checkUpdates = async () => {
+    // Тихая проверка при открытии окна модов: не чаще раза в 30 минут для одной папки, результат запоминается
+    static autoChecked = new Map(); // modsPath → {at, updates}
+    static autoCheck = () => {
         const context = RxModsManager.getContext();
         const target = RxModrinthCatalog.target();
-        if (!context || !target?.loader) return RxToasts.create(MESSAGES.mods.catalogNoLoader, "info");
+        if (!context || !target?.loader || RxPrivacy.isParanoid()) return;
+        const last = RxModrinthCatalog.autoChecked.get(context.modsPath);
+        if (last && Date.now() - last.at < 30 * 60e3) {
+            return RxModrinthCatalog.showUpdates(last.updates.filter(item => fs.existsSync(item.current.file)));
+        }
+        RxModrinthCatalog.checkUpdates(true);
+    };
+
+    static checkUpdates = async (quiet = false) => {
+        const context = RxModsManager.getContext();
+        const target = RxModrinthCatalog.target();
+        if (!context || !target?.loader) return quiet ? null : RxToasts.create(MESSAGES.mods.catalogNoLoader, "info");
         const $button = $('#modal-mods [data-mods-action="updates"]');
         $button.prop("disabled", true);
         try {
@@ -312,7 +335,8 @@ class RxModrinthCatalog {
             const byHash = new Map([...installed.values()].map(item => [item.sha1, item]));
             if (!byHash.size) {
                 RxModrinthCatalog.showUpdates([]);
-                return RxToasts.create(MESSAGES.mods.updatesNone, "check_circle", MESSAGES.mods.updatesUnknown);
+                RxModrinthCatalog.autoChecked.set(context.modsPath, {at: Date.now(), updates: []});
+                return quiet ? null : RxToasts.create(MESSAGES.mods.updatesNone, "check_circle", MESSAGES.mods.updatesUnknown);
             }
             const latest = await RxModrinthCatalog.call("POST", "/version_files/update", {
                 hashes: [...byHash.keys()],
@@ -323,11 +347,13 @@ class RxModrinthCatalog {
             const updates = Object.entries(latest || {})
                 .map(([hash, version]) => ({current: byHash.get(hash), version, file: RxModrinthCatalog.primaryFile(version)}))
                 .filter(item => item.current && item.file && item.version.id !== item.current.versionId);
+            RxModrinthCatalog.autoChecked.set(context.modsPath, {at: Date.now(), updates});
+            if (RxModsManager.getContext()?.modsPath !== context.modsPath) return;
             RxModrinthCatalog.showUpdates(updates);
-            if (!updates.length) RxToasts.create(MESSAGES.mods.updatesNone, "check_circle", "", "success");
+            if (!updates.length && !quiet) RxToasts.create(MESSAGES.mods.updatesNone, "check_circle", "", "success");
         } catch (error) {
             RxCollector.writeLog(`Modrinth: Update check failed [error=${error}]`);
-            RxToasts.create(MESSAGES.mods.catalogOffline, "wifi_off", "", "error");
+            if (!quiet) RxToasts.create(MESSAGES.mods.catalogOffline, "wifi_off", "", "error");
         } finally {
             $button.prop("disabled", false);
         }
@@ -347,7 +373,10 @@ class RxModrinthCatalog {
         const $button = $('#modal-mods [data-mods-action="apply-updates"]').prop("disabled", true);
         // Старые файлы не удаляем сразу, а переносим в папку бэкапа
         const backupDir = path.join(context.gameRoot, "rx-mod-backups", new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-"));
+        const target = RxModrinthCatalog.target();
+        const visited = new Set();
         let done = 0;
+        let deps = 0;
         for (const item of RxModrinthCatalog.updates) {
             try {
                 const fileName = await RxModrinthCatalog.download(item.file, context.modsPath);
@@ -359,14 +388,24 @@ class RxModrinthCatalog {
                     if (/\.disabled$/i.test(oldFile)) fs.renameSync(path.join(context.modsPath, fileName), path.join(context.modsPath, `${fileName}.disabled`));
                 }
                 done++;
+                // Новой версии могли понадобиться новые обязательные зависимости — ставим их тоже
+                for (const dependency of (item.version.dependencies || []).filter(dep => dep.dependency_type === "required" && dep.project_id)) {
+                    try {
+                        if (target?.loader) deps += (await RxModrinthCatalog.installProject(dependency.project_id, target, context.modsPath, visited)).length;
+                    } catch (error) {
+                        RxCollector.writeLog(`Modrinth: Dependency install failed [project=${dependency.project_id}] [error=${error}]`);
+                    }
+                }
             } catch (error) {
                 RxCollector.writeLog(`Modrinth: Update failed [file=${item.current.file}] [error=${error}]`);
             }
         }
         $button.prop("disabled", false);
         RxModrinthCatalog.showUpdates([]);
+        RxModrinthCatalog.autoChecked.delete(context.modsPath);
         RxModrinthCatalog.installedKey = "";
-        RxToasts.create(MESSAGES.mods.updatesDone.replace("{0}", done), "upgrade", done ? MESSAGES.mods.updatesBackup : "", done ? "success" : "error");
+        const details = [done ? MESSAGES.mods.updatesBackup : "", deps ? MESSAGES.mods.catalogDeps.replace("{0}", deps) : ""].filter(Boolean).join(" · ");
+        RxToasts.create(MESSAGES.mods.updatesDone.replace("{0}", done), "upgrade", details, done ? "success" : "error");
         RxModsManager.refresh();
     };
 
@@ -408,6 +447,7 @@ class RxModrinthCatalog {
         $(document).on("showModalEvent", (event) => {
             if (event.originalEvent?.detail?.modal !== "mods") return;
             RxModrinthCatalog.showUpdates([]);
+            setTimeout(RxModrinthCatalog.autoCheck, 400);
             if (!$modal.find('[data-view="catalog"]').prop("hidden")) RxModrinthCatalog.search();
         });
     };

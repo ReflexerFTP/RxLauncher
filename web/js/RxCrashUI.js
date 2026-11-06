@@ -45,6 +45,17 @@ class RxCrashUI {
                 }
             }));
         }
+        // Главная кнопка для мода-виновника: отключить и сразу запустить снова
+        if (finding.fileName && modsDir && ["stackCulprit", "suspect", "mixin"].includes(finding.rule) && fs.existsSync(path.join(modsDir, finding.fileName))) {
+            $actions.prepend(RxCrashUI.actionButton("restart_alt", RxCrashUI.message("disableRelaunch", "Отключить и запустить снова"), async () => {
+                if (!RxCrashAnalyzer.disableMod(RxCrashUI.report, finding.fileName)) return;
+                RxToasts.create(RxCrashUI.message("modDisabled", "Мод отключён"), "block", finding.fileName, "success");
+                await RxCrashUI.hide();
+                await RxModals.switchModal("content");
+                // Только та же версия, что вылетела: иначе отключение мода ничего не проверит
+                if (!RxCrashUI.report.versionId || RxCrashUI.report.versionId === RxVersionsManager.getActiveVersion()) RxFlyout.startSelectedVersion();
+            }).removeClass("transparent"));
+        }
         if (finding.dependency && modsDir) {
             const $install = RxCrashUI.actionButton("download", RxCrashUI.message("installMod", "Установить"), async () => {
                 $install.prop("disabled", true).find("span:last").text(RxCrashUI.message("installing", "Устанавливаем…"));

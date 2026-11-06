@@ -11,6 +11,7 @@ class RxFriends {
     static loaded = false;
     static seenIncoming = null; // id заявок, о которых уже показали уведомление
     static outgoingIds = new Set();
+    static seenInvites = new Set(); // приглашения на сервер, которые уже показали
 
     static enabled = () => RxAccount.isLoggedIn() && !RxPrivacy.isParanoid();
     static invisible = () => RxConfig.read("friendsInvisible", false) === true;
@@ -71,6 +72,11 @@ class RxFriends {
             data.friends.filter(friend => RxFriends.outgoingIds.has(friend.id))
                 .forEach(friend => RxToasts.create(MESSAGES.friends.accepted, "handshake", friend.nick, "success"));
         }
+        // Приглашения на сервер приходят один раз
+        (Array.isArray(data.invites) ? data.invites : []).filter(item => item?.id && item.server && !RxFriends.seenInvites.has(item.id)).forEach(item => {
+            RxFriends.seenInvites.add(item.id);
+            if (typeof RxFriendsUI !== "undefined") RxFriendsUI.showInvite(item);
+        });
         RxFriends.seenIncoming = new Set(incoming.map(item => item.id));
         RxFriends.outgoingIds = new Set(outgoing.map(item => item.id));
         RxFriends.state = {friends: data.friends, incoming, outgoing};
@@ -125,6 +131,9 @@ class RxFriends {
     static accept = (id) => RxFriends.act("friends/accept", {id});
     static decline = (id) => RxFriends.act("friends/decline", {id});
     static remove = (id) => RxFriends.act("friends/remove", {id});
+    // Позвать на свой сервер: сервер RxLauncher берёт адрес из нашего статуса
+    static invite = (id) => RxAccount.call("friends/invite", {id});
+    static myServer = () => RxFriends.presence().server || "";
 
     // ---------- игра ----------
     static gameStarted = ({version = "", loaderType = "", server = "", sourceId = ""} = {}) => {

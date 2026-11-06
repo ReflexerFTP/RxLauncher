@@ -36,6 +36,15 @@ class RxUI {
         ipcRenderer.send("reload-main-window");
     }
 
+    // Показать окно (Tauri создаёт его скрытым) и дождаться, пока оно нарисует первый кадр
+    static revealWindow = async () => {
+        const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+        try {
+            await Promise.race([ipcRenderer.invoke("rx-window-show"), wait(1000)]);
+        } catch (_) {}
+        await Promise.race([new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))), wait(250)]);
+    };
+
     // Начать загрузочную анимацию
     static startLoadScreenAnimation = () => {
         let loadingScreenElem = $(".loading-screen");

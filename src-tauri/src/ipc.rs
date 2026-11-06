@@ -33,6 +33,11 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
         "close-main-window" | "hide-main-window" | "maximize-main-window" | "reload-main-window" | "disappear-main-window" | "appear-main-window" | "focus-fix" => {
             crate::window::window_command(app, &channel)
         }
+        // Интерфейс готов к первому кадру — показываем окно (оно создаётся скрытым)
+        "rx-window-show" => {
+            crate::window::reveal(app);
+            ok(Value::Null)
+        }
         "launcher-ready" => {
             crate::logs::write("info", "Launcher UI ready");
             ok(Value::Null)
@@ -73,6 +78,11 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             let dir = payload.get("dir").and_then(Value::as_str).unwrap_or("").to_string();
             let only_enabled = payload.get("onlyEnabled").and_then(Value::as_bool).unwrap_or(false);
             blocking(move || crate::modscan::scan_dir(&user_data, &dir, only_enabled)).await
+        }
+        "mod-scan-files" => {
+            let files: Vec<String> = arg(&args, 0).get("files").and_then(Value::as_array)
+                .map(|items| items.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default();
+            blocking(move || crate::modscan::scan_files(&user_data, &files)).await
         }
         "discord-loopback" => {
             let payload = arg(&args, 0);

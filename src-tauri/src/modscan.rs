@@ -435,6 +435,45 @@ fn save_cache(file: &Path, cache: &mut Value) {
     }
 }
 
+// Файлы перед установкой (скачанные во временную папку или выбранные вручную): тот же разбор и кеш по SHA-1
+pub fn scan_files(user_data: &Path, files: &[String]) -> BridgeResult {
+    let cache_file = user_data.join("mod-scan-cache.json");
+    let mut cache = load_cache(&cache_file);
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0);
+    let mut list = Vec::new();
+    for file in files.iter().take(200) {
+        let path = Path::new(file);
+        let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+        if !path.is_absolute() || !path.is_file() {
+            list.push(json!({"name": name, "path": file, "sha1": "", "verdict": "unknown", "findings": [], "error": "notFound"}));
+            continue;
+        }
+        let sha1 = crate::gamefiles::sha1_file(path).unwrap_or_default();
+        let mut result = match cache["bySha1"].get(&sha1).filter(|_| !sha1.is_empty()) {
+            Some(known) => known.clone(),
+            None => {
+                let scanned = scan_file(path);
+                if !sha1.is_empty() && scanned["verdict"] != "unknown" {
+                    let mut stored = scanned.clone();
+                    stored["at"] = json!(now);
+                    cache["bySha1"][&sha1] = stored;
+                }
+                scanned
+            }
+        };
+        if let Some(map) = result.as_object_mut() {
+            map.remove("at");
+            map.insert("name".into(), json!(name));
+            map.insert("path".into(), json!(file));
+            map.insert("sha1".into(), json!(sha1));
+            map.insert("enabled".into(), json!(true));
+        }
+        list.push(result);
+    }
+    save_cache(&cache_file, &mut cache);
+    ok(json!({"files": list}))
+}
+
 pub fn scan_dir(user_data: &Path, dir: &str, only_enabled: bool) -> BridgeResult {
     if dir.is_empty() || dir.len() > 1024 || !Path::new(dir).is_absolute() {
         return Err(BridgeError::new("Invalid mods directory"));

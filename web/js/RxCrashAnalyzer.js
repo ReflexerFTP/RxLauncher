@@ -61,6 +61,49 @@ class RxCrashAnalyzer {
         return "0x" + (value >>> 0).toString(16).toUpperCase().padStart(8, "0");
     };
 
+    // Пакеты игры, загрузчиков и библиотек — их классы в стеке ни на какой мод не указывают
+    static IGNORED_PACKAGES = /^(?:java|javax|jdk|sun|com\.sun|net\.minecraft|com\.mojang|net\.fabricmc|org\.quiltmc|net\.minecraftforge|net\.neoforged|cpw|org\.spongepowered|com\.llamalad7|org\.lwjgl|io\.netty|com\.google|org\.apache|org\.slf4j|it\.unimi|org\.objectweb|kotlin|kotlinx|scala|org\.joml|oshi|com\.electronwill|org\.jetbrains|org\.openjdk|com\.github\.benmanes|joptsimple|org\.jline|net\.java|org\.tukaani|com\.ibm|org\.antlr|org\.yaml|org\.json|com\.fasterxml|org\.ow2|org\.checkerframework|org\.intellij|net\.jodah|org\.burningwave|me\.lucko\.spark\.lib)\./;
+
+    // Виновник по трассировке ошибки: мод, чей код (или mixin) стоит в стеке. Верх стека весит больше.
+    // Forge/NeoForge подписывают кадры файлом (~[mod.jar%2312!/:?]) или id (TRANSFORMER/modid@1.0/…),
+    // Fabric — именем метода mixin (handler$zza000$modid$…); остальное ищем по классам внутри JAR модов
+    static stackCulprit = async (text, mods, modsDir) => {
+        const enabled = mods.entries.filter((entry) => entry.enabled);
+        if (!enabled.length || !modsDir) return null;
+        const frames = [...String(text || "").matchAll(/^\s*at\s+([^\s(]+)\.([\w$<>]+)\([^)\n]*\)(?:\s*~?\[([^\]\n]*)\])?/gm)].slice(0, 120);
+        if (!frames.length) return null;
+        const byJar = new Map(enabled.map((entry) => [entry.fileName.toLowerCase(), entry.fileName]));
+        const byId = new Map(enabled.filter((entry) => entry.meta?.id).map((entry) => [entry.meta.id.toLowerCase(), entry.fileName]));
+        const score = new Map();
+        const bump = (fileName, weight) => fileName && score.set(fileName, (score.get(fileName) || 0) + weight);
+        const classes = new Map(); // запись в JAR → вес
+        frames.forEach((match, index) => {
+            const weight = Math.max(1, 12 - index);
+            const parts = match[1].split("/");
+            const className = parts[parts.length - 1];
+            const owner = parts.length === 3 && parts[1].includes("@") ? parts[1].split("@")[0].toLowerCase() : "";
+            const jar = (match[3] || "").match(/([^\/\\[\]%:~]+\.jar)/i);
+            const mixin = match[2].match(/^\w+\$\w+\$([a-z0-9_]+)\$/i);
+            if (jar && byJar.has(jar[1].toLowerCase())) return bump(byJar.get(jar[1].toLowerCase()), weight * 2);
+            if (owner && byId.has(owner)) return bump(byId.get(owner), weight * 2);
+            if (mixin && byId.has(mixin[1].toLowerCase())) bump(byId.get(mixin[1].toLowerCase()), weight * 2);
+            if (!RxCrashAnalyzer.IGNORED_PACKAGES.test(className) && className.includes(".")) {
+                const entry = `${className.replace(/\$.*$/, "").replace(/\./g, "/")}.class`;
+                if (classes.size < 40 || classes.has(entry)) classes.set(entry, Math.max(classes.get(entry) || 0, weight));
+            }
+        });
+        if (classes.size && typeof RxModMeta !== "undefined") {
+            for (const entry of enabled) {
+                const found = await RxModMeta.readEntries(path.join(modsDir, entry.fileName), (name) => classes.has(name), 512 * 1024);
+                Object.keys(found).forEach((name) => bump(entry.fileName, classes.get(name)));
+            }
+        }
+        const [best] = [...score.entries()].sort((a, b) => b[1] - a[1]);
+        if (!best) return null;
+        const mod = enabled.find((entry) => entry.fileName === best[0]);
+        return {fileName: best[0], name: mod?.meta?.name || best[0]};
+    };
+
     // Известные пакеты Java -> какой мод-библиотеку поставить
     static LIBRARY_HINTS = [
         [/^net[./]fabricmc[./]fabric[./]/, "Fabric API"],
@@ -185,7 +228,17 @@ class RxCrashAnalyzer {
         const hasOptifine = mods.entries.some((entry) => entry.enabled && /optifine|optifabric/i.test(entry.fileName));
         if (hasOptifine && ["sodium", "iris", "embeddium", "rubidium"].some((id) => ids.has(id))) add({rule: "optifineSodium", severity: "error", args: {}});
 
-        // 11. Подозреваемые моды из crash-report
+        // 11. Виновник по трассировке — когда правила выше не нашли конкретный мод
+        if (!findings.some((item) => item.severity === "error" && item.fileName)) {
+            try {
+                const culprit = await RxCrashAnalyzer.stackCulprit(crashText || text, mods, modsDir);
+                if (culprit) add({rule: "stackCulprit", severity: "error", args: {mod: culprit.name}, fileName: culprit.fileName});
+            } catch (error) {
+                RxCollector.writeLog(`Crash: Stack analysis failed [error=${error?.message || error}]`);
+            }
+        }
+
+        // 12. Подозреваемые моды из crash-report
         const suspects = new Set();
         for (const match of crashText.matchAll(/Suspected Mods?:\s*([^\n]+(?:\n\t[^\n]+)*)/g)) {
             match[1].split(/[\n,]/).map((item) => item.replace(/\t/g, "").trim()).filter((item) => item && !/^None$/i.test(item) && !/^Unknown$/i.test(item)).forEach((item) => suspects.add(item));
@@ -195,7 +248,7 @@ class RxCrashAnalyzer {
             add({rule: "suspect", severity: "warn", args: {mod: suspect}, fileName: fileForMod(id)});
         });
 
-        // 12. Статическая проверка модов (как во вкладке «Моды»)
+        // 13. Статическая проверка модов (как во вкладке «Моды»)
         mods.entries.filter((entry) => entry.enabled && entry.compat?.verdict === "error").slice(0, 8).forEach((entry) => {
             const problems = entry.compat.checks.filter((check) => check.level === "error").map((check) => check.text);
             add({rule: "modProblem", severity: "warn", args: {mod: entry.meta?.name || entry.fileName}, detail: problems.join(" · "), fileName: entry.fileName,
@@ -301,6 +354,7 @@ class RxCrashAnalyzer {
             gameFiles: {title: "Файлы игры повреждены", fix: "Переустановите версию игры. Если не поможет — смените папку игры в настройках и установите начисто."},
             authlib: {title: "Не удалось связаться с системой скинов", fix: "Сервис Ely.by временно недоступен. Попробуйте позже или запустите игру с локальным профилем."},
             optifineSodium: {title: "OptiFine вместе с Sodium/Iris", fix: "OptiFine несовместим с Sodium, Iris и их аналогами. Оставьте что-то одно: Sodium + Iris обычно работают быстрее."},
+            stackCulprit: {title: "Похоже, вылет из-за мода «{mod}»", fix: "Его код стоит в трассировке ошибки. Отключите мод и запустите игру снова: если вылет пропадёт — обновите мод или напишите его автору."},
             suspect: {title: "Вероятный виновник: {mod}", fix: "Игра указала этот мод в отчёте о вылете. Обновите его или временно отключите."},
             modProblem: {title: "Проблема с модом «{mod}»", fix: "Проверка модов нашла проблему, из-за которой игра может вылетать."},
             nativeCrash: {title: "Аварийное завершение Java ({code})", fix: "Чаще всего это видеодрайвер, шейдеры или антивирус. Обновите драйвер видеокарты, отключите шейдеры и моды рендера и попробуйте снова."},
@@ -324,6 +378,7 @@ class RxCrashAnalyzer {
             gameFiles: {title: "Game files are corrupted", fix: "Reinstall the game version. If that does not help, change the game folder in settings and install cleanly."},
             authlib: {title: "Could not reach the skin system", fix: "Ely.by is temporarily unavailable. Try later or play with a local profile."},
             optifineSodium: {title: "OptiFine together with Sodium/Iris", fix: "OptiFine is incompatible with Sodium, Iris and similar mods. Keep one: Sodium + Iris is usually faster."},
+            stackCulprit: {title: "The crash seems to come from “{mod}”", fix: "Its code is in the error stack trace. Disable the mod and start the game again: if the crash is gone, update the mod or tell its author."},
             suspect: {title: "Likely culprit: {mod}", fix: "The game named this mod in its crash report. Update it or disable it temporarily."},
             modProblem: {title: "Problem with “{mod}”", fix: "The mod check found an issue that can crash the game."},
             nativeCrash: {title: "Java crashed natively ({code})", fix: "Most often it is the graphics driver, shaders or antivirus. Update the GPU driver, disable shaders and rendering mods, and try again."},

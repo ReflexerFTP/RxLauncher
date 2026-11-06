@@ -23,6 +23,16 @@ pub fn show_launcher(app: &AppHandle) {
     let _ = app.remove_tray_by_id(TRAY_ID);
 }
 
+// Первый показ при запуске: окно ещё ни разу не показывали
+pub fn reveal(app: &AppHandle) {
+    if let Some(window) = main_window(app) {
+        if !window.is_visible().unwrap_or(true) {
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }
+}
+
 // Во время игры: окно скрыто, в трее значок «Открыть RxLauncher»
 pub fn hide_launcher(app: &AppHandle) {
     let Some(window) = main_window(app) else { return };

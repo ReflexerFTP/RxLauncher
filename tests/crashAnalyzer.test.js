@@ -55,6 +55,32 @@ const rules = (report) => [...report.findings].map((finding) => finding.rule);
     assert.ok(report.findings.some((f) => f.rule === "missingDep" && f.dependency === "fabric-api"));
     assert.ok(report.findings.some((f) => f.title.startsWith("Missing dependency mod: Sodium")));
 
+    // Виновник по трассировке: Forge подписывает кадр файлом мода, Fabric — именем метода mixin
+    fs.writeFileSync(path.join(gameRoot, "mods", "badmod-1.0.jar"), "not a real jar");
+    report = await run([
+        "java.lang.NullPointerException: Cannot invoke \"Object.toString()\" because \"value\" is null",
+        "\tat com.example.badmod.Renderer.draw(Renderer.java:42) ~[badmod-1.0.jar%23123!/:?]",
+        "\tat net.minecraft.client.renderer.GameRenderer.render(GameRenderer.java:900) ~[client-1.21.4.jar:?]",
+        "\tat java.base/java.lang.Thread.run(Thread.java:1583) [?:?]"
+    ].join("\n"));
+    assert.ok(report.findings.some((f) => f.rule === "stackCulprit" && f.fileName === "badmod-1.0.jar"), "culprit from the jar named in the stack frame");
+    fs.rmSync(path.join(gameRoot, "mods", "badmod-1.0.jar"));
+
+    // Fabric без имени файла в кадре: класс из стека ищется внутри JAR модов
+    const jarSource = path.join(tempRoot, "jar-src");
+    fs.mkdirSync(path.join(jarSource, "com", "example", "fabricbad"), {recursive: true});
+    fs.writeFileSync(path.join(jarSource, "fabric.mod.json"), JSON.stringify({schemaVersion: 1, id: "fabricbad", name: "Fabric Bad", version: "1.0"}));
+    fs.writeFileSync(path.join(jarSource, "com", "example", "fabricbad", "Ticker.class"), "class");
+    await require("compressing").zip.compressDir(jarSource, path.join(gameRoot, "mods", "fabric-bad.jar"), {ignoreBase: true});
+    report = await run([
+        "java.lang.IllegalStateException: boom",
+        "\tat com.example.fabricbad.Ticker.tick(Ticker.java:10)",
+        "\tat net.minecraft.class_310.method_1574(class_310.java:100)",
+        "\tat net.minecraft.class_310.handler$zza000$othermod$onTick(class_310.java:5)"
+    ].join("\n"));
+    assert.ok(report.findings.some((f) => f.rule === "stackCulprit" && f.fileName === "fabric-bad.jar" && f.title.includes("Fabric Bad")), JSON.stringify(report.findings));
+    fs.rmSync(path.join(gameRoot, "mods", "fabric-bad.jar"));
+
     // Mixin-конфликт
     report = await run("[main/ERROR]: Mixin apply for mod lithium failed lithium.mixins.json:ai.sensor.MixinSensor from mod lithium -> net.minecraft.class_123: org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException");
     assert.ok(report.findings.some((f) => f.rule === "mixin" && f.args.mod === "lithium"), "mixin conflict with mod id");
