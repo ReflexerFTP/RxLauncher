@@ -53,7 +53,7 @@ async fn request(key: &str, endpoint: &str, query: Option<&Value>, method: &str,
     let mut builder = if method == "POST" { client.post(url) } else { client.get(url) };
     builder = builder.header("Accept", "application/json").header("x-api-key", key).header("User-Agent", crate::http::user_agent()).timeout(Duration::from_secs(20));
     if method == "POST" {
-        builder = builder.json(body.unwrap_or(&json!({})));
+        builder = builder.header("Content-Type", "application/json").body(serde_json::to_vec(body.unwrap_or(&json!({}))).unwrap_or_default());
     }
     match builder.send().await {
         Ok(response) => {
