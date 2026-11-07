@@ -58,6 +58,14 @@ class RxJavaManager {
     static init = () => {
         javaInstallationDirectory = path.join(GAME_DATA, "javaDownloads");
         RxUtils.createMissingDirectories(javaInstallationDirectory);
+        // Java от старых версий лаунчера без квитанции — не скачиваем заново, а принимаем после проверки
+        try {
+            fs.readdirSync(javaInstallationDirectory).filter(entry => /^\d+$/.test(entry)).forEach(major => {
+                if (require('../runtimeSecurity').adoptLegacyRuntime(path.join(javaInstallationDirectory, major), major)) {
+                    RxCollector.writeLog(`Java: Adopted Java ${major} installed by an older launcher`);
+                }
+            });
+        } catch (_) {}
     };
 
     // Получить локально установленные версии Java

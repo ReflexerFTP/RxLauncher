@@ -58,6 +58,25 @@ function validateRuntime(root, major, expectedRelease = null) {
         return JSON.stringify(actual) === JSON.stringify(receipt.files);
     } catch (_) { return false; }
 }
+// Java, скачанная версиями до 3.13 (без квитанции): принимаем один раз, если внутри обычная сборка Temurin
+// нужной версии, и записываем квитанцию — дальше подмена файлов ловится как обычно
+function adoptLegacyRuntime(root, major) {
+    try {
+        if (fs.lstatSync(root).isSymbolicLink() || fs.existsSync(path.join(root, RECEIPT))) return false;
+        const dirs = fs.readdirSync(root, {withFileTypes: true}).filter(entry => entry.isDirectory() && !entry.name.startsWith('.'));
+        if (dirs.length !== 1 || !/^jdk-?[0-9][0-9A-Za-z.+_-]*$/.test(dirs[0].name)) return false;
+        const home = path.join(root, dirs[0].name);
+        const release = fs.readFileSync(path.join(home, 'release'), 'utf8');
+        if (!/^IMPLEMENTOR="Eclipse Adoptium"$/m.test(release)) return false;
+        const version = (release.match(/^JAVA_VERSION="([^"]+)"$/m) || [])[1] || '';
+        const versionMajor = Number(version.startsWith('1.') ? version.split('.')[1] : version.split('.')[0]);
+        if (versionMajor !== Number(major) || !fs.statSync(path.join(home, 'bin', process.platform === 'win32' ? 'java.exe' : 'java')).isFile()) return false;
+        const files = runtimeFiles(root);
+        const packageSha256 = crypto.createHash('sha256').update(JSON.stringify(files)).digest('hex');
+        fs.writeFileSync(path.join(root, RECEIPT), JSON.stringify({schema: 1, release: dirs[0].name, major: Number(major), packageSha256, legacy: true, files}));
+        return true;
+    } catch (_) { return false; }
+}
 async function resolveJavaRelease(info, getJson) {
     const major = Number(info.version);
     if (!Number.isSafeInteger(major) || major < 8 || major > 99) throw new Error('Unsupported Java version');
@@ -74,4 +93,4 @@ async function resolveJavaRelease(info, getJson) {
     }
     return {...info, major, release: row.release_name, url: url.href, sha256: pkg.checksum.toLowerCase(), size: pkg.size};
 }
-module.exports = {AUTHLIB, RECEIPT, runtimeFiles, writeRuntimeReceipt, validateRuntime, resolveJavaRelease};
+module.exports = {AUTHLIB, RECEIPT, runtimeFiles, writeRuntimeReceipt, validateRuntime, adoptLegacyRuntime, resolveJavaRelease};
