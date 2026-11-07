@@ -1,27 +1,75 @@
 #updateNotify {
     width: 100%;
-    border-radius: 10px;
+    border-radius: 14px;
     gap: 12px;
+    flex-wrap: wrap;
+}
+
+#updateNotify .update-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-primary) 18%, transparent);
+    color: var(--theme-primary);
+    font-size: 22px;
+    flex: 0 0 auto;
+}
+
+#updateNotify[data-state="ready"] .update-icon {
+    background: color-mix(in srgb, var(--success) 18%, transparent);
+    color: var(--success);
+}
+
+#updateNotify .update-copy {
+    min-width: 180px;
+    gap: 2px;
 }
 
 #updateNotify .caption {
-    font-size: 15pt;
+    font-size: 13pt;
     font-weight: 700;
 }
 
 #updateNotify .description {
-    font-size: 13pt;
+    font-size: 11pt;
     font-weight: 500;
     color: var(--text-sub);
 }
 
-#updateNotify button {
-    font-size: 14pt;
-    padding: 8px 21px !important;
-    border-radius: 32px !important;
-    height: max-content !important;
+#updateNotify .update-bar {
+    height: 5px;
+    margin-top: 6px;
+    border-radius: 5px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .1);
 }
 
-#updateNotify .link * {
-    font-size: 13pt;
+#updateNotify .update-bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: var(--theme-primary);
+    transition: width .4s ease;
+}
+
+#updateNotify button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11pt;
+    padding: 8px 16px !important;
+    border-radius: 32px !important;
+    height: max-content !important;
+    white-space: nowrap;
+}
+
+#updateNotify button .material-symbols-outlined {
+    font-size: 18px;
+}
+
+#updateNotify [hidden] {
+    display: none !important;
 }

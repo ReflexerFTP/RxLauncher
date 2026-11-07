@@ -87,6 +87,7 @@ class RxFriendsUI {
             if (person.online && person.server) actions += b("copy", "content_copy", RxFriendsUI.t("copyServer"));
             const mine = RxFriends.myServer();
             if (person.online && mine && person.server !== mine) actions += b("invite", "send", RxFriendsUI.t("invite").replace("{0}", mine));
+            actions += b("send", "forward_to_inbox", RxFriendsUI.t("send"));
             actions += b("remove", "person_remove", RxFriendsUI.t("remove"));
         } else if (kind === "incoming") {
             status = esc(RxFriendsUI.t("wantsToBeFriends"));
@@ -104,6 +105,95 @@ class RxFriendsUI {
             </div>
             <div class="fx-actions">${actions}</div>
         </div>`;
+    };
+
+    static shareRow = (item) => {
+        const esc = RxFriendsUI.escape;
+        const what = RxFriendsUI.t(item.kind === "pack" ? "sharePackFrom" : "shareModFrom").replace("{0}", item.nick);
+        return `<div class="fx-friend" data-share-id="${esc(item.id)}">
+            <div class="fx-avatar"><img alt="" loading="lazy" src="${esc(RxFriendsUI.head(item.nick, 46))}"/></div>
+            <div class="fx-info">
+                <div class="fx-name"><span>${esc(item.title || RxFriendsUI.t(item.kind === "pack" ? "packFallback" : "modFallback"))}</span></div>
+                <div class="fr-status"><span class="material-symbols-outlined">${item.kind === "pack" ? "inventory_2" : "extension"}</span> ${esc(what)} · ${esc(RxFriendsUI.ago(item.at))}</div>
+            </div>
+            <div class="fx-actions">
+                <button data-share-action="open" title="${esc(RxFriendsUI.t(item.kind === "pack" ? "shareOpen" : "shareInstall"))}"><span class="material-symbols-outlined">${item.kind === "pack" ? "visibility" : "download"}</span><span>${esc(RxFriendsUI.t(item.kind === "pack" ? "shareOpen" : "shareInstall"))}</span></button>
+                <button class="transparent icon" data-share-action="drop" title="${esc(RxFriendsUI.t("shareDrop"))}"><span class="material-symbols-outlined">close</span></button>
+            </div>
+        </div>`;
+    };
+
+    // Открыть присланное: сборка — превью «Играть вместе» (там видно, что внутри, и есть «Установить»), мод — установка в текущую версию
+    static openShare = async (id) => {
+        const item = RxFriends.shares().find(share => share.id === id);
+        if (!item) return;
+        if (item.kind === "pack") {
+            await RxModals.switchModal("together");
+            const $modal = RxTogetherUI.$modal();
+            $modal.find("[data-join-code]").val(item.code);
+            if (RxTogetherUI.check(item.code)) setTimeout(() => RxUtils.scrollWithin($modal.find("[data-join-preview]")[0]), 200);
+            RxFriends.dropShare(id);
+            return;
+        }
+        const context = RxModsManager.getContext();
+        if (!context || !RxModrinthCatalog.target()?.loader) return RxToasts.create(MESSAGES.mods.catalogNoLoader, "info");
+        const confirmed = await RxDialog.confirm({
+            icon: "extension", title: RxFriendsUI.t("shareModTitle").replace("{0}", item.title || RxFriendsUI.t("modFallback")),
+            text: RxFriendsUI.t("shareModText").replace("{0}", item.nick).replace("{1}", context.displayName),
+            confirmText: RxFriendsUI.t("shareInstall")
+        });
+        if (!confirmed) return;
+        RxFriends.dropShare(id);
+        await RxModrinthCatalog.install(item.project);
+    };
+
+    // Отправить другу: свою сборку (как код «Играть вместе») или мод с Modrinth из текущей версии
+    static send = async (friend) => {
+        const kind = await RxDialog.open({
+            icon: "forward_to_inbox", title: RxFriendsUI.t("sendTitle").replace("{0}", friend.nick), text: RxFriendsUI.t("sendText"),
+            choices: [
+                {icon: "inventory_2", title: RxFriendsUI.t("sendPack"), text: RxFriendsUI.t("sendPackText"), value: "pack"},
+                {icon: "extension", title: RxFriendsUI.t("sendMod"), text: RxFriendsUI.t("sendModText"), value: "mod"}
+            ],
+            buttons: [{id: "cancel", text: MESSAGES.dialog.cancel}]
+        });
+        if (kind?.value === "pack") return RxFriendsUI.sendPack(friend);
+        if (kind?.value === "mod") return RxFriendsUI.sendMod(friend);
+    };
+
+    static sendPack = async (friend) => {
+        const sources = RxInstancesUI.list().map(instance => ({icon: "inventory_2", title: instance.displayName, text: RxFriendsUI.t("instance"), value: `pack-${instance.id}`}));
+        (RxVersionsUI.allVersions || []).filter(version => version.installed && RxShare.LOADERS.includes(version.type))
+            .forEach(version => sources.push({icon: "deployed_code", title: version.displayName, text: RxFriendsUI.t("version"), value: version.id}));
+        if (!sources.length) return RxToasts.create(RxFriendsUI.t("nothingToSend"), "info");
+        const picked = await RxDialog.open({icon: "inventory_2", title: RxFriendsUI.t("sendPackTitle").replace("{0}", friend.nick), choices: sources.slice(0, 30),
+            buttons: [{id: "cancel", text: MESSAGES.dialog.cancel}]});
+        if (!picked?.value) return;
+        try {
+            const {code} = await RxShare.createCode(picked.value, "", {remember: false});
+            const title = sources.find(source => source.value === picked.value)?.title || "";
+            await RxFriends.share(friend.id, {kind: "pack", code, title});
+            RxToasts.create(RxFriendsUI.t("sent"), "forward_to_inbox", `${title} → ${friend.nick}`, "success");
+        } catch (error) {
+            RxCollector.writeLog(`Friends: Send pack failed [error=${error?.message || error?.code || error}]`);
+            RxToasts.create(error?.code ? RxAccount.errorText(error) : RxTogetherUI.errorText(error), "error", "", "error");
+        }
+    };
+
+    static sendMod = async (friend) => {
+        const context = RxModsManager.getContext();
+        if (!context) return RxToasts.create(RxFriendsUI.t("nothingToSend"), "info");
+        const installed = await RxModrinthCatalog.loadInstalled(true);
+        const names = new Map(RxModsManager.files.map(file => [path.resolve(file.fullPath), file.meta?.name || file.title]));
+        const mods = [...installed.entries()].map(([project, item]) => ({icon: "extension", title: names.get(path.resolve(item.file)) || RxModsManager.displayName(path.basename(item.file)),
+            text: path.basename(item.file), value: project, version: item.versionId})).sort((a, b) => a.title.localeCompare(b.title));
+        if (!mods.length) return RxToasts.create(RxFriendsUI.t("noModrinthMods"), "info");
+        const picked = await RxDialog.open({icon: "extension", title: RxFriendsUI.t("sendModTitle").replace("{0}", friend.nick), text: RxFriendsUI.t("sendModHint"),
+            choices: mods.slice(0, 60), buttons: [{id: "cancel", text: MESSAGES.dialog.cancel}]});
+        if (!picked?.value) return;
+        const mod = mods.find(item => item.value === picked.value);
+        const sent = await RxFriendsUI.busy($(), () => RxFriends.share(friend.id, {kind: "mod", project: mod.value, version: mod.version || "", title: mod.title}));
+        if (sent) RxToasts.create(RxFriendsUI.t("sent"), "forward_to_inbox", `${mod.title} → ${friend.nick}`, "success");
     };
 
     static section = (title, count) => `<div class="fx-section">${RxFriendsUI.escape(title)}<b>${count}</b></div>`;
@@ -150,6 +240,12 @@ class RxFriendsUI {
             ...(outgoing.length ? [RxFriendsUI.section(RxFriendsUI.t("outgoing"), outgoing.length)] : []),
             ...outgoing.map(item => RxFriendsUI.row(item, "outgoing"))
         ];
+        // Присланное друзьями: сборки и моды
+        const shares = RxFriends.shares();
+        if (shares.length) {
+            requests.push(RxFriendsUI.section(RxFriendsUI.t("sharesTitle"), shares.length));
+            shares.forEach(item => requests.push(RxFriendsUI.shareRow(item)));
+        }
         $card.find("[data-friends-requests]").html(requests.join(""));
 
         // Список по группам: в игре, в лаунчере, не в сети
@@ -208,6 +304,7 @@ class RxFriendsUI {
             return RxToasts.create(RxFriendsUI.t("serverCopied"), "content_copy", person.server, "success");
         }
         if (action === "join") return RxFriendsUI.join(person);
+        if (action === "send") return RxFriendsUI.send(person);
         if (action === "invite") {
             const sent = await RxFriendsUI.busy($button, () => RxFriends.invite(id));
             if (sent) RxToasts.create(RxFriendsUI.t("inviteSent"), "send", person.nick, "success");
@@ -477,6 +574,11 @@ class RxFriendsUI {
         $card.on("submit", "[data-friends-add]", (event) => { event.preventDefault(); RxFriendsUI.addFriend(); });
         $card.on("click", "[data-friend-action]", function () {
             RxFriendsUI.friendAction($(this), $(this).closest("[data-friend-id]").attr("data-friend-id"), $(this).attr("data-friend-action"));
+        });
+        $card.on("click", "[data-share-action]", function () {
+            const id = $(this).closest("[data-share-id]").attr("data-share-id");
+            if (this.dataset.shareAction === "open") RxFriendsUI.openShare(id);
+            else RxFriends.dropShare(id);
         });
         $card.on("click", "[data-copy-mode]", function () { RxFriendsUI.setCopyMode(this.dataset.copyMode); });
         $card.on("click", "[data-friends-copy-pick]", () => RxFriendsUI.pickCopyFriends().catch(error => RxToasts.create(RxAccount.errorText(error), "error", "", "error")));

@@ -10,8 +10,8 @@ class RxImportUI {
 
         const sources = RxImport.detectSources();
         RxImportUI.$("[data-import-sources]").html(sources.length ? sources.map((source, index) => `<div class="import-row">
-            <span class="material-symbols-outlined">${source.kind === "legacy" || source.kind === "tlauncher" ? "rocket_launch" : "folder"}</span>
-            <div class="import-row-copy"><b>${esc(source.name)}</b><span>${esc(source.path)}</span></div>
+            <span class="material-symbols-outlined">${source.instance ? "inventory_2" : source.kind === "legacy" || source.kind === "tlauncher" ? "rocket_launch" : "folder"}</span>
+            <div class="import-row-copy"><b>${esc(source.name)}</b><span>${esc(source.instance ? `${RxImportUI.loaderText(source.instance)} · ${source.path}` : source.path)}</span></div>
             <button type="button" data-import-source="${index}"${RxImportUI.busy ? " disabled" : ""}>
                 <span class="material-symbols-outlined">download</span><span>${esc(RxImport.text("importButton", "Импортировать"))}</span>
             </button>
@@ -56,8 +56,62 @@ class RxImportUI {
         if (!busy) setTimeout(() => RxImportUI.$("[data-import-progress]").prop("hidden", true), 1500);
     };
 
+    static loaderText = (info) => `${RxVersionsUI.TYPE_LABELS?.[info.loader] || RxUtils.capitalizeWord(info.loader)} ${info.game}`;
+
+    // Сборка другого лаунчера → новая сборка RxLauncher (её моды сразу проверяются на стилеры)
+    static INSTANCE_PARTS = ["mods", "config", "resourcepacks", "shaderpacks", "saves", "options", "servers", "screenshots"];
+    static startInstance = async (source) => {
+        if (RxImportUI.busy || RxImportUI.gameRunning()) return false;
+        RxImportUI.setBusy(true);
+        let scan;
+        try {
+            RxImportUI.$("[data-import-progress]").prop("hidden", false);
+            RxImportUI.$(".import-progress-bar div").css("width", "0%");
+            RxImportUI.$("[data-import-progress-text]").text(RxImport.text("scanning", "Смотрим, что есть в {0}…", source.name));
+            scan = await RxImport.scan(source.path);
+        } catch (error) {
+            RxCollector.writeLog(`Import: scan failed [error=${error.message}]`);
+            RxToasts.create(RxImport.text("failed", "Не удалось выполнить импорт"), "error");
+            return false;
+        } finally {
+            RxImportUI.setBusy(false);
+        }
+        const info = source.instance;
+        const result = await RxDialog.open({
+            icon: "inventory_2",
+            title: RxImport.text("instanceTitle", "Сборка «{0}»", info.name),
+            text: RxImport.text("instanceText", "Будет создана сборка RxLauncher: {0}. Отмеченное скопируется в неё, моды сразу проверятся на стилеры. Исходная сборка не изменится.", RxImportUI.loaderText(info)),
+            checks: RxImportUI.INSTANCE_PARTS.map(id => ({
+                id, icon: RxImport.PARTS.find(part => part.id === id)?.icon || "check", title: RxImport.partTitle(id),
+                text: RxImport.describe(id, scan[id]), checked: id !== "screenshots" && Boolean(scan[id]?.count), disabled: !scan[id]?.count
+            })),
+            buttons: [{id: "cancel", text: MESSAGES.dialog.cancel},
+                {id: "ok", text: RxImport.text("instanceButton", "Создать сборку"), icon: "add_box", primary: true}]
+        });
+        if (result.button !== "ok" || RxImportUI.gameRunning()) return false;
+        const parts = RxImportUI.INSTANCE_PARTS.filter(id => result.checks[id] && scan[id]?.count);
+        RxImportUI.setBusy(true);
+        try {
+            const stats = await RxImport.importInstance(source, parts, {onProgress: RxImportUI.setProgress});
+            await RxModScan.reviewInstalled(path.join(GAME_DATA, "modpacks", stats.id, "mods"), info.name);
+            await RxVersionsUI.loadVersions();
+            RxVersionsManager.setActiveVersion(`pack-${stats.id}`);
+            RxToasts.create(RxImport.text("instanceDone", "Сборка «{0}» готова — она уже выбрана", info.name), "task_alt",
+                stats.failed ? RxImport.text("doneWithErrors", "Не скопировано: {0}", String(stats.failed)) : RxImportUI.loaderText(info), "success");
+            return true;
+        } catch (error) {
+            RxCollector.writeLog(`Import: instance failed [error=${error.message}]`);
+            RxToasts.create(RxImport.text("failed", "Не удалось выполнить импорт"), "error", error.message);
+            return false;
+        } finally {
+            RxImportUI.setBusy(false);
+            RxImportUI.render();
+        }
+    };
+
     // Окно выбора: что перенести + галочка резервной копии
     static start = async (source) => {
+        if (source.instance) return RxImportUI.startInstance(source);
         if (RxImportUI.busy || RxImportUI.gameRunning()) return false;
         RxImportUI.setBusy(true);
         let scan;
@@ -165,6 +219,16 @@ class RxImportUI {
         const result = await ipcRenderer.invoke("open-dialog", {properties: ["openDirectory"], title: RxImport.text("pickFolder", "Выбрать папку")});
         const dir = Array.isArray(result) ? result[0] : result;
         if (!dir) return false;
+        // Папка сборки или целого лаунчера Prism / MultiMC / CurseForge
+        const kind = fs.existsSync(path.join(dir, "minecraftinstance.json")) || /curse/i.test(dir) ? "curseforge" : /prism/i.test(dir) ? "prism" : "multimc";
+        const instances = RxImport.instancesIn(path.resolve(dir), kind === "curseforge" ? "CurseForge" : kind === "prism" ? "Prism Launcher" : "MultiMC", kind);
+        if (instances.length === 1) return RxImportUI.start(instances[0]);
+        if (instances.length > 1) {
+            const picked = await RxDialog.open({icon: "inventory_2", title: RxImport.text("pickInstance", "Какую сборку перенести?"),
+                choices: instances.slice(0, 50).map((source, index) => ({icon: "inventory_2", title: source.instance.name, text: RxImportUI.loaderText(source.instance), value: index})),
+                buttons: [{id: "cancel", text: MESSAGES.dialog.cancel}]});
+            return Number.isInteger(picked?.value) ? RxImportUI.start(instances[picked.value]) : false;
+        }
         if (!RxImport.looksLikeGameDir(dir)) {
             RxToasts.create(RxImport.text("notGameDir", "В этой папке нет файлов Minecraft"), "warning");
             return false;

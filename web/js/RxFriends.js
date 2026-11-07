@@ -12,6 +12,7 @@ class RxFriends {
     static seenIncoming = null; // id заявок, о которых уже показали уведомление
     static outgoingIds = new Set();
     static seenInvites = new Set(); // приглашения на сервер, которые уже показали
+    static SHARES_KEY = "friendShares"; // присланные сборки и моды: хранятся, пока игрок не откроет или не уберёт
 
     static enabled = () => RxAccount.isLoggedIn() && !RxPrivacy.isParanoid();
     static invisible = () => RxConfig.read("friendsInvisible", false) === true;
@@ -77,6 +78,14 @@ class RxFriends {
             RxFriends.seenInvites.add(item.id);
             if (typeof RxFriendsUI !== "undefined") RxFriendsUI.showInvite(item);
         });
+        const shares = (Array.isArray(data.shares) ? data.shares : []).filter(RxFriends.validShare);
+        if (shares.length) {
+            const known = new Set(RxFriends.shares().map(item => item.id));
+            const fresh = shares.filter(item => !known.has(item.id));
+            RxConfig.write(RxFriends.SHARES_KEY, [...fresh.reverse(), ...RxFriends.shares()].slice(0, 30));
+            fresh.forEach(item => RxToasts.create(MESSAGES.friends[item.kind === "pack" ? "sharePackToast" : "shareModToast"].replace("{0}", item.nick),
+                item.kind === "pack" ? "inventory_2" : "extension", item.title || "", {type: "success", action: {label: MESSAGES.friends.shareOpen, onClick: () => RxFriendsUI.openShare(item.id)}}));
+        }
         RxFriends.seenIncoming = new Set(incoming.map(item => item.id));
         RxFriends.outgoingIds = new Set(outgoing.map(item => item.id));
         RxFriends.state = {friends: data.friends, incoming, outgoing};
@@ -131,6 +140,16 @@ class RxFriends {
     static accept = (id) => RxFriends.act("friends/accept", {id});
     static decline = (id) => RxFriends.act("friends/decline", {id});
     static remove = (id) => RxFriends.act("friends/remove", {id});
+    // Присланное: сборка — код RX1-…, мод — проект Modrinth
+    static validShare = item => item && typeof item.id === "string" && typeof item.nick === "string"
+        && ((item.kind === "pack" && /^RX1-[A-Za-z0-9_-]{8,}$/.test(item.code || "")) || (item.kind === "mod" && /^[A-Za-z0-9]{8}$/.test(item.project || "")));
+    static shares = () => (RxConfig.read(RxFriends.SHARES_KEY, []) || []).filter(RxFriends.validShare);
+    static dropShare = (id) => {
+        RxConfig.write(RxFriends.SHARES_KEY, RxFriends.shares().filter(item => item.id !== id));
+        RxFriends.changed();
+    };
+    static share = (id, body) => RxAccount.call("friends/share", {id, ...body});
+
     // Позвать на свой сервер: сервер RxLauncher берёт адрес из нашего статуса
     static invite = (id) => RxAccount.call("friends/invite", {id});
     static myServer = () => RxFriends.presence().server || "";

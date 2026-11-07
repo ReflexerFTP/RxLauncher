@@ -26,7 +26,7 @@ class RxModrinthVerify {
         const now = Date.now();
         const wanted = [...new Set(hashes.filter(hash => /^[0-9a-f]{40}$/.test(String(hash))))];
         const stale = wanted.filter(hash => !cache[hash] || now - cache[hash].t > (cache[hash].p ? RxModrinthVerify.KNOWN_MS : RxModrinthVerify.UNKNOWN_MS));
-        if (stale.length && !RxPrivacy.isParanoid()) {
+        if (stale.length && !RxPrivacy.isParanoid() && !(typeof RxNetwork !== "undefined" && RxNetwork.offline)) {
             try {
                 for (let index = 0; index < stale.length; index += 500) {
                     const part = stale.slice(index, index + 500);

@@ -178,6 +178,8 @@ class RxShare {
         } finally {
             await RxFlyout.changeMode("idle");
         }
+        // Сборка пришла от другого человека — сразу проверяем моды на стилеры
+        await RxModScan.reviewInstalled(path.join(root, "mods"), data.n);
         RxShare.remember({direction: "received", code: RxShare.encode(data), name: data.n, server: data.sv || "", from: data.by || "", instance: id});
         RxCollector.writeLog(`Share: Installed ${id} from code [files=${files.length}] [missing=${missing.length}] [from=${data.by}]`);
         return {id, missing};

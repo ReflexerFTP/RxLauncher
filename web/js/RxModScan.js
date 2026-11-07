@@ -110,6 +110,34 @@ class RxModScan {
         flagged.forEach(file => RxCollector.writeLog(`ModScan: ${file.verdict} ${file.name} [${file.findings.map(item => item.id).join(",")}]`));
     };
 
+    // Сборка от друга или из файла .mrpack только что установлена: найденное сразу показываем и предлагаем отключить
+    static reviewInstalled = async (modsDir, name = "") => {
+        if (!RxModScan.isEnabled() || !modsDir || !fs.existsSync(modsDir)) return true;
+        let report;
+        try {
+            report = await RxModScan.scan(modsDir);
+        } catch (error) {
+            RxCollector.writeLog(`ModScan: Pack review skipped [error=${error?.message || error}]`);
+            return true;
+        }
+        RxModScan.logReport(report);
+        const flagged = RxModScan.flagged(report.files.filter(file => file.enabled), await RxModScan.verified(report.files));
+        if (!flagged.length) return true;
+        const danger = flagged.some(file => file.verdict === "danger");
+        const answer = await RxDialog.confirm({
+            icon: danger ? "gpp_bad" : "gpp_maybe",
+            title: RxModScan.t(danger ? "packDangerTitle" : "packSuspectTitle"),
+            text: RxModScan.t("packText").replace("{0}", name || "—").replace("{1}", flagged.length),
+            items: RxModScan.items(flagged),
+            cancelText: RxModScan.t("packKeep"),
+            confirmText: RxModScan.t("disableDangerous"),
+            danger: true
+        });
+        if (answer !== true) return false;
+        RxToasts.create(RxModScan.t("disabled"), "gpp_good", String(RxModScan.disable(flagged)));
+        return true;
+    };
+
     // Перед запуском: true — можно играть (опасные моды отключены или им доверяют)
     static beforeLaunch = async (modsDir) => {
         if (!RxModScan.isEnabled()) return true;

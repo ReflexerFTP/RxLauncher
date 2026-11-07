@@ -1,17 +1,23 @@
 <link rel="stylesheet" href="views/updateNotify.css"/>
 
+<!-- Новая версия лаунчера: версия, полоса скачивания и кнопки (RxUpdater) -->
 <div class="chip large pill" id="updateNotify" style="display: none">
-    <span class="material-symbols-outlined">update</span>
-    <div class="flex flex-grow flex-col">
-        <span class="caption">{{updater.available}}</span>
-        <span class="description">{{updater.downloading}}</span>
+    <span class="update-icon material-symbols-outlined">system_update</span>
+    <div class="flex flex-grow flex-col update-copy">
+        <span class="caption" data-update-title>{{updater.available}}</span>
+        <span class="description" data-update-text>{{updater.downloading}}</span>
+        <div class="update-bar" data-update-bar hidden><i></i></div>
     </div>
-    <button class="transparent pill small"
-            data-rx-onclick="openExternal(`https://github.com/${REPO_NAME}/releases/latest`)">
-        <div class="link">
-            <span class="material-symbols-outlined">open_in_new</span>
-            <span>{{updater.changelog}}</span>
-        </div>
+    <button class="transparent pill small" data-update-action="details">
+        <span class="material-symbols-outlined">info</span>
+        <span>{{updater.whatsNew}}</span>
     </button>
-    <button class="pill small" style="display: none" data-rx-onclick="RxUpdater.installUpdate()">{{updater.install}}</button>
+    <button class="pill small" data-update-action="download" hidden>
+        <span class="material-symbols-outlined">download</span>
+        <span>{{updater.download}}</span>
+    </button>
+    <button class="pill small" data-update-action="install" hidden>
+        <span class="material-symbols-outlined">restart_alt</span>
+        <span>{{updater.install}}</span>
+    </button>
 </div>

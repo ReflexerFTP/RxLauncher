@@ -185,8 +185,10 @@ class RxAccountsUI {
         $(".title-wrapper .account-chip").toggleClass("no-account", activeAccount === "none");
         $select.empty();
 
+        // Нет аккаунта — на главной карточка «Как тебя зовут в игре?», в чипе — подсказка
+        $("[data-nick-card]").prop("hidden", activeAccount !== "none");
         if (activeAccount === "none") {
-            $select.append($(`<span class="title"></span>`).text(MESSAGES.commons.notSelected));
+            $select.append($(`<span class="material-symbols-outlined">person_add</span>`), $(`<span class="title"></span>`).text(MESSAGES.accounts.enterNick || MESSAGES.commons.notSelected));
         } else {
             const acc = RxAccountsManager.getAccount(activeAccount);
             const $icon = $(`<div class="icon"><img class="avatar" alt=""/></div>`);
@@ -199,6 +201,43 @@ class RxAccountsUI {
         $select.show();
         return true;
     }
+
+    // Ник прямо на главной: создаём локальный аккаунт и сразу выбираем его
+    static quickNick = () => {
+        const $card = $("[data-nick-card]");
+        const nickname = String($card.find("[data-nick-input]").val() || "").trim();
+        if (!/^[A-Za-z0-9_]{3,16}$/.test(nickname)) {
+            $card.addClass("invalid").find("[data-nick-hint]").text(MESSAGES.home.nickInvalid);
+            RxAccountsUI.shakeNick();
+            return false;
+        }
+        if (RxAccountsManager.addLocalAccount(nickname) === false) return false;
+        const created = Object.values(RxAccountsManager.getAccounts()).find(acc => acc.type === "local" && acc.nickname.toLowerCase() === nickname.toLowerCase());
+        if (created) RxAccountsUI.selectAccount(created.uuid);
+        RxAccountsUI.reloadAccountSelect();
+        RxToasts.create(MESSAGES.home.nickDone.replace("{0}", nickname), "waving_hand", MESSAGES.home.nickDoneText, "success");
+        return true;
+    };
+
+    static shakeNick = () => {
+        const $card = $("[data-nick-card]");
+        if (!$card.length || $card.prop("hidden")) return false;
+        $card.removeClass("shake");
+        void $card[0].offsetWidth;
+        $card.addClass("shake");
+        $card.find("[data-nick-input]").trigger("focus");
+        return true;
+    };
+
+    static bindQuickNick = () => {
+        const $card = $("[data-nick-card]");
+        $card.on("submit", event => { event.preventDefault(); RxAccountsUI.quickNick(); });
+        $card.on("input", "[data-nick-input]", function () {
+            const value = String(this.value || "");
+            const bad = value.length > 0 && !/^[A-Za-z0-9_]{0,16}$/.test(value);
+            $card.toggleClass("invalid", bad).find("[data-nick-hint]").text(bad ? MESSAGES.home.nickInvalid : MESSAGES.home.nickHint);
+        });
+    };
 
     // Получить текст из типа аккаунта
     static typeDisplayName = (type) => {

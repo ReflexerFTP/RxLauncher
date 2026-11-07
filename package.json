@@ -1,6 +1,6 @@
 {
   "name": "rxclient",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Minecraft-лаунчер. Быстрый. Индивидуальный. Твой",
   "main": "app.js",
   "scripts": {

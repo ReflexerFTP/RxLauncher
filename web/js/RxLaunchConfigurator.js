@@ -1372,7 +1372,9 @@ variable {
         const gameData = type !== "custom" && separated
             ? path.join(GAME_DATA, "home", `${type}-${version}`) : GAME_DATA;
         try {
-            const result = await ipcRenderer.invoke("generate-mclc-config", {type, version, loaderVersion, gameData});
+            // Без интернета ядро сразу берёт уже установленную версию с диска, не дожидаясь серверов
+            const online = typeof RxNetwork === "undefined" || await RxNetwork.check();
+            const result = await ipcRenderer.invoke("generate-mclc-config", {type, version, loaderVersion, gameData, offline: !online});
             if (result && type === "custom" && separated) {
                 result.overrides = {...(result.overrides || {}), gameDirectory: path.join(GAME_DATA, "home", `custom-${version}`)};
             }

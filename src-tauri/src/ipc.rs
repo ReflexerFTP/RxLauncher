@@ -122,6 +122,11 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
         "set-curseforge-api-key" => crate::curseforge::set_key(&user_data, arg(&args, 0).as_str().unwrap_or("")).await,
         "clear-curseforge-api-key" => crate::curseforge::clear_key(&user_data),
         "curseforge-request" => crate::curseforge::api_request(&user_data, &arg(&args, 0)).await,
+        "update-status" => ok(crate::updater::status()),
+        "update-download" => {
+            crate::updater::begin_download(app);
+            ok(crate::updater::status())
+        }
         "install-update" => {
             crate::updater::install(app);
             ok(Value::Null)

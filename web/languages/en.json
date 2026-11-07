@@ -44,13 +44,23 @@
       "reorderHint": "Drag to reorder",
       "empty": "No profiles yet — add your first nickname below",
       "deleteConfirm": "Click again to delete",
-      "add": "Add"
+      "add": "Add",
+      "enterNick": "Enter a nickname"
     },
     "home": {
       "heroAria": "Artwork for the selected Minecraft version",
       "defaultReleaseTitle": "Tricky Trials",
       "defaultReleaseDescription": "The cinematic scene changes together with the selected Minecraft version.",
-      "offlineReady": "Available offline"
+      "offlineReady": "Available offline",
+      "nickTitle": "What's your in-game name?",
+      "nickText": "Other players see it on servers. You can change it any time.",
+      "nickPlaceholder": "Enter a nickname, e.g. Steve_2009",
+      "nickButton": "Play",
+      "nickHint": "3–16 characters: Latin letters, digits and _",
+      "nickInvalid": "Only Latin letters, digits and _ — 3 to 16 characters",
+      "nickDone": "Hi, {0}!",
+      "nickDoneText": "Nickname saved — pick a version and press Play",
+      "nickFirst": "Enter a nickname first"
     },
     "changelog": {
       "title": "Update history",
@@ -430,7 +440,26 @@
       "ready": "After restarting the launcher, the update will be installed",
       "deferred": "The update will install after Minecraft closes so your statistics are not lost",
       "changelog": "List of changes",
-      "install": "Install"
+      "install": "Restart and update",
+      "availableVersion": "Version {0} is out",
+      "availableText": "The update is {0} MB",
+      "progress": "Downloading: {0} of {1} MB · {2}%",
+      "failed": "The connection dropped — we will continue where it stopped",
+      "whatsNew": "What's new",
+      "download": "Download",
+      "newVersion": "New RxLauncher version",
+      "size": "Size",
+      "inBackground": "Downloading in the background",
+      "inBackgroundText": "Keep playing — once it is downloaded, the launcher will offer to restart.",
+      "dialogTitle": "Version {0} is out",
+      "dialogText": "A new RxLauncher version is ready to download. Settings, accounts and packs are kept.",
+      "autoDownload": "Download updates automatically",
+      "autoDownloadText": "Updates download in the background as soon as they are out",
+      "later": "Later",
+      "ok": "Got it",
+      "restartInstall": "Restart and update",
+      "readyTitle": "Version {0} is downloaded",
+      "readyText": "The update is verified by the RxLauncher signature. Restart the launcher to install it — it takes a few seconds."
     },
     "settings": {
       "title": "Settings",
@@ -641,6 +670,10 @@
           "auto": "Auto (Mojang + mirror)",
           "official": "Mojang only",
           "mirror": "Mirror first"
+        },
+        "autoDownloadUpdates": {
+          "title": "Download updates automatically",
+          "description": "New launcher versions download in the background; you install them with a button"
         }
       },
       "about": {
@@ -714,7 +747,12 @@
         "count_screenshots": "Screenshots: {0}",
         "count_servers": "New servers: {0}",
         "count_accounts": "New nicknames: {0}",
-        "count_cache": "Files: {0}"
+        "count_cache": "Files: {0}",
+        "instanceTitle": "Pack “{0}”",
+        "instanceText": "A new RxLauncher pack will be created: {0}. The checked items are copied into it and mods are scanned for stealers right away. The original pack stays as it is.",
+        "instanceButton": "Create pack",
+        "instanceDone": "Pack “{0}” is ready and selected",
+        "pickInstance": "Which pack to import?"
       }
     },
     "flymenu": {
@@ -1275,7 +1313,11 @@
       "installAnyway": "I trust them — install",
       "installOthers": "Install the rest",
       "installSkip": "Don't install",
-      "installBlocked": "The mod was not installed: the check found signs of a stealer"
+      "installBlocked": "The mod was not installed: the check found signs of a stealer",
+      "packDangerTitle": "The pack has dangerous mods",
+      "packSuspectTitle": "The pack has suspicious mods",
+      "packText": "“{0}” is installed, but the check found mods with signs of a stealer: {1}. Better disable them.",
+      "packKeep": "Keep them"
     },
     "launchCheck": {
       "title": "Some mods have problems",
@@ -1476,7 +1518,9 @@
         "badCode": "Could not send the setup",
         "notOnServer": "You can invite friends while you are playing on a server",
         "friendOffline": "Your friend is offline",
-        "notFriend": "This player is not on your friends list"
+        "notFriend": "This player is not on your friends list",
+        "badShare": "This can't be sent",
+        "shareLimit": "Your friend already has many unopened items"
       },
       "onSite": "Account on the website",
       "onSiteText": "rxlauncher.xyz/account — profile, password and nickname",
@@ -1611,7 +1655,33 @@
       "inviteSent": "Invite sent",
       "inviteTitle": "{0} invites you to play",
       "inviteText": "Server {0}. The invite is valid for 10 minutes.",
-      "inviteToast": "{0} invites you to a server"
+      "inviteToast": "{0} invites you to a server",
+      "send": "Send a pack or a mod",
+      "sendTitle": "Send to {0}",
+      "sendText": "Your friend gets it even if they are offline now — the launcher shows a notification.",
+      "sendPack": "A pack",
+      "sendPackText": "Modrinth mods, resource packs and shaders — your friend installs it in one click",
+      "sendMod": "A mod",
+      "sendModText": "Recommend a mod from the current version",
+      "sendPackTitle": "Which pack to send to {0}?",
+      "sendModTitle": "Which mod to recommend to {0}?",
+      "sendModHint": "Only Modrinth mods can be sent — so your friend gets a verified file.",
+      "instance": "pack",
+      "version": "version",
+      "nothingToSend": "Nothing to send yet — install a version or a pack",
+      "noModrinthMods": "This version has no Modrinth mods",
+      "sent": "Sent",
+      "sharesTitle": "From friends",
+      "sharePackFrom": "{0} sent a pack",
+      "shareModFrom": "{0} recommends a mod",
+      "sharePackToast": "{0} sent you a pack",
+      "shareModToast": "{0} recommends a mod",
+      "shareOpen": "View",
+      "shareInstall": "Install",
+      "shareDrop": "Remove",
+      "modFallback": "Mod",
+      "shareModTitle": "Install “{0}”?",
+      "shareModText": "Recommended by {0}. It goes into {1} and is scanned for stealers first."
     },
     "feed": {
       "kinds": {
@@ -1625,6 +1695,11 @@
       "recommended": "Recommended",
       "recommendedPacks": "Recommended",
       "allPacks": "All modpacks"
+    },
+    "network": {
+      "offlineTitle": "No internet — offline mode",
+      "offlineText": "You can play versions and packs that are already downloaded. Catalogs and updates come back with the connection.",
+      "onlineTitle": "Back online"
     }
   }
 }

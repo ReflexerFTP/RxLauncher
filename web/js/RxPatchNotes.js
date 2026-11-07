@@ -1,6 +1,40 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.2.0-updates-import",
+            version: "4.2.0",
+            date: "2026-11-08T12:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "УДОБСТВО", en: "CONVENIENCE"},
+            title: {ru: "Обновления сами, импорт сборок и офлайн", en: "Self-updating, pack import and offline mode"},
+            summary: {
+                ru: "Лаунчер сам сообщает о новой версии и качает её в фоне, переносит сборки из Prism, MultiMC и CurseForge, работает без интернета, а сборки и моды можно отправить другу.",
+                en: "The launcher tells you about new versions and downloads them in the background, imports packs from Prism, MultiMC and CurseForge, works offline, and you can send packs and mods to a friend."
+            },
+            changes: {
+                ru: [
+                    "Обновления лаунчера: после каждого запуска — окно «Вышла версия», загрузка в фоне с докачкой при обрывах и кнопка «Перезапустить и обновить». Автозагрузку можно выключить в настройках.",
+                    "Импорт сборок из Prism Launcher, MultiMC, PolyMC и CurseForge: переносятся отдельной сборкой с тем же Minecraft и загрузчиком, моды сразу проверяются на стилеры. TLauncher и Legacy Launcher — как раньше.",
+                    "Офлайн-режим: без интернета лаунчер не ждёт серверов и сразу запускает уже скачанные версии и сборки.",
+                    "Ник прямо на главной: новым игрокам — заметная карточка «Как тебя зовут в игре?» с подсказкой, какой ник подойдёт.",
+                    "Друзья: «Отправить сборку или мод» — даже если друг не в сети. Присланное появляется в разделе «Прислали друзья».",
+                    "Сборки от друзей и файлы .mrpack сразу после установки проверяются на стилеры.",
+                    "Аккаунт под защитой: на сайте видны последние входы (устройство и страна) и есть «Выйти на других устройствах», сервер защищён от флуда запросами.",
+                    "Вёрстка: кнопки модов, вкладки версий и карточки истории обновлений больше не вылезают за край в маленьком окне."
+                ],
+                en: [
+                    "Launcher updates: after every start — a “Version is out” window, background download that resumes after drops, and a “Restart and update” button. Auto-download can be turned off in settings.",
+                    "Pack import from Prism Launcher, MultiMC, PolyMC and CurseForge: each becomes a separate pack with the same Minecraft and loader, and mods are scanned for stealers right away. TLauncher and Legacy Launcher work as before.",
+                    "Offline mode: without internet the launcher doesn't wait for servers and starts already downloaded versions and packs right away.",
+                    "Nickname right on the home screen: new players get a clear “What's your in-game name?” card with a hint about valid names.",
+                    "Friends: “Send a pack or a mod” — even if your friend is offline. Received items show up under “From friends”.",
+                    "Packs from friends and .mrpack files are scanned for stealers right after installation.",
+                    "Account protection: the website shows recent sign-ins (device and country) and has “Sign out on other devices”; the server is protected against request floods.",
+                    "Layout: mod buttons, version tabs and changelog cards no longer overflow in a small window."
+                ]
+            }
+        },
+        {
             id: "4.1.0-safer-mods",
             version: "4.1.0",
             date: "2026-11-06T22:00:00+03:00",

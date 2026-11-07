@@ -223,7 +223,15 @@ pub async fn generate_config(input: Value) -> BridgeResult {
         }
     };
     // Если версия уже установлена — при недоступной сети запускаем её с диска
-    let local = if loader_version.is_none() { local_config(kind, version, &root) } else { None };
+    let offline = input.get("offline").and_then(Value::as_bool).unwrap_or(false);
+    let local = if loader_version.is_none() || offline { local_config(kind, version, &root) } else { None };
+    // Офлайн-режим: интернета нет — не ждём серверов загрузчиков
+    if offline {
+        if let Some(local) = local {
+            crate::logs::write("info", &format!("Loader config {kind}-{version}: offline, using installed files"));
+            return ok(local);
+        }
+    }
     let limit = Duration::from_secs(if local.is_some() { 8 } else { 90 });
     match tokio::time::timeout(limit, online).await {
         Ok(Ok(config)) => ok(config),

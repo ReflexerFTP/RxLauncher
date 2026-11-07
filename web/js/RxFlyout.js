@@ -114,6 +114,12 @@ class RxFlyout {
     // Запустить выбранную версию
     static startSelectedVersion = async () => {
         if (RxAccountsManager.getActiveAccount() === "none") {
+            // Ник вводится прямо на главной — подсвечиваем карточку, а не прячем её за окном аккаунтов
+            await RxModals.switchModal("content");
+            if (RxAccountsUI.shakeNick()) {
+                RxToasts.create(MESSAGES.home.nickFirst, "badge");
+                return false;
+            }
             RxToasts.create(MESSAGES.flyout.selectAccount, "manage_accounts");
             RxAccountsUI.open();
             return false;

@@ -137,6 +137,22 @@ html.light .title-wrapper .account-chip:hover {
     display: none;
 }
 
+/* Нет аккаунта — чип заметен: подсказка «Введите ник» и мягкая пульсация */
+.title-wrapper .account-chip.no-account #accountSelect {
+    border-color: color-mix(in srgb, var(--theme-primaryLighter) 55%, transparent) !important;
+    animation: accountChipPulse 2.2s ease-in-out infinite;
+}
+
+.title-wrapper .account-chip.no-account #accountSelect .title {
+    color: var(--theme-primaryLighter);
+    font-weight: 800;
+}
+
+@keyframes accountChipPulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-primaryLighter) 0%, transparent); }
+    50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--theme-primaryLighter) 22%, transparent); }
+}
+
 /* ===== Переключатель языка ===== */
 .title-wrapper .lang-toggle {
     -webkit-app-region: no-drag;

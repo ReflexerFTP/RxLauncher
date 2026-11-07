@@ -78,6 +78,7 @@
     <script type="application/x-rx-script" src="./js/RxImportUI.js"></script>
     <script type="application/x-rx-script" src="./js/RxCatalog.js"></script>
     <script type="application/x-rx-script" src="./js/RxLaunchCheck.js"></script>
+    <script type="application/x-rx-script" src="./js/RxNetwork.js"></script>
     <script type="application/x-rx-script" src="./js/RxModrinthVerify.js"></script>
     <script type="application/x-rx-script" src="./js/RxModScan.js"></script>
     <script type="application/x-rx-script" src="./js/RxWorldBackups.js"></script>
@@ -257,6 +258,7 @@
         await RxAccountsManager.refreshElybyProfiles();
         RxAccountsUI.reloadAccountsManager();
         RxAccountsUI.reloadAccountSelect();
+        RxAccountsUI.bindQuickNick();
 
         // Загружаем список версий
         RxVersionsUI.loadVersions();

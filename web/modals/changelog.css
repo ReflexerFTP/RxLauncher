@@ -270,6 +270,8 @@
 }
 
 #modal-changelog .changelog-steps button {
+    width: 100% !important; /* обе карточки — на всю ширину своей половины */
+    max-width: none !important;
     min-width: 0;
     height: auto !important;
     display: flex;

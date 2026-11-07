@@ -24,6 +24,28 @@
                     <span><span class="material-symbols-outlined">auto_awesome</span><b data-hero-version>1.21</b></span>
                     <span><span class="material-symbols-outlined">cloud_off</span><b>{{home.offlineReady}}</b></span>
                 </div>
+
+                <!-- Ник для игры: виден, пока не выбран ни один аккаунт -->
+                <form class="hero-nick" data-nick-card hidden autocomplete="off">
+                    <div class="hero-nick-head">
+                        <span class="hero-nick-icon material-symbols-outlined">badge</span>
+                        <div>
+                            <span class="hero-nick-title">{{home.nickTitle}}</span>
+                            <span>{{home.nickText}}</span>
+                        </div>
+                    </div>
+                    <div class="hero-nick-row">
+                        <label class="hero-nick-field">
+                            <span class="material-symbols-outlined">person</span>
+                            <input type="text" maxlength="16" spellcheck="false" data-nick-input placeholder="{{home.nickPlaceholder}}"/>
+                        </label>
+                        <button type="submit" class="pill" data-nick-submit>
+                            <span>{{home.nickButton}}</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                    <small data-nick-hint>{{home.nickHint}}</small>
+                </form>
             </div>
 
             <%- include('../views/flyout'); %>

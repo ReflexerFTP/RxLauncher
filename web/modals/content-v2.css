@@ -156,3 +156,141 @@
     #modal-content .hero-story h1 { font-size: 31pt; }
     .hero-facts > span:nth-child(3) { display: none; }
 }
+
+/* ===== Ник для игры (пока нет аккаунта) ===== */
+#modal-content .hero-nick {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(520px, 100%);
+    margin-top: 6px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(8, 14, 16, .72);
+    border: 1px solid color-mix(in srgb, var(--theme-primaryLighter) 45%, transparent);
+    box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .9), 0 0 0 4px color-mix(in srgb, var(--theme-primaryLighter) 10%, transparent);
+    backdrop-filter: blur(14px);
+    animation: heroNickIn .45s var(--rx-ease, ease) both;
+}
+
+#modal-content .hero-nick[hidden] {
+    display: none;
+}
+
+#modal-content .hero-nick.shake {
+    animation: heroNickShake .45s ease;
+}
+
+#modal-content .hero-nick-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#modal-content .hero-nick-head > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#modal-content .hero-nick-head .hero-nick-title {
+    font-size: 13.5pt;
+    font-weight: 800;
+    color: var(--text-color);
+}
+
+#modal-content .hero-nick-head span:not(.material-symbols-outlined):not(.hero-nick-title) {
+    font-size: 10pt;
+    color: var(--text-sub);
+}
+
+#modal-content .hero-nick-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border-radius: 13px;
+    font-size: 23px;
+    color: var(--theme-primaryLighter);
+    background: color-mix(in srgb, var(--theme-primaryLighter) 16%, transparent);
+}
+
+#modal-content .hero-nick-row {
+    display: flex;
+    gap: 8px;
+}
+
+#modal-content .hero-nick-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 46px;
+    padding: 0 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .12);
+    transition: border-color .2s ease, background .2s ease;
+}
+
+#modal-content .hero-nick-field:focus-within {
+    border-color: var(--theme-primaryLighter);
+    background: rgba(255, 255, 255, .09);
+}
+
+#modal-content .hero-nick-field .material-symbols-outlined {
+    color: var(--text-sub);
+    font-size: 20px;
+}
+
+#modal-content .hero-nick-field input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0 !important;
+    outline: none;
+    background: transparent !important;
+    color: var(--text-color);
+    font-size: 12.5pt;
+    font-weight: 700;
+}
+
+#modal-content .hero-nick-row button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 46px;
+    padding: 0 18px !important;
+    border-radius: 14px !important;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+#modal-content .hero-nick small {
+    font-size: 9.5pt;
+    color: var(--text-sub);
+}
+
+#modal-content .hero-nick.invalid small {
+    color: var(--error);
+}
+
+#modal-content .hero-nick.invalid .hero-nick-field {
+    border-color: var(--error);
+}
+
+@keyframes heroNickIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes heroNickShake {
+    0%, 100% { transform: none; }
+    20% { transform: translateX(-7px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(3px); }
+}

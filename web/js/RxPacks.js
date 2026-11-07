@@ -412,6 +412,8 @@ class RxPacks {
             RxPacks.writeModpackManifest(modpackId, manifestJson);
             await fsPromises.copyFile(unpacked.indexPath, path.join(modpackPath, "modrinth.index.json"));
             RxToasts.create(MESSAGES.packs.imported, "check", displayName);
+            // Моды из overrides лежат в архиве как есть (не с Modrinth) — проверяем их сразу
+            await RxModScan.reviewInstalled(path.join(modpackPath, "mods"), displayName);
             return modpackId;
         } catch (error) {
             console.error(error);

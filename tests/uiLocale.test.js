@@ -29,13 +29,13 @@ const notesSource = fs.readFileSync(path.join(__dirname, "..", "web", "js", "RxP
 vm.runInContext(`${notesSource}\nthis.RxPatchNotes = RxPatchNotes;`, context, {filename: "RxPatchNotes.js"});
 assert.strictEqual(context.RxPatchNotes.locale(), "ru-RU");
 assert.doesNotThrow(() => context.RxPatchNotes.formatDate("2026-07-29T18:00:00+03:00"));
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Моды под защитой и приглашения друзей");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Обновления сами, импорт сборок и офлайн");
 language = "en";
 assert.strictEqual(context.RxPatchNotes.locale(), "en-US");
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Safer mods and friend invites");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Self-updating, pack import and offline mode");
 // Устаревший сохранённый язык откатывается на английские тексты
 language = "ua";
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Safer mods and friend invites");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Self-updating, pack import and offline mode");
 // Каждый патч локализован для обоих языков
 for (const lang of ["ru", "en"]) {
     language = lang;

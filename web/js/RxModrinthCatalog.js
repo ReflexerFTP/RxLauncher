@@ -316,7 +316,7 @@ class RxModrinthCatalog {
     static autoCheck = () => {
         const context = RxModsManager.getContext();
         const target = RxModrinthCatalog.target();
-        if (!context || !target?.loader || RxPrivacy.isParanoid()) return;
+        if (!context || !target?.loader || RxPrivacy.isParanoid() || RxNetwork.offline) return;
         const last = RxModrinthCatalog.autoChecked.get(context.modsPath);
         if (last && Date.now() - last.at < 30 * 60e3) {
             return RxModrinthCatalog.showUpdates(last.updates.filter(item => fs.existsSync(item.current.file)));

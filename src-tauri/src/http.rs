@@ -413,6 +413,66 @@ pub async fn get_bytes(url: &str, idle: Duration, max: u64) -> Result<Vec<u8>, B
     Ok(body)
 }
 
+// Докачка в файл (обновление лаунчера на медленном интернете): продолжает с конца уже скачанного через Range
+pub async fn fetch_to_file(url: &str, path: &Path, total: u64, mut progress: impl FnMut(u64)) -> Result<(), BridgeError> {
+    use std::io::{Seek, SeekFrom};
+    let io = |e: std::io::Error| BridgeError::new(e.to_string());
+    let mut have = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+    if have > total {
+        let _ = std::fs::remove_file(path);
+        have = 0;
+    }
+    if have == total && total > 0 {
+        return Ok(());
+    }
+    let mut request = client(false, false).get(url).header("User-Agent", user_agent());
+    if have > 0 {
+        request = request.header("Range", format!("bytes={have}-"));
+    }
+    let response = tokio::time::timeout(Duration::from_secs(60), request.send())
+        .await
+        .map_err(|_| BridgeError::code("Request timed out", "ETIMEDOUT"))?
+        .map_err(net_error)?;
+    let status = response.status().as_u16();
+    if status == 200 {
+        have = 0; // сервер не умеет Range — качаем сначала
+    } else if status != 206 {
+        return Err(BridgeError { message: format!("HTTP {status} for {url}"), status: Some(status), ..Default::default() });
+    }
+    let mut file = std::fs::OpenOptions::new().create(true).write(true).open(path).map_err(io)?;
+    file.set_len(have).map_err(io)?;
+    file.seek(SeekFrom::Start(have)).map_err(io)?;
+    let mut writer = std::io::BufWriter::with_capacity(256 * 1024, file);
+    let mut stream = response.bytes_stream();
+    progress(have);
+    loop {
+        match tokio::time::timeout(Duration::from_secs(60), stream.next()).await {
+            Err(_) => {
+                let _ = writer.flush();
+                return Err(BridgeError::code("Request timed out", "ETIMEDOUT"));
+            }
+            Ok(None) => break,
+            Ok(Some(Err(error))) => {
+                let _ = writer.flush();
+                return Err(net_error(error));
+            }
+            Ok(Some(Ok(chunk))) => {
+                have += chunk.len() as u64;
+                if have > total {
+                    return Err(BridgeError::new("Download is larger than expected"));
+                }
+                writer.write_all(&chunk).map_err(io)?;
+                progress(have);
+            }
+        }
+    }
+    writer.flush().map_err(io)?;
+    if have != total {
+        return Err(BridgeError::new("Incomplete download"));
+    }
+    Ok(())
+}
+
 pub fn user_agent() -> String {
     format!("MaxRx/RxLauncher/{} (https://rxlauncher.xyz)", env!("CARGO_PKG_VERSION"))
 }

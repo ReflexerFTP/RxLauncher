@@ -21,5 +21,17 @@ const sha256 = crypto.createHash("sha256").update(data).digest("hex");
 const message = `rxlauncher-update\n${version}\n${file}\n${sha256}\n${data.length}`;
 const signature = crypto.sign(null, Buffer.from(message), crypto.createPrivateKey(key)).toString("base64");
 const url = `https://github.com/ReflexerFTP/RxLauncher/releases/download/v${version}/${encodeURIComponent(file)}`;
-fs.writeFileSync(path.join(dir, "rxlauncher-tauri-update.json"), JSON.stringify({version, file, url, sha256, size: data.length, signature}, null, 2));
+// «Что нового» для окна обновления — из первого патчноута (не подписывается, только показывается)
+let notes = {};
+try {
+    const vm = require("vm");
+    const context = vm.createContext({RxConfig: {read: () => "ru"}, RxTranslator: {getCurrentLanguage: () => "ru"}});
+    vm.runInContext(`${fs.readFileSync(path.join(__dirname, "..", "web", "js", "RxPatchNotes.js"), "utf8")}
+this.items = RxPatchNotes.ITEMS;`, context);
+    const item = context.items.find(entry => entry.version === version);
+    if (item) notes = {title: item.title?.ru || "", summary: item.summary?.ru || ""};
+} catch (error) {
+    console.warn(`Patch notes not added: ${error.message}`);
+}
+fs.writeFileSync(path.join(dir, "rxlauncher-tauri-update.json"), JSON.stringify({version, file, url, sha256, size: data.length, signature, ...notes}, null, 2));
 console.log(`Update manifest signed for ${file} (${data.length} bytes)`);

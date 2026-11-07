@@ -1,4 +1,5 @@
 // Импорт из других лаунчеров (Legacy Launcher, TLauncher, официальный, любая папка .minecraft).
+// Сборки Prism Launcher, MultiMC, PolyMC и CurseForge переносятся отдельной сборкой RxLauncher с тем же загрузчиком.
 // Игрок галочками выбирает, что перенести; перед переносом можно сделать резервную копию —
 // она хранит только то, что импорт заменил или добавил, и откатывается тоже по галочкам.
 // Копии лежат в <папка игры>/backups/import/<дата>/manifest.json (+ files/ с прежними версиями файлов)
@@ -143,7 +144,125 @@ class RxImport {
         const tlProps = RxImport.readProperties(path.join(minecraft, "tlauncher-2.0.properties"));
         if (tlProps["minecraft.gamedir"]) addWithHomes("TLauncher", tlProps["minecraft.gamedir"], "tlauncher");
         addWithHomes(isTLauncher ? "TLauncher" : "Minecraft (.minecraft)", minecraft, isTLauncher ? "tlauncher" : "minecraft");
+        // Сборки других лаунчеров
+        RxImport.detectInstances().forEach(source => {
+            if (!found.some(item => RxImport.samePath(item.path, source.path))) found.push(source);
+        });
         return found;
+    };
+
+    // ---------- сборки Prism Launcher / MultiMC / PolyMC / CurseForge ----------
+    static LOADER_UIDS = [["net.fabricmc.fabric-loader", "fabric"], ["org.quiltmc.quilt-loader", "quilt"], ["net.neoforged", "neoforge"], ["net.minecraftforge", "forge"]];
+
+    // Папка сборки Prism/MultiMC: instance.cfg + mmc-pack.json, игра — в .minecraft или minecraft
+    static readMultiMcInstance = (dir, label, kind) => {
+        let pack = null;
+        try { pack = JSON.parse(fs.readFileSync(path.join(dir, "mmc-pack.json"), "utf8")); } catch (_) { return null; }
+        const components = Array.isArray(pack?.components) ? pack.components : [];
+        const versionOf = uid => String(components.find(item => item?.uid === uid)?.version || "");
+        const game = versionOf("net.minecraft");
+        const loader = RxImport.LOADER_UIDS.find(([uid]) => versionOf(uid));
+        const gameDir = [".minecraft", "minecraft"].map(name => path.join(dir, name)).find(RxImport.isDirectory);
+        if (!/^\d+\.\d+(\.\d+)?$/.test(game) || !gameDir) return null;
+        const name = String(RxImport.readProperties(path.join(dir, "instance.cfg")).name || path.basename(dir)).slice(0, 64);
+        return {name: `${label} · ${name}`, path: path.resolve(gameDir), kind,
+            instance: {name, game, loader: loader ? loader[1] : "vanilla", loaderVersion: loader ? versionOf(loader[0]) : ""}};
+    };
+
+    // Папка сборки CurseForge: minecraftinstance.json, игра — в самой папке
+    static readCurseForgeInstance = (dir) => {
+        let info = null;
+        try { info = JSON.parse(fs.readFileSync(path.join(dir, "minecraftinstance.json"), "utf8")); } catch (_) { return null; }
+        const game = String(info?.gameVersion || info?.baseModLoader?.minecraftVersion || "");
+        const loader = String(info?.baseModLoader?.name || "").match(/^(fabric|quilt|neoforge|forge)-([0-9][^-]*)/i);
+        if (!/^\d+\.\d+(\.\d+)?$/.test(game)) return null;
+        const name = String(info?.name || path.basename(dir)).slice(0, 64);
+        return {name: `CurseForge · ${name}`, path: path.resolve(dir), kind: "curseforge",
+            instance: {name, game, loader: loader ? loader[1].toLowerCase() : "vanilla", loaderVersion: loader ? loader[2] : ""}};
+    };
+
+    // Все сборки внутри папки лаунчера (или сама папка — уже сборка)
+    static instancesIn = (root, label, kind) => {
+        const one = kind === "curseforge" ? RxImport.readCurseForgeInstance(root) : RxImport.readMultiMcInstance(root, label, kind);
+        if (one) return [one];
+        let instancesDir = root;
+        const config = RxImport.readProperties(path.join(root, kind === "prism" ? "prismlauncher.cfg" : kind === "polymc" ? "polymc.cfg" : "multimc.cfg"));
+        if (config.InstanceDir) instancesDir = path.isAbsolute(config.InstanceDir) ? config.InstanceDir : path.join(root, config.InstanceDir);
+        else if (RxImport.isDirectory(path.join(root, "instances"))) instancesDir = path.join(root, "instances");
+        else if (RxImport.isDirectory(path.join(root, "Instances"))) instancesDir = path.join(root, "Instances");
+        return RxImport.listDirs(instancesDir).slice(0, 200)
+            .map(name => kind === "curseforge" ? RxImport.readCurseForgeInstance(path.join(instancesDir, name)) : RxImport.readMultiMcInstance(path.join(instancesDir, name), label, kind))
+            .filter(Boolean);
+    };
+
+    static detectInstances = () => {
+        const appData = RxImport.appData();
+        const home = os.homedir();
+        const local = process.env.LOCALAPPDATA || path.join(home, "AppData", "Local");
+        const roots = [
+            [path.join(appData, "PrismLauncher"), "Prism Launcher", "prism"],
+            [path.join(appData, "PolyMC"), "PolyMC", "polymc"],
+            // MultiMC переносной: ищем в обычных местах
+            ...[path.join(home, "MultiMC"), path.join(local, "Programs", "MultiMC"), path.join(home, "Desktop", "MultiMC"), path.join(home, "Downloads", "MultiMC"), "C:\\MultiMC", "D:\\MultiMC"]
+                .map(dir => [dir, "MultiMC", "multimc"]),
+            [path.join(home, "curseforge", "minecraft", "Instances"), "CurseForge", "curseforge"],
+            [path.join(home, "Documents", "Curse", "Minecraft", "Instances"), "CurseForge", "curseforge"]
+        ];
+        const found = [];
+        for (const [dir, label, kind] of roots) {
+            if (!RxImport.isDirectory(dir)) continue;
+            try { found.push(...RxImport.instancesIn(dir, label, kind)); } catch (_) {}
+        }
+        return found.filter(source => !RxImport.isInside(GAME_DATA, source.path) && !RxImport.samePath(source.path, GAME_DATA));
+    };
+
+    // Перенести сборку другого лаунчера как новую сборку RxLauncher: тот же Minecraft и загрузчик, выбранные папки
+    static importInstance = async (source, partIds, {onProgress = () => {}} = {}) => {
+        const info = source.instance;
+        const id = RxInstancesUI.uniqueId(info.name);
+        const root = path.join(GAME_DATA, "modpacks", id);
+        const jobs = [];
+        for (const part of RxImport.PARTS.filter(item => partIds.includes(item.id))) {
+            if (part.files) {
+                part.files.forEach(name => {
+                    const from = path.join(source.path, name);
+                    if (RxImport.isFile(from)) jobs.push({from, to: path.join(root, name), size: fs.statSync(from).size});
+                });
+            } else if (part.id === "servers") {
+                const from = path.join(source.path, "servers.dat");
+                if (RxImport.isFile(from)) jobs.push({from, to: path.join(root, "servers.dat"), size: fs.statSync(from).size});
+            } else if (part.dirs && !part.shared) {
+                for (const dir of part.dirs) {
+                    for (const file of await RxImport.walk(path.join(source.path, dir))) jobs.push({from: file.full, to: path.join(root, dir, file.rel), size: file.size});
+                }
+            }
+        }
+        const total = jobs.reduce((sum, job) => sum + job.size, 0);
+        let copied = 0, failed = 0;
+        ["mods", "config", "resourcepacks", "shaderpacks", "saves"].forEach(dir => fs.mkdirSync(path.join(root, dir), {recursive: true}));
+        for (const job of jobs) {
+            try {
+                await fsPromises.mkdir(path.dirname(job.to), {recursive: true});
+                await fsPromises.copyFile(job.from, job.to);
+            } catch (error) {
+                failed++;
+                RxCollector.writeLog(`Import: copy failed [file=${job.from}] [error=${error.message}]`);
+            }
+            copied += job.size;
+            onProgress(copied, total, path.basename(job.from));
+        }
+        RxPacks.writeModpackManifest(id, {
+            id,
+            uuid: crypto.randomUUID(),
+            displayName: info.name,
+            baseVersion: {full: `${info.loader}-${info.game}`, type: info.loader, number: info.game, loaderVersion: info.loaderVersion || ""},
+            files: [],
+            icon: false,
+            created: Date.now(),
+            source: {provider: "import", from: source.kind}
+        });
+        RxCollector.writeLog(`Import: Instance ${source.name} → pack ${id} [files=${jobs.length}] [failed=${failed}]`);
+        return {id, copied: jobs.length - failed, failed};
     };
 
     // Все файлы папки (без ссылок): [{full, rel, size}]
