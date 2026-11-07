@@ -18,7 +18,8 @@ class RxPatchNotes {
                     "Обновления модов: проверка запускается сама при открытии окна модов, а новые обязательные зависимости ставятся вместе с обновлением.",
                     "Разбор вылета находит мод по трассировке ошибки и предлагает «Отключить и запустить снова».",
                     "Друзья: кнопка «Позвать на сервер» — друг получит приглашение и зайдёт к вам одной кнопкой.",
-                    "Окно лаунчера появляется, когда интерфейс уже готов: без пустого тёмного окна при запуске."
+                    "Окно лаунчера появляется, когда интерфейс уже готов: без пустого тёмного окна при запуске.",
+                    "Java, скачанная старыми версиями лаунчера, больше не скачивается заново — её проверяют и принимают."
                 ],
                 en: [
                     "“Verified by Modrinth”: mods that match files on Modrinth get a badge. Files not from Modrinth get a stricter stealer check — the launcher asks about suspicious findings before you play.",
@@ -26,7 +27,8 @@ class RxPatchNotes {
                     "Mod updates: the check runs by itself when you open the mods window, and new required dependencies are installed with the update.",
                     "The crash report finds the mod from the error stack trace and offers “Disable and start again”.",
                     "Friends: an “Invite to server” button — your friend gets an invite and joins you in one click.",
-                    "The launcher window appears once the interface is ready: no empty dark window on startup."
+                    "The launcher window appears once the interface is ready: no empty dark window on startup.",
+                    "Java downloaded by older launcher versions is no longer downloaded again — it is checked and kept."
                 ]
             }
         },
