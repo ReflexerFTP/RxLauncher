@@ -1,6 +1,30 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.2.2-java",
+            version: "4.2.2",
+            date: "2026-11-08T16:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "ИСПРАВЛЕНИЕ", en: "FIX"},
+            title: {ru: "Java больше не качается заново", en: "Java is no longer downloaded again"},
+            summary: {
+                ru: "Установленная Java используется сразу: лаунчер больше не скачивает её целиком при каждой новой патч-сборке, а проверка перед запуском стала в 5 раз быстрее.",
+                en: "Installed Java is used right away: the launcher no longer re-downloads it for every new patch build, and the pre-launch check is 5 times faster."
+            },
+            changes: {
+                ru: [
+                    "Если нужная Java уже установлена и цела, лаунчер берёт её и не ходит в интернет. Раньше при выходе новой патч-сборки Java (например, 21.0.13 вместо 21.0.12) он скачивал её заново — около 190 МБ.",
+                    "Проверка файлов Java перед запуском: ~4 секунды вместо ~20 — контрольные суммы считает ядро на Rust, и за один запуск игры проверка не повторяется.",
+                    "Подмена файлов Java по-прежнему ловится: изменённая Java не запустится и будет переустановлена."
+                ],
+                en: [
+                    "If the required Java is already installed and intact, the launcher uses it without going online. It used to re-download Java (~190 MB) whenever a new patch build came out (e.g. 21.0.13 instead of 21.0.12).",
+                    "Java file check before launch: ~4 seconds instead of ~20 — checksums are computed by the Rust core and the check isn't repeated within one launch.",
+                    "Tampered Java files are still detected: modified Java won't start and is reinstalled."
+                ]
+            }
+        },
+        {
             id: "4.2.1-security",
             version: "4.2.1",
             date: "2026-11-08T14:00:00+03:00",

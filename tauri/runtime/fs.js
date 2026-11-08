@@ -134,6 +134,10 @@ const fs = {
     realpathSync(path) {
         return sync("realpath", {path: toPath(path)}).value;
     },
+    // Только в Tauri: хеш файла считает ядро (Rust) — в разы быстрее, чем читать файл по кускам через мост
+    hashFileSync(path, algorithm = "sha256") {
+        return sync("hashFile", {path: toPath(path), algorithm}).value;
+    },
     mkdtempSync(prefix) {
         return sync("mkdtemp", {prefix: toPath(prefix)}).value;
     },

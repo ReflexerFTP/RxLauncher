@@ -4,12 +4,12 @@ class RxJavaManager {
     // Установить версию Java
     static install = async (version, restoreStartMode = false) => {
         const integrity = require('../runtimeSecurity');
-        const cached = RxJavaManager.isInstalled(version);
+        // Нужная Java уже установлена и цела (сверена по квитанции) — ею и пользуемся.
+        // Раньше лаунчер при каждом запуске спрашивал Adoptium и качал всю Java (~190 МБ) заново из-за новой патч-сборки
+        if (RxJavaManager.isInstalled(version)) return true;
         let info = RxJavaManager.getByVersion(version);
         if (!info) throw new Error('Unsupported Java platform');
-        try { info = await integrity.resolveJavaRelease(info, RxHttp.json); }
-        catch (error) { if (cached) return true; throw error; }
-        if (cached && integrity.validateRuntime(info.unpackPath, version, info.release)) return true;
+        info = await integrity.resolveJavaRelease(info, RxHttp.json);
         // Готовим UI
         RxFlyout.setUIStartMode(true);
         RxFlyout.setText();
@@ -136,10 +136,26 @@ class RxJavaManager {
     };
 
     // Получить путь к скачанной версии Java (возвращает false, если версия не существует)
+    // Проверенная Java запоминается на 5 минут, пока java.exe не менялся: за один запуск игры
+    // все файлы не пересчитываются дважды, а подмена исполняемого файла сразу ведёт к полной проверке
+    static verified = new Map(); // каталог → {at, stamp}
+    static stamp = (file) => {
+        try { const stat = fs.statSync(file); return `${stat.size}:${stat.mtimeMs}`; } catch (_) { return ""; }
+    };
+
     static getPath = (javaVersion) => {
         if (!/^\d+$/.test(String(javaVersion))) return false;
         const dir = path.join(javaInstallationDirectory, String(javaVersion));
-        return require('../runtimeSecurity').validateRuntime(dir, javaVersion) ? this.findJava(dir) : false;
+        const cached = RxJavaManager.verified.get(dir);
+        if (cached && Date.now() - cached.at < 5 * 60e3) {
+            const exe = this.findJava(dir);
+            if (exe && RxJavaManager.stamp(exe) === cached.stamp) return exe;
+        }
+        RxJavaManager.verified.delete(dir);
+        if (!require('../runtimeSecurity').validateRuntime(dir, javaVersion)) return false;
+        const exe = this.findJava(dir);
+        if (exe) RxJavaManager.verified.set(dir, {at: Date.now(), stamp: RxJavaManager.stamp(exe)});
+        return exe;
     }
 
     static findJava = (javaDirPath) => {

@@ -10,6 +10,8 @@ const inside = (root, file) => {
     return rel !== '..' && !rel.startsWith('..' + path.sep) && !path.isAbsolute(rel);
 };
 const hash = file => {
+    // Лаунчер на Tauri: хеш считает ядро на Rust (вся Java ~300 МБ — за секунды, а не за полминуты)
+    if (typeof fs.hashFileSync === 'function') return fs.hashFileSync(file, 'sha256');
     const digest = crypto.createHash('sha256');
     const fd = fs.openSync(file, 'r');
     try {
