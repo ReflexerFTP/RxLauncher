@@ -165,4 +165,10 @@ jobs:
           files=("out/RxLauncher Setup ${version}.exe" out/RxLauncher_${version}_x64-setup.exe)
           if [ -f out/rxlauncher-tauri-update.json ]; then files+=(out/rxlauncher-tauri-update.json); fi
           for file in "${files[@]}"; do test -f "$file" || { echo "Missing $file"; exit 1; }; done
+          # Релиз уже есть — только добавляем подписанный манифест обновления
+          if gh release view "v${version}" -R "${{ github.repository }}" >/dev/null 2>&1; then
+            test -f out/rxlauncher-tauri-update.json || { echo "No signed manifest (RX_UPDATE_SIGNING_KEY)"; exit 1; }
+            gh release upload "v${version}" out/rxlauncher-tauri-update.json -R "${{ github.repository }}" --clobber
+            exit 0
+          fi
           gh release create "v${version}" "${files[@]}" -R "${{ github.repository }}" --verify-tag             --title "RxLauncher ${version} — $(node -p "require('vm').runInNewContext(require('fs').readFileSync('web/js/RxPatchNotes.js','utf8')+';RxPatchNotes.ITEMS[0].title.ru',{RxConfig:{read:()=>'ru'}})")"             --notes-file notes.md --latest
