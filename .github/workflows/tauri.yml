@@ -161,9 +161,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(node -p "require('./src-tauri/tauri.conf.json').version")
-          sha=$(gh run view "${{ inputs.release_run }}" -R "${{ github.repository }}" --json headSha -q .headSha)
           node tauri/release-notes.cjs > notes.md
           files=("out/RxLauncher Setup ${version}.exe" out/RxLauncher_${version}_x64-setup.exe)
           if [ -f out/rxlauncher-tauri-update.json ]; then files+=(out/rxlauncher-tauri-update.json); fi
           for file in "${files[@]}"; do test -f "$file" || { echo "Missing $file"; exit 1; }; done
-          gh release create "v${version}" "${files[@]}" -R "${{ github.repository }}" --target "$sha"             --title "RxLauncher ${version} — $(node -p "require('vm').runInNewContext(require('fs').readFileSync('web/js/RxPatchNotes.js','utf8')+';RxPatchNotes.ITEMS[0].title.ru',{RxConfig:{read:()=>'ru'}})")"             --notes-file notes.md --latest
+          gh release create "v${version}" "${files[@]}" -R "${{ github.repository }}" --verify-tag             --title "RxLauncher ${version} — $(node -p "require('vm').runInNewContext(require('fs').readFileSync('web/js/RxPatchNotes.js','utf8')+';RxPatchNotes.ITEMS[0].title.ru',{RxConfig:{read:()=>'ru'}})")"             --notes-file notes.md --latest
