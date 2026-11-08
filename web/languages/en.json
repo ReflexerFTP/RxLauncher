@@ -1013,7 +1013,8 @@
       },
       "useButton": "RxSkins skin system",
       "fieldsError": "Fields are not filled in/filled in incorrectly",
-      "passwordsComp": "Passwords don't match"
+      "passwordsComp": "Passwords don't match",
+      "serviceGone": "Old RxLauncher skin accounts no longer work — use the Skins tab"
     },
     "console": {
       "title": "Console",
@@ -1700,6 +1701,20 @@
       "offlineTitle": "No internet — offline mode",
       "offlineText": "You can play versions and packs that are already downloaded. Catalogs and updates come back with the connection.",
       "onlineTitle": "Back online"
+    },
+    "eula": {
+      "title": "Welcome to RxLauncher",
+      "text": "A few words before you start:",
+      "points": [
+        "RxLauncher is free and open source. It is not an official Minecraft product and is not affiliated with Mojang or Microsoft.",
+        "Game statistics stay on your computer. An RxLauncher account (friends) is optional.",
+        "Mods are scanned for stealers, but install them only from sources you trust.",
+        "By using the launcher you accept the terms of use and the privacy policy."
+      ],
+      "eulaLink": "Terms of use",
+      "privacyLink": "Privacy policy",
+      "accept": "I accept",
+      "decline": "Exit"
     }
   }
 }

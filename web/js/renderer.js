@@ -51,10 +51,10 @@ global.LAUNCHER_VERSION = packageJson.version;
 
 // Ссылки на сайт
 global.SITE_URL = "https://rxlauncher.xyz";
-global.CDN_URL = "https://cdn.rxlauncher.ru";
-global.SKINS_API_URL = "https://skins.rxlauncher.ru";
-global.STATS_URL = "https://statscol.rxlauncher.ru/save_fl?savedata=";
-global.AUTHLIB_INJECTOR_URL = CDN_URL + "/authlib-injector.jar";
+// Старые сервисы на rxlauncher.ru (скины, сбор статистики, CDN) больше не существуют, а домен никому не принадлежит:
+// туда нельзя отправлять ни данные, ни пароли. Пустой адрес — функция выключена
+global.SKINS_API_URL = "";
+global.STATS_URL = "";
 global.REPO_NAME = "ReflexerFTP/RxLauncher";
 
 // Ссылка на Java

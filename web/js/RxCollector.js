@@ -86,6 +86,8 @@ class RxCollector {
 
     static collectAndSendStats = async () => {
         if (RxConfig.read("sendTechnicalStats", false) !== true) return false;
+        // Сервера статистики сейчас нет — ничего никуда не отправляем
+        if (!STATS_URL) return false;
         if (RxConfig.read("serverPrivacyMode", false) === true) {
             RxCollector.writeLog("Stats skipped: server privacy mode enabled");
             return false;

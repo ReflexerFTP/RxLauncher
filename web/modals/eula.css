@@ -22,3 +22,29 @@
 #modal-eula .buttons button {
     min-width: 20vw;
 }
+#modal-eula .data {
+    max-width: 560px;
+    padding: 4px 6px;
+    color: var(--text-color);
+    line-height: 1.55;
+}
+
+#modal-eula .data h2 {
+    margin: 0 0 10px;
+    font-size: 18pt;
+}
+
+#modal-eula .data p,
+#modal-eula .data li {
+    color: var(--text-sub);
+    font-size: 11pt;
+}
+
+#modal-eula .data ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+#modal-eula .eula-links a {
+    color: var(--theme-primaryLighter);
+}

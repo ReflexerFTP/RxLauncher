@@ -16,7 +16,14 @@ class RxSkinsUI {
     }
 
     // Начать процесс регистрации
+    // Старый сервис скинов RxLauncher закрыт — логин и пароль никуда не отправляем
+    static serviceGone = () => {
+        RxToasts.create(MESSAGES.rxAuth?.serviceGone || "Старые аккаунты скинов RxLauncher больше не работают", "cloud_off");
+        return false;
+    };
+
     static register = async () => {
+        if (!SKINS_API_URL) return RxSkinsUI.serviceGone();
         let login = $("#modal-rxRegister input.login").val().trim();
         let password = $("#modal-rxRegister input.password").val().trim();
         let repPassword = $("#modal-rxRegister input.password-repeat").val().trim();
@@ -60,6 +67,7 @@ class RxSkinsUI {
 
     // Начать процесс входа
     static login = async () => {
+        if (!SKINS_API_URL) return RxSkinsUI.serviceGone();
         let login = $("#modal-rxLogin input.login").val().trim();
         let password = $("#modal-rxLogin input.password").val().trim();
         let $error = $("#modal-rxLogin .error");
@@ -127,6 +135,7 @@ class RxSkinsUI {
 
     // Обновить профили у всех аккаунтов
     static refreshAllProfiles = () => {
+        if (!SKINS_API_URL) return Promise.resolve(true);
         let accountsList = RxAccountsManager.getAccounts();
         let keysEachList = Object.keys(accountsList);
         let currentAccount = -1;
@@ -191,6 +200,7 @@ class RxSkinsUI {
 
     // Загрузить текстуру на сервер
     static uploadTexture = async (type, file = "") => {
+        if (!SKINS_API_URL) return RxSkinsUI.serviceGone();
         let formData;
         if (file === "") {
             formData = new FormData($("#texture-image-form")[0]);
