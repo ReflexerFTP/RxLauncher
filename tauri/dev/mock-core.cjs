@@ -2,7 +2,7 @@
 // Интерфейс — с http://tauri.localhost (dist-tauri), протокол rxsync — эталонная реализация на Node того же формата,
 // что и Rust-ядро (src-tauri/src/bridge.rs). Запуск: electron tauri/dev/mock-core.cjs [--shot=файл.png] [--eval=код]
 "use strict";
-const {app, BrowserWindow, protocol, session} = require("electron");
+const {app, BrowserWindow, net, protocol, session} = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
@@ -162,6 +162,8 @@ app.whenReady().then(async () => {
             const file = decodeURIComponent(url.pathname.slice(1));
             return fs.existsSync(file) ? new Response(fs.readFileSync(file)) : new Response("not found", {status: 404});
         }
+        // Локальный API для проверок (node server/api/server.js на 127.0.0.1)
+        if (url.hostname === "127.0.0.1") return net.fetch(request, {bypassCustomProtocolHandlers: true});
         return new Response("blocked in mock", {status: 403});
     });
     const preload = path.join(__dirname, "mock-preload.cjs");

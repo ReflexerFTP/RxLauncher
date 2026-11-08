@@ -185,9 +185,28 @@ class RxAdminUI {
                 <div class="rxad-people">${data.friends.length ? data.friends.map(friend => `<span>${friend.online ? "<i></i>" : ""}${esc(friend.nick)}</span>`).join("") : `<em>${esc(RxAdminUI.t("none"))}</em>`}</div>
                 <div class="rxad-section">${esc(RxAdminUI.t("devices"))} · ${data.sessions.length}</div>
                 <div class="rxad-sessions">${data.sessions.map(item => `<div><span class="material-symbols-outlined">devices</span>${esc(RxAdminUI.t("signedIn").replace("{0}", RxAdminUI.dateTime(item.created)))}<em>${esc(RxAdminUI.t("used").replace("{0}", RxAdminUI.dateTime(item.used)))}</em></div>`).join("") || `<em>${esc(RxAdminUI.t("none"))}</em>`}</div>
+                <div class="rxad-section">${esc(RxAdminUI.t("cape"))}</div>
+                ${user.cape ? `<div class="rxad-cape">
+                    <img alt="" src="${esc(user.cape.url)}"/>
+                    <div><span>${esc(`${user.cape.width}×${user.cape.height} · ${RxAdminUI.dateTime(user.cape.updated)}`)}</span>
+                        <em>${esc([user.nick, ...(user.capeNicks || [])].join(", "))}</em></div>
+                    <button class="transparent" data-admin-cape-delete><span class="material-symbols-outlined">delete</span><span>${esc(RxAdminUI.t("capeDelete"))}</span></button>
+                </div>` : `<em class="rxad-none">${esc(RxAdminUI.t("none"))}</em>`}
                 <div class="rxad-player-actions">
                     <button class="transparent" data-admin-logout-all ${data.sessions.length ? "" : "disabled"}><span class="material-symbols-outlined">logout</span><span>${esc(RxAdminUI.t("logoutAll"))}</span></button>
                 </div>`);
+            // Неподобающий плащ: удалить картинку и привязанные ники
+            $pane.find("[data-admin-cape-delete]").on("click", async () => {
+                const confirmed = await RxDialog.confirm({icon: "delete", title: RxAdminUI.t("capeDelete"), text: RxAdminUI.t("capeDeleteText").replace("{0}", user.nick), confirmText: RxAdminUI.t("capeDelete"), danger: true});
+                if (!confirmed) return;
+                try {
+                    await RxAccount.call("admin/cape/delete", {id});
+                    RxToasts.create(RxAdminUI.t("capeDeleted"), "delete", user.nick, "success");
+                    RxAdminUI.openPlayer(id);
+                } catch (error) {
+                    RxToasts.create(RxAccount.errorText(error), "error", "", "error");
+                }
+            });
             $pane.find("[data-admin-logout-all]").on("click", async () => {
                 const confirmed = await RxDialog.confirm({icon: "logout", title: RxAdminUI.t("logoutAll"), text: RxAdminUI.t("logoutAllText").replace("{0}", user.nick), confirmText: RxAdminUI.t("logoutAll")});
                 if (!confirmed) return;

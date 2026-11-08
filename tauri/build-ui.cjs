@@ -141,7 +141,7 @@ fs.writeFileSync(path.join(OUT, "rx-runtime.js"), runtime);
 // Файлы, которые код интерфейса читает через fs (__dirname): ресурсы Tauri рядом с exe
 const RESOURCES = path.join(ROOT, "src-tauri", "resources", "web");
 fs.rmSync(RESOURCES, {recursive: true, force: true});
-for (const dir of ["languages", "assets/rxclient", "assets/data"]) {
+for (const dir of ["languages", "assets/rxclient", "assets/data", "assets/agents"]) {
     if (fs.existsSync(path.join(WEB, dir))) copyWeb(path.join(WEB, dir), path.join(RESOURCES, dir));
 }
 

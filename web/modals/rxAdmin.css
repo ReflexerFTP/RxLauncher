@@ -153,3 +153,10 @@
 .rxad-top-row i { position: absolute; inset: 0 auto 0 0; z-index: -1; border-radius: 8px; background: color-mix(in srgb, var(--theme-primary) 18%, transparent); }
 .rxad-top-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rxad-top-row b { font-variant-numeric: tabular-nums; }
+/* Плащ игрока в карточке */
+.rxad-cape { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--theme-primaryBgLight); font-size: 8.5pt; }
+.rxad-cape img { width: 128px; height: 64px; image-rendering: pixelated; border-radius: 6px; background: var(--theme-primaryBgDark); }
+.rxad-cape div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rxad-cape em { color: var(--text-sub); font-style: normal; overflow: hidden; text-overflow: ellipsis; }
+.rxad-cape button { margin-left: auto; }
+.rxad-none { color: var(--text-sub); font-size: 8.5pt; font-style: normal; }

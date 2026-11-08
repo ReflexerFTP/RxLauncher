@@ -1,6 +1,32 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.3.0-capes",
+            version: "4.3.0",
+            date: "2026-11-08T19:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "НОВОЕ", en: "NEW"},
+            title: {ru: "Свои плащи", en: "Custom capes"},
+            summary: {
+                ru: "Новая вкладка «Плащи»: нарисуйте плащ прямо в лаунчере или загрузите PNG. Его видят все, кто играет через RxLauncher, — на любых серверах и версиях.",
+                en: "New Capes tab: draw a cape right in the launcher or upload a PNG. Everyone playing through RxLauncher sees it — on any server and version."
+            },
+            changes: {
+                ru: [
+                    "Редактор плаща: кисть, ластик, заливка, пипетка, отмена, заготовка и 3D-просмотр плаща и элитр. Поддерживаются PNG 64×32 и HD до 512×256, старый формат 22×17 тоже подойдёт.",
+                    "Сохранить свой плащ может группа Игрок+. Плащ виден на нике аккаунта и на игровом нике, с которым вы заходите в игру.",
+                    "В игре ничего ставить не нужно: лаунчер сам подключает модуль плащей к vanilla, Fabric, Forge и NeoForge. Отключить его можно во вкладке «Плащи».",
+                    "Администраторы видят плащ в карточке игрока и могут удалить неподходящий."
+                ],
+                en: [
+                    "Cape editor: brush, eraser, fill, color picker, undo, a starter template and a 3D preview of the cape and elytra. 64×32 PNGs and HD up to 512×256 are supported, the old 22×17 format works too.",
+                    "Saving your own cape is available to Player+. The cape shows on your account nickname and on the game nickname you play with.",
+                    "Nothing to install in game: the launcher attaches the cape module to vanilla, Fabric, Forge and NeoForge by itself. It can be turned off in the Capes tab.",
+                    "Admins see the cape on the player card and can remove an inappropriate one."
+                ]
+            }
+        },
+        {
             id: "4.2.3-assets",
             version: "4.2.3",
             date: "2026-11-08T17:00:00+03:00",

@@ -72,7 +72,8 @@
         resultConfig = await RxLaunchConfigurator.applyRxClientLobbyMode(versionParsed, rxClientMeta, resultConfig);
 
         RxCollector.writeLog("Config: Setup of authlib-injector and resolving promises");
-        return RxLaunchConfigurator.setupAuthlib(resultConfig, activeAccount);
+        resultConfig = await RxLaunchConfigurator.setupAuthlib(resultConfig, activeAccount);
+        return RxCapes.setupLaunch(resultConfig, activeAccount);
     }
 
     static resolveRxClientLaunchMeta = async (versionParsed) => {

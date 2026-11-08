@@ -3,19 +3,20 @@
 // (в настройках или прямо в установщике — тот оставляет installer-tabs.json рядом с config.json).
 // Меню сгруппировано и разворачивается: свёрнуто — значки, развёрнуто — значки с подписями (sidebarExpanded).
 class RxTabs {
-    static ALL = ["content", "settings", "catalog", "instances", "mods", "friends", "skins", "servers", "statistics", "together", "screenshots", "console"];
+    static ALL = ["content", "settings", "catalog", "instances", "mods", "friends", "skins", "capes", "servers", "statistics", "together", "screenshots", "console"];
     static LOCKED = ["content", "settings"];
-    static DEFAULT = ["content", "settings", "catalog", "friends", "statistics", "together", "console"];
+    static DEFAULT = ["content", "settings", "catalog", "friends", "capes", "statistics", "together", "console"];
     // Вкладки, о которых установщик не знает: его выбор их не выключает
     static INSTALLER_TABS = ["content", "settings", "instances", "mods", "skins", "servers", "statistics", "screenshots", "console"];
     // Новые разделы один раз включаются и у тех, кто настроил меню раньше
     static ADDED_IN_3 = ["catalog", "together"];
     static ADDED_IN_3_9 = ["friends"];
+    static ADDED_IN_4_3 = ["capes"];
     static CONFIG_KEY = "enabledTabs";
     static EXPANDED_KEY = "sidebarExpanded";
     static ICONS = {
         content: "home", settings: "settings", catalog: "travel_explore", instances: "stacks", mods: "extension", friends: "diversity_3",
-        skins: "accessibility_new", servers: "dns", statistics: "monitoring", together: "group", screenshots: "photo_library", console: "terminal"
+        skins: "accessibility_new", capes: "checkroom", servers: "dns", statistics: "monitoring", together: "group", screenshots: "photo_library", console: "terminal"
     };
 
     static normalize = (list) => {
@@ -122,6 +123,12 @@ class RxTabs {
                 RxConfig.write(RxTabs.CONFIG_KEY, RxTabs.normalize([...RxTabs.getEnabled(), ...RxTabs.ADDED_IN_3_9]));
             }
             RxConfig.write("tabsMigrated39", true);
+        }
+        if (RxConfig.read("tabsMigrated43", false) !== true) {
+            if (RxConfig.isKeyExists(RxTabs.CONFIG_KEY)) {
+                RxConfig.write(RxTabs.CONFIG_KEY, RxTabs.normalize([...RxTabs.getEnabled(), ...RxTabs.ADDED_IN_4_3]));
+            }
+            RxConfig.write("tabsMigrated43", true);
         }
     };
 
