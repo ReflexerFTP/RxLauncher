@@ -1,6 +1,30 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.2.1-security",
+            version: "4.2.1",
+            date: "2026-11-08T14:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
+            title: {ru: "Исправления безопасности", en: "Security fixes"},
+            summary: {
+                ru: "Лаунчер больше не обращается к старым адресам rxlauncher.ru, а при первом запуске показывает понятное окно правил.",
+                en: "The launcher no longer contacts the old rxlauncher.ru addresses and shows a clear terms window on first start."
+            },
+            changes: {
+                ru: [
+                    "Убраны старые адреса rxlauncher.ru (сбор статистики и старая система скинов): этот домен нам больше не принадлежит, поэтому туда не уходят ни данные, ни пароли.",
+                    "Окно правил при первом запуске показывает текст прямо в лаунчере со ссылками на соглашение и политику конфиденциальности — раньше оно было пустым.",
+                    "Старые аккаунты скинов RxLauncher отключены: для скинов используйте вкладку «Скины»."
+                ],
+                en: [
+                    "Removed the old rxlauncher.ru addresses (statistics and the old skin system): we no longer own that domain, so no data or passwords go there.",
+                    "The first-start terms window now shows its text inside the launcher with links to the terms and privacy policy — it used to be empty.",
+                    "Old RxLauncher skin accounts are disabled: use the Skins tab for skins."
+                ]
+            }
+        },
+        {
             id: "4.2.0-updates-import",
             version: "4.2.0",
             date: "2026-11-08T12:00:00+03:00",
