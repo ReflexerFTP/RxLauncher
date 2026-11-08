@@ -663,12 +663,18 @@ async fn prepare_assets(root: &Path, game_dir: &Path, version: &Value, version_i
         return Err(BridgeError::new("Invalid asset index id"));
     }
     let mut index_path = assets_root.join("indexes").join(format!("{index_id}.json"));
+    // Имя индекса, которое получит игра (--assetIndex): она сама открывает indexes/<имя>.json
+    let mut index_name = index_id.clone();
     let index_item = Download { url: str_of(index, "url").unwrap_or("").to_string(), path: index_path.clone(), sha1: str_of(index, "sha1").map(str::to_string), size: index.get("size").and_then(Value::as_u64) };
     if !gamefiles::present(&index_item, true) {
-        // Версия на Electron называла индекс по имени сборки (fabric-1.21.4.json)
+        // Версия на Electron называла индекс по имени сборки (fabric-1.21.4.json). Игре нужен файл
+        // под тем же именем, что и в --assetIndex, иначе она стартует без языков, звуков и фона меню
         let legacy = Download { path: assets_root.join("indexes").join(format!("{version_id}.json")), ..index_item.clone() };
         if valid_id(version_id) && gamefiles::present(&legacy, true) {
-            index_path = legacy.path;
+            if std::fs::copy(&legacy.path, &index_path).is_err() {
+                index_path = legacy.path;
+                index_name = version_id.to_string();
+            }
         } else {
             gamefiles::fetch(&index_item, source).await?;
         }
@@ -716,5 +722,5 @@ async fn prepare_assets(root: &Path, game_dir: &Path, version: &Value, version_i
         }
         game_assets = target;
     }
-    Ok((assets_root, index_id, game_assets))
+    Ok((assets_root, index_name, game_assets))
 }

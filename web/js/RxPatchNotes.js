@@ -1,6 +1,28 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.2.3-assets",
+            version: "4.2.3",
+            date: "2026-11-08T17:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "ИСПРАВЛЕНИЕ", en: "FIX"},
+            title: {ru: "Вернулись языки, звуки и фон меню", en: "Languages, sounds and menu background are back"},
+            summary: {
+                ru: "Версии, скачанные старым лаунчером, снова запускаются с русским языком, звуками и фоном главного меню.",
+                en: "Versions downloaded by the old launcher start with all languages, sounds and the main menu background again."
+            },
+            changes: {
+                ru: [
+                    "Лаунчер на Electron сохранял индекс ресурсов под именем сборки (например, fabric-1.21.4.json), а игра ищет его по номеру (19.json). Из-за этого Minecraft запускался только с английским языком, без звуков и без панорамы в меню.",
+                    "Теперь лаунчер сам кладёт индекс под нужным именем — ничего перекачивать не нужно."
+                ],
+                en: [
+                    "The Electron launcher saved the asset index under the build name (e.g. fabric-1.21.4.json), while the game looks it up by number (19.json). Minecraft therefore started with English only, no sounds and no menu panorama.",
+                    "The launcher now places the index under the expected name — nothing needs to be re-downloaded."
+                ]
+            }
+        },
+        {
             id: "4.2.2-java",
             version: "4.2.2",
             date: "2026-11-08T16:00:00+03:00",
