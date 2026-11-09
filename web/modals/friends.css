@@ -205,6 +205,11 @@
 
 .fx-segment { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; border-radius: 12px; background: var(--theme-primaryBg); }
 .fx-segment button {
+    /* Каждая кнопка на всю свою треть: иначе кнопка ужималась по тексту и активная подсветка стояла криво */
+    width: 100%;
+    min-width: 0;
+    margin: 0 !important;
+    justify-self: stretch;
     height: 34px !important;
     padding: 0 4px !important;
     border-radius: 9px !important;

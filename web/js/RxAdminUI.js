@@ -245,6 +245,8 @@ class RxAdminUI {
             const tile = (value, label, hint = "") => `<div class="rxad-kpi"><b>${esc(value)}</b><span>${esc(label)}</span>${hint ? `<small>${esc(hint)}</small>` : ""}</div>`;
             const top = (title, items, value) => {
                 const max = Math.max(1, ...items.map(item => item.v));
+                // Первые пять — так статистика помещается в окно без прокрутки
+                items = items.slice(0, 5);
                 return `<div class="rxad-top"><div class="rxad-section">${esc(title)}</div>${items.length ? items.map(item => `<div class="rxad-top-row"><span>${esc(item.name)}</span><b>${esc(value(item))}</b><i style="width:${Math.max(4, item.v / max * 100)}%"></i></div>`).join("") : `<em>${esc(RxAdminUI.t("noData"))}</em>`}</div>`;
             };
             // Онлайн по часам за 48 часов (максимум за час из замеров раз в 5 минут)
@@ -265,11 +267,11 @@ class RxAdminUI {
                     ${tile(RxAdminUI.hoursText(t.playSeconds), RxAdminUI.t("playTotal"))}
                 </div>
                 <div class="rxad-charts">
-                    <div><div class="rxad-section">${esc(RxAdminUI.t("chartRegistrations"))}</div>${RxAdminUI.bars(stats.registrations.map(item => ({n: item.n, label: dayLabel(item.day), tip: `${dayLabel(item.day)}: ${item.n}`})))}</div>
-                    <div><div class="rxad-section">${esc(RxAdminUI.t("chartActive"))}</div>${RxAdminUI.bars(stats.active.map(item => ({n: item.n, label: dayLabel(item.day), tip: `${dayLabel(item.day)}: ${item.n}`})))}</div>
+                    <div class="rxad-chartbox"><div class="rxad-section">${esc(RxAdminUI.t("chartRegistrations"))}</div>${RxAdminUI.bars(stats.registrations.map(item => ({n: item.n, label: dayLabel(item.day), tip: `${dayLabel(item.day)}: ${item.n}`})))}</div>
+                    <div class="rxad-chartbox"><div class="rxad-section">${esc(RxAdminUI.t("chartActive"))}</div>${RxAdminUI.bars(stats.active.map(item => ({n: item.n, label: dayLabel(item.day), tip: `${dayLabel(item.day)}: ${item.n}`})))}</div>
                 </div>
-                <div class="rxad-section">${esc(RxAdminUI.t("chartOnline"))}</div>
-                ${RxAdminUI.bars(hours.map(hour => ({n: byHour.get(hour) || 0, label: hourLabel(hour), tip: `${hourLabel(hour)}: ${byHour.get(hour) || 0}`})))}
+                <div class="rxad-chartbox"><div class="rxad-section">${esc(RxAdminUI.t("chartOnline"))}</div>
+                ${RxAdminUI.bars(hours.map(hour => ({n: byHour.get(hour) || 0, label: hourLabel(hour), tip: `${hourLabel(hour)}: ${byHour.get(hour) || 0}`})))}</div>
                 <div class="rxad-tops">
                     ${top(RxAdminUI.t("topVersions"), stats.topVersions.map(item => ({name: item.name, v: item.n})), item => item.v)}
                     ${top(RxAdminUI.t("topLoaders"), stats.topLoaders.map(item => ({name: loaders[item.name] || item.name, v: item.n})), item => item.v)}

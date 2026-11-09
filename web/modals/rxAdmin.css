@@ -107,7 +107,10 @@
 .rxad-pane[hidden] { display: none; }
 /* Блоки окна не сжимаются по высоте: если не влезают — прокрутка, а не обрезанный текст и налезающие строки */
 #modal-rxAdmin > :not(.rxad-pane), .rxad-player > *, .rxad-statpane > *, [data-admin-pane="players"] > :not(.rxad-list), .rxad-top-row { flex-shrink: 0; }
-.rxad-player, .rxad-statpane { overflow-y: auto; padding-right: 4px; }
+.rxad-player { overflow-y: auto; padding-right: 4px; }
+/* Статистика помещается целиком без прокрутки: графики делят оставшуюся высоту, топы — в один ряд */
+.rxad-statpane { display: grid; grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) auto; overflow: hidden; }
+.rxad-statpane > .rxad-loading, .rxad-statpane > .rxad-empty { grid-row: 1 / -1; }
 .rxad-loading { flex: 1; display: grid; place-items: center; }
 .rxad-loading .material-symbols-outlined { font-size: 30px; color: var(--theme-primaryLighter); }
 .rxad-loading .spin { animation: mc-spin 1s linear infinite; }
@@ -141,17 +144,18 @@
 .rxad-kpi b { font-size: 16pt; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .rxad-kpi span { color: var(--text-sub); font-size: 8.5pt; font-weight: 600; }
 .rxad-kpi small { color: var(--text-sub); font-size: 7.8pt; opacity: .8; }
-.rxad-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.rxad-chart { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; height: 110px; margin-top: 6px; }
+.rxad-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-height: 0; }
+.rxad-chartbox { display: flex; flex-direction: column; min-height: 0; }
+.rxad-chart { flex: 1 1 auto; min-height: 36px; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; margin-top: 6px; }
 .rxad-axis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; color: var(--text-sub); font-size: 7.5pt; }
 .rxad-bars { display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--rx-stroke); background: linear-gradient(var(--rx-stroke) 1px, transparent 1px) 0 0 / 100% 50%; }
 .rxad-bar { flex: 1 1 0; height: 100%; display: flex; align-items: flex-end; }
 .rxad-bar i { display: block; width: 100%; max-width: 16px; margin: 0 auto; border-radius: 3px 3px 0 0; background: var(--theme-primary); opacity: .85; }
 .rxad-bar:hover i { opacity: 1; background: var(--theme-primaryLighter); }
 .rxad-xaxis { display: flex; justify-content: space-between; margin: 4px 0 0 28px; color: var(--text-sub); font-size: 7.5pt; }
-.rxad-tops { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.rxad-top { display: flex; flex-direction: column; gap: 4px; }
-.rxad-top-row { position: relative; isolation: isolate; display: flex; justify-content: space-between; gap: 8px; padding: 5px 9px; border-radius: 8px; overflow: hidden; font-size: 8.8pt; }
+.rxad-tops { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.rxad-top { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rxad-top-row { position: relative; isolation: isolate; display: flex; justify-content: space-between; gap: 6px; padding: 3px 8px; border-radius: 7px; overflow: hidden; font-size: 8.3pt; }
 .rxad-top-row i { position: absolute; inset: 0 auto 0 0; z-index: -1; border-radius: 8px; background: color-mix(in srgb, var(--theme-primary) 18%, transparent); }
 .rxad-top-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rxad-top-row b { font-variant-numeric: tabular-nums; }
