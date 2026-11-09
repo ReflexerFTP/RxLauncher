@@ -185,9 +185,6 @@ const validWorld = root(compound(tag(10,'Data',compound(tag(8,'LevelName',str('S
             RxDownloader:{downloadFile:async(...args)=>{requested=args;}}});
         await assert.rejects(Config.setupAuthlib({customArgs:[]},'x'),/Unverified/);assert.equal(requested[4].sha256,integrity.AUTHLIB.sha256);assert.equal(requested[5].expectedSize,integrity.AUTHLIB.size);
     });
-    await test('Windows packaging cannot bypass signing gate',async()=>{
-        await assert.rejects(require('../scripts/require-signed-release')({electronPlatformName:'win32',packager:{config:{win:{forceCodeSigning:false}}}}),/Unsigned/);
-    });
     console.log(`Security remediation: ${rows.length}/${rows.length} checks passed`);
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{
     const resolved=fs.realpathSync(fixture);if(!resolved.startsWith(fs.realpathSync(os.tmpdir())+path.sep))throw Error('Unsafe fixture cleanup');fs.rmSync(resolved,{recursive:true,force:true});

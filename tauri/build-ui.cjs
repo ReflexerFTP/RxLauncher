@@ -58,10 +58,10 @@ html = html.replace(/data-rx-on(click|change|input|submit|keydown)="([^"]*)"/g, 
     return `data-rx-on${kind}="${handlers.get(code)}"`;
 });
 
-// Рантайм и skinview3d — первыми (defer сохраняет порядок)
+// Рантайм — первым (defer сохраняет порядок)
 const firstScript = html.indexOf("<script defer");
 if (firstScript === -1) throw new Error("No scripts in template");
-html = `${html.slice(0, firstScript)}<script defer src="./rx-runtime.js"></script>\n    <script defer src="./rx-handlers.js"></script>\n    <script defer src="./js/skinview3d.bundle.js"></script>\n    ${html.slice(firstScript)}`;
+html = `${html.slice(0, firstScript)}<script defer src="./rx-runtime.js"></script>\n    <script defer src="./rx-handlers.js"></script>\n    ${html.slice(firstScript)}`;
 
 // ---------- 4. rx-runtime.js ----------
 const parts = [fs.readFileSync(path.join(RUNTIME, "core.js"), "utf8")];
@@ -87,7 +87,7 @@ parts.push(fs.readFileSync(path.join(RUNTIME, "node-misc.js"), "utf8"));
 
 // Корневые модули, которые интерфейс подключает через require; некоторые заменены версиями для Tauri
 const REPLACED = Object.fromEntries(["archiveMetadata.js", "archiveWorker.js", "nbtWorker.js"].map(file => [file, path.join(RUNTIME, "replacements", file)]));
-for (const file of ["externalTargets.js", "lowEndOptions.js", "modrinthPackSafety.js", "runtimeSecurity.js", "archiveWorker.js", "nbtWorker.js", "archiveMetadata.js", "minecraftSkinService.js", "web/js/RxNbt.js"]) {
+for (const file of ["externalTargets.js", "lowEndOptions.js", "modrinthPackSafety.js", "runtimeSecurity.js", "archiveWorker.js", "nbtWorker.js", "archiveMetadata.js", "web/js/RxNbt.js"]) {
     const source = REPLACED[file] && fs.existsSync(REPLACED[file]) ? REPLACED[file] : path.join(ROOT, file);
     define(file, fs.readFileSync(source, "utf8"));
 }

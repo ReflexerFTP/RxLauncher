@@ -46,19 +46,23 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             let payload = arg(&args, 0);
             let pid = payload.get("pid").and_then(Value::as_u64).unwrap_or(0) as u32;
             if payload.get("active").and_then(Value::as_bool) == Some(true) && pid > 0 {
-                state.set_game(true, pid);
+                state.add_game(pid);
                 return ok(Value::Null);
             }
             if payload.get("active").and_then(Value::as_bool) != Some(false) {
                 return ok(Value::Null);
             }
-            if state.game_pid() > 0 && pid != state.game_pid() {
-                crate::logs::write("warn", &format!("Ignored stale Minecraft close state [activePid={}] [incomingPid={pid}]", state.game_pid()));
+            // Закрылся один из клиентов: история команд прячется для его папки; остальное — когда закрыты все
+            let none_left = state.remove_game(pid);
+            let supplied = payload.get("gameDirectory").and_then(Value::as_str).unwrap_or("").to_string();
+            let vault_data = user_data.clone();
+            std::thread::spawn(move || {
+                let dir = if supplied.is_empty() { None } else { crate::vault::accepted_dir(&vault_data, &supplied) };
+                crate::vault::finish(&vault_data, dir.as_deref(), none_left);
+            });
+            if !none_left {
                 return ok(Value::Null);
             }
-            state.set_game(false, 0);
-            let vault_data = user_data.clone();
-            std::thread::spawn(move || crate::vault::finish(&vault_data));
             crate::updater::game_closed(app);
             let visible = crate::window::main_window(app).and_then(|w| w.is_visible().ok()).unwrap_or(true);
             if !visible {

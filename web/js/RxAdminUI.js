@@ -192,9 +192,12 @@ class RxAdminUI {
                         <em>${esc([user.nick, ...(user.capeNicks || [])].join(", "))}</em></div>
                     <button class="transparent" data-admin-cape-delete><span class="material-symbols-outlined">delete</span><span>${esc(RxAdminUI.t("capeDelete"))}</span></button>
                 </div>` : `<em class="rxad-none">${esc(RxAdminUI.t("none"))}</em>`}
+                <div class="rxad-section">${esc(RxAchievements.t("title", "Достижения"))}</div>
+                ${RxAchievements.adminHtml(user.achievements)}
                 <div class="rxad-player-actions">
                     <button class="transparent" data-admin-logout-all ${data.sessions.length ? "" : "disabled"}><span class="material-symbols-outlined">logout</span><span>${esc(RxAdminUI.t("logoutAll"))}</span></button>
                 </div>`);
+            RxAchievements.bindAdmin($pane, id, () => RxAdminUI.openPlayer(id));
             // Неподобающий плащ: удалить картинку и привязанные ники
             $pane.find("[data-admin-cape-delete]").on("click", async () => {
                 const confirmed = await RxDialog.confirm({icon: "delete", title: RxAdminUI.t("capeDelete"), text: RxAdminUI.t("capeDeleteText").replace("{0}", user.nick), confirmText: RxAdminUI.t("capeDelete"), danger: true});

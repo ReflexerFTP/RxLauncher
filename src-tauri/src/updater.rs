@@ -2,7 +2,10 @@
 // открытый ключ встроен сюда. Манифест rxlauncher-tauri-update.json: {version, file, url, sha256, size, signature, title, summary}.
 // Подпись — над строкой «rxlauncher-update\n<версия>\n<файл>\n<sha256>\n<размер>», затем установщик сверяется по SHA-256.
 // title и summary (что нового) не подписаны и только показываются игроку.
-// Проверка — при каждом запуске и раз в 6 часов. Скачивание с докачкой: обрыв на медленном интернете не начинает его заново
+// Проверка — при каждом запуске и раз в 6 часов; если сеть не ответила — снова через 30 с, 2, 5 и 15 минут.
+// Скачивание с докачкой в %APPDATA%\rxclient\updates (временную папку Windows чистит). Когда GitHub не отвечает
+// (у части игроков он почти не грузится), манифест и установщик берутся с зеркала rxlauncher.xyz/update/:
+// подпись и SHA-256 проверяются те же, поэтому зеркалу доверять не нужно
 use std::io::Read;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -15,6 +18,10 @@ use sha2::Digest;
 use tauri::{AppHandle, Emitter, Manager};
 
 const MANIFEST_URL: &str = "https://github.com/ReflexerFTP/RxLauncher/releases/latest/download/rxlauncher-tauri-update.json";
+const MIRROR_MANIFEST_URL: &str = "https://rxlauncher.xyz/update/rxlauncher-tauri-update.json";
+const MIRROR_BASE: &str = "https://rxlauncher.xyz/update/";
+// Повторы проверки после ошибки сети (секунды), дальше — раз в час, пока не получится
+const CHECK_RETRIES: [u64; 4] = [30, 120, 300, 900];
 const PUBLIC_KEY: &str = "828d75aae2514e0b03f23629f8bd16a3ecc0b57db529e39c3c3ead24cc35bfbf";
 
 #[derive(Clone)]
@@ -84,10 +91,26 @@ fn auto_download(app: &AppHandle) -> bool {
         .unwrap_or(true)
 }
 
+type Verified = (String, String, String, u64, String);
+
+// Манифест с GitHub, а если он не ответил или подпись не сошлась — с зеркала
+async fn fetch_manifest() -> Result<(Value, Verified), String> {
+    let mut errors = Vec::new();
+    for url in [MANIFEST_URL, MIRROR_MANIFEST_URL] {
+        let parsed = match crate::http::get_bytes(url, Duration::from_secs(20), 64 * 1024).await {
+            Ok(bytes) => serde_json::from_slice::<Value>(&bytes).map_err(|e| e.to_string()),
+            Err(error) => Err(error.message),
+        };
+        match parsed.and_then(|manifest| verify(&manifest).map(|fields| (manifest, fields))) {
+            Ok(result) => return Ok(result),
+            Err(error) => errors.push(format!("{url}: {error}")),
+        }
+    }
+    Err(errors.join("; "))
+}
+
 async fn check(app: &AppHandle) -> Result<(), String> {
-    let manifest: Value = serde_json::from_slice(&crate::http::get_bytes(MANIFEST_URL, Duration::from_secs(30), 64 * 1024).await.map_err(|e| e.message)?)
-        .map_err(|e| e.to_string())?;
-    let (version, file, url, size, sha256) = verify(&manifest)?;
+    let (manifest, (version, file, url, size, sha256)) = fetch_manifest().await?;
     let current = app.package_info().version.to_string();
     if parse_version(&version) <= parse_version(&current) {
         return Ok(());
@@ -134,20 +157,48 @@ pub fn begin_download(app: &AppHandle) {
             Err(error) => {
                 crate::logs::write("warn", &format!("Update download: {error}"));
                 let _ = app.emit("rx:update-error", json!({"message": error, "status": status()}));
+                // Сеть пропала надолго — через 10 минут продолжаем с того же места
+                if auto_download(&app) {
+                    let app = app.clone();
+                    tauri::async_runtime::spawn(async move {
+                        tokio::time::sleep(Duration::from_secs(600)).await;
+                        begin_download(&app);
+                    });
+                }
             }
         }
     });
 }
 
+fn updates_dir(app: &AppHandle) -> PathBuf {
+    app.state::<crate::state::AppState>().user_data.join("updates")
+}
+
 async fn download(app: &AppHandle) -> Result<(), String> {
     let update = AVAILABLE.lock().ok().and_then(|u| u.clone()).ok_or("No update")?;
-    let dir = std::env::temp_dir().join("rxlauncher-update");
+    let dir = updates_dir(app);
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let part = dir.join(format!("{}.part", update.file));
     let target = dir.join(&update.file);
+    // Файлы других версий больше не нужны
+    if let Ok(entries) = std::fs::read_dir(&dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path != part && path != target {
+                let _ = std::fs::remove_file(path);
+            }
+        }
+    }
+    // Скачанный в прошлый запуск файл: проверяем его подпись заново, не скачивая
+    if target.is_file() && !part.exists() {
+        let _ = std::fs::rename(&target, &part);
+    }
+    let mirror = format!("{MIRROR_BASE}{}", update.file);
     let mut last_emit = Instant::now() - Duration::from_secs(1);
     let mut attempt = 0u64;
     loop {
+        // Источники чередуются: GitHub, зеркало, GitHub… Файл докачивается с места обрыва
+        let source = if attempt % 2 == 0 { update.url.as_str() } else { mirror.as_str() };
         let progress = |received: u64| {
             RECEIVED.store(received, Ordering::SeqCst);
             if last_emit.elapsed() >= Duration::from_millis(500) {
@@ -155,12 +206,12 @@ async fn download(app: &AppHandle) -> Result<(), String> {
                 let _ = app.emit("rx:update-progress", status());
             }
         };
-        match crate::http::fetch_to_file(&update.url, &part, update.size, progress).await {
+        match crate::http::fetch_to_file(source, &part, update.size, progress).await {
             Ok(()) => break,
-            Err(error) if attempt < 40 => {
+            Err(error) if attempt < 60 => {
                 attempt += 1;
-                crate::logs::write("warn", &format!("Update download interrupted (attempt {attempt}): {}", error.message));
-                tokio::time::sleep(Duration::from_secs(5 * attempt.min(6))).await;
+                crate::logs::write("warn", &format!("Update download interrupted (attempt {attempt}, {source}): {}", error.message));
+                tokio::time::sleep(Duration::from_secs(3 * attempt.min(10))).await;
             }
             Err(error) => return Err(error.message),
         }
@@ -199,11 +250,21 @@ pub fn start(app: &AppHandle) {
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(Duration::from_secs(6)).await;
+        let mut failures = 0usize;
         loop {
-            if let Err(error) = check(&app).await {
-                crate::logs::write("warn", &format!("Update check: {error}"));
-            }
-            tokio::time::sleep(Duration::from_secs(6 * 3600)).await;
+            let wait = match check(&app).await {
+                Ok(()) => {
+                    failures = 0;
+                    6 * 3600
+                }
+                Err(error) => {
+                    crate::logs::write("warn", &format!("Update check (failure {}): {error}", failures + 1));
+                    let wait = CHECK_RETRIES.get(failures).copied().unwrap_or(3600);
+                    failures += 1;
+                    wait
+                }
+            };
+            tokio::time::sleep(Duration::from_secs(wait)).await;
         }
     });
 }

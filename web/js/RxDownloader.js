@@ -117,7 +117,10 @@ class RxDownloader {
         return true;
     }
 
+    // Обрыв связи повторяем до NETWORK_RETRIES раз с растущей паузой (на мобильном интернете связь пропадает на секунды),
+    // ответ сервера «файла нет» — только RETRIES раз
     static RETRIES = 3;
+    static NETWORK_RETRIES = 6;
 
     // Скачать много файлов параллельно (файлы сборки): повтор при обрыве, проверка хеша, общий прогресс.
     // items: [{url, fallbackUrl, path, hashes, size, displayName}]; вторая попытка идёт через fallbackUrl (зеркало), если он есть.
@@ -151,6 +154,17 @@ class RxDownloader {
         return declared;
     };
 
+    // Обрыв, таймаут, нет сети — в отличие от ответа сервера с ошибкой
+    static isNetworkError = (error) => {
+        if (!error || error.status) return false;
+        const text = `${error.code || ""} ${error.message || ""}`;
+        return /ETIMEDOUT|ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|ENETUNREACH|EPIPE|socket|network|timed out|timeout|connection|Incomplete|aborted by peer|decoding|body/i.test(text)
+            && !/Download aborted/.test(text);
+    };
+
+    static retryText = (attempt) => (MESSAGES.starter.retrying || "Связь оборвалась — повтор {0}/{1}")
+        .replace("{0}", attempt).replace("{1}", RxDownloader.NETWORK_RETRIES);
+
     static downloadMany = async (items, title, concurrency = 6) => {
         if (!Array.isArray(items)) throw new TypeError("Download items must be an array");
         if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error("Invalid download concurrency");
@@ -167,6 +181,7 @@ class RxDownloader {
         };
         let finished = 0;
         let failure = null;
+        let retrying = null; // {attempt, until} — подпись «Связь оборвалась — повтор 2/6»
         await RxDownloader.prepareUIToDownload(title);
 
         const updateUI = (force = false) => {
@@ -180,6 +195,7 @@ class RxDownloader {
                 const parts = [`${finished} / ${items.length}`, `${RxUtils.humanFileSize(bytes)} / ${RxUtils.humanFileSize(totalBytes)}`];
                 if (speed > 0) parts.push(`${RxUtils.humanFileSize(speed)}/${MESSAGES.starter.sec}`);
                 if (RxDownloader.formatEta(eta)) parts.push(RxDownloader.formatEta(eta));
+                if (retrying && retrying.until > now) parts.unshift(RxDownloader.retryText(retrying.attempt));
                 RxFlyout.setProgress(percent);
                 RxFlyout.setText(`${MESSAGES.commons.downloading} ${title}`, `${parts.join(" · ")} (${percent}%)`);
             } else {
@@ -208,8 +224,11 @@ class RxDownloader {
                 } catch (error) {
                     // Отмену и ответ 4xx (файла нет) повторять бесполезно — разве что через ещё не опробованное зеркало
                     const missing = error.status >= 400 && error.status < 500;
-                    if (signal.aborted || attempt >= RxDownloader.RETRIES || (missing && (!item.fallbackUrl || attempt >= 2))) throw error;
+                    const limit = RxDownloader.isNetworkError(error) ? RxDownloader.NETWORK_RETRIES : RxDownloader.RETRIES;
+                    if (signal.aborted || attempt >= limit || (missing && (!item.fallbackUrl || attempt >= 2))) throw error;
                     RxCollector.writeLog(`Download retry ${attempt} [file=${item.displayName || path.basename(item.path)}] [error=${error.message}]`);
+                    retrying = {attempt: attempt + 1, until: Date.now() + 4000};
+                    updateUI(true);
                     await new Promise((resolve, reject) => {
                         const onAbort = () => {
                             clearTimeout(timer);
@@ -219,7 +238,7 @@ class RxDownloader {
                         const timer = setTimeout(() => {
                             signal.removeEventListener("abort", onAbort);
                             resolve();
-                        }, 700 * attempt);
+                        }, Math.min(8000, 700 * 2 ** (attempt - 1)));
                         signal.addEventListener("abort", onAbort, {once: true});
                         if (signal.aborted) onAbort();
                     });

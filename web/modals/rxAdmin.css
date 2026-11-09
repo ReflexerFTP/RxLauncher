@@ -166,3 +166,10 @@
 .rxad-cape em { color: var(--text-sub); font-style: normal; overflow: hidden; text-overflow: ellipsis; }
 .rxad-cape button { margin-left: auto; }
 .rxad-none { color: var(--text-sub); font-size: 8.5pt; font-style: normal; }
+
+/* Награды от админа: переключатели */
+.rxad-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.rxad-badges button { display: flex; align-items: center; gap: 6px; height: 32px !important; padding: 0 10px !important; font-size: 8.5pt; border: 1px solid var(--rx-stroke) !important; border-radius: 9px !important; }
+.rxad-badges button .material-symbols-outlined { font-size: 17px; }
+.rxad-badges button.on { color: #f5c55a !important; border-color: color-mix(in srgb, #f5b942 45%, transparent) !important; }
+.rxad-badges button:disabled { opacity: .7; cursor: default; }

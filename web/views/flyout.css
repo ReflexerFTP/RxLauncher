@@ -159,3 +159,15 @@
 .flyout.start-mode #playButton {
     display: none;
 }
+
+/* Игра уже идёт: рядом с «Играть» — компактная «Закрыть игру» (можно запустить ещё один клиент) */
+.flyout.games-running:not(.start-mode) #stopGameButton {
+    width: auto;
+    min-width: 0;
+    padding: 0 18px !important;
+    font-size: 11pt !important;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}

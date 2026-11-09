@@ -44,7 +44,7 @@ pub fn run() {
             // История команд, оставшаяся в папках игры (например, после сбоя), — в хранилище
             let user_data = app.state::<state::AppState>().user_data.clone();
             std::thread::spawn(move || {
-                let hidden = vault::protect_everywhere(&user_data, None);
+                let hidden = vault::protect_everywhere(&user_data, &[]);
                 if hidden > 0 {
                     logs::write("info", &format!("CommandHistory: swept {hidden} folder(s) at startup"));
                 }

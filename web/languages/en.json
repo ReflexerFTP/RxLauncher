@@ -365,61 +365,6 @@
       },
       "filesFailed": "Could not download the instance files"
     },
-    "servers": {
-      "title": "Servers",
-      "disclaimer": "The launcher developer does not guarantee the quality and integrity of the servers",
-      "ipCopied": "IP copied!",
-      "link": "How to add my server here?",
-      "privacyModeEnabled": "Private",
-      "privacyWarning": "Direct server launch is blocked by privacy mode. Use a VPN/proxy or disable privacy mode.",
-      "catalog": {
-        "subtitle": "Live server catalog with player counts, MOTD and local history",
-        "refresh": "Refresh statuses",
-        "addCustom": "Add server",
-        "filters": "Server filters",
-        "search": "Server name or address",
-        "all": "All",
-        "sort": "Sort",
-        "sortOnlineDesc": "Highest online first",
-        "sortOnlineAsc": "Lowest online first",
-        "sortName": "By name",
-        "noInternet": "The catalog requires an internet connection",
-        "noInternetHint": "Check your connection and try again. RxLaunch keeps the network catalog closed until the status service responds.",
-        "retry": "Try again",
-        "loading": "Checking connection and loading servers…",
-        "empty": "No servers match this filter",
-        "historyHint": "Peak and average are calculated from observations on this PC over 30 days",
-        "customTitle": "Add your server",
-        "customSubtitle": "It will be saved in RxLaunch and synced to Minecraft's server list before launch.",
-        "cancel": "Cancel",
-        "nameLabel": "Name",
-        "addressLabel": "IP or domain",
-        "categoryLabel": "Category",
-        "save": "Add",
-        "graphEmpty": "The chart will appear after several successful measurements",
-        "autoVersion": "Automatic version",
-        "custom": "Custom",
-        "current": "Current",
-        "peak": "Peak",
-        "average": "Average",
-        "graphTitle": "Online history",
-        "measurements": "measurements",
-        "observed": "Observations on this PC",
-        "copy": "Copy",
-        "added": "Added",
-        "addToMinecraft": "Add to game",
-        "play": "Play",
-        "delete": "Delete",
-        "online": "online",
-        "offline": "Offline",
-        "noInternetToast": "No internet connection — the Servers tab is unavailable",
-        "serverAdded": "Server added to Minecraft's list",
-        "syncFailed": "Could not update Minecraft's server list",
-        "invalidAddress": "Check the server IP or domain",
-        "duplicate": "This server is already in the catalog",
-        "customAdded": "Server added to the catalog"
-      }
-    },
     "starter": {
       "configuring": "Assembling the configuration",
       "preparingGame": "Preparing the game for launch",
@@ -432,7 +377,23 @@
       "remaining": "~{0} left",
       "sec": "s",
       "min": "min",
-      "gameFiles": "game files"
+      "gameFiles": "game files",
+      "retrying": "Connection lost — retry {0}/{1}",
+      "netFail": {
+        "title": "Couldn't download game files",
+        "text": "The connection keeps dropping or Mojang's server isn't responding. What's already downloaded is kept — a retry continues from there",
+        "file": "File",
+        "continue": "Launch anyway",
+        "mirror": "Use mirror",
+        "retry": "Retry"
+      },
+      "stopChoice": {
+        "title": "Which client to close?",
+        "all": "Close all"
+      },
+      "busy": "Wait — the previous client is still starting",
+      "memoryLowered": "Low free memory — this client gets {0} MB",
+      "serversSyncFailed": "Could not update Minecraft's server list"
     },
     "updater": {
       "available": "New update available",
@@ -515,6 +476,11 @@
         "stripPasswords": {
           "title": "Do not keep passwords in history",
           "description": "Login commands with a password (/l, /login, /reg, /register, /changepassword) are removed from command_history.txt right away, even while the game is running. Works together with anti-theft"
+        },
+        "rxCapes": {
+          "title": "RxLauncher capes in game",
+          "description": "Show your cape and other RxLauncher players' capes. Create or draw your own cape (Player+) on rxlauncher.xyz",
+          "site": "My cape on the site"
         }
       },
       "java": {
@@ -594,15 +560,12 @@
             "settings": "Settings",
             "instances": "Instances",
             "mods": "Mods",
-            "skins": "Skins",
-            "servers": "Servers",
             "statistics": "Statistics",
             "screenshots": "Screenshots",
             "console": "Console",
             "catalog": "Catalog",
             "together": "Together",
-            "friends": "Friends",
-            "capes": "Capes"
+            "friends": "Friends"
           }
         }
       },
@@ -675,6 +638,10 @@
         "autoDownloadUpdates": {
           "title": "Download updates automatically",
           "description": "New launcher versions download in the background; you install them with a button"
+        },
+        "ramSaverMode": {
+          "title": "Save RAM",
+          "description": "Java returns memory the game isn't using to the system, shrinks the heap after garbage collection and stores identical strings once. The game starts with 512 MB and takes more only when needed — useful with 8 GB of RAM and several clients running"
         }
       },
       "about": {
@@ -753,7 +720,11 @@
         "instanceText": "A new RxLauncher pack will be created: {0}. The checked items are copied into it and mods are scanned for stealers right away. The original pack stays as it is.",
         "instanceButton": "Create pack",
         "instanceDone": "Pack “{0}” is ready and selected",
-        "pickInstance": "Which pack to import?"
+        "pickInstance": "Which pack to import?",
+        "firstRunTitle": "Moving from TLauncher or TL Legacy?",
+        "firstRunText": "We'll bring over worlds, mods, resource packs, shaders, game settings, servers and accounts. Your old launcher stays untouched — pick where to move from",
+        "firstRunLater": "Not now",
+        "firstRunHint": "You can move everything any time: Settings → Import"
       }
     },
     "flymenu": {
@@ -761,8 +732,6 @@
       "settings": "Settings",
       "packs": "Modpacks",
       "mods": "Mods",
-      "skins": "Skins",
-      "servers": "Servers",
       "statistics": "Statistics",
       "console": "Console",
       "folder": "Game folder",
@@ -771,7 +740,6 @@
       "catalog": "Catalog",
       "together": "Play together",
       "friends": "Friends",
-      "capes": "Capes",
       "expand": "Expand menu",
       "collapse": "Collapse",
       "groups": {
@@ -801,136 +769,6 @@
       "deleted": "Screenshot moved to the Recycle Bin",
       "deleteFailed": "Could not delete the screenshot"
     },
-    "capes": {
-      "title": "Capes",
-      "subtitle": "Your own cape: draw it or upload a PNG. Everyone playing through RxLauncher sees it",
-      "preview": "3D cape preview",
-      "plusOnly": "Player+ only",
-      "plusActive": "Player+",
-      "showElytra": "Elytra",
-      "showCape": "Cape",
-      "loading": "Loading your cape…",
-      "loadFailed": "Could not load your cape",
-      "loginTitle": "Sign in to your RxLauncher account",
-      "loginHint": "The cape belongs to your account. You can draw without signing in.",
-      "plusTitle": "Custom capes are for Player+",
-      "plusHint": "Draw and try on as much as you like; saving a cape needs the Player+ group.",
-      "emptyTitle": "No cape yet",
-      "emptyHint": "Draw a cape or upload a PNG, then press Save.",
-      "unsavedTitle": "Unsaved changes",
-      "unsavedHint": "Press Save to show the cape in game.",
-      "activeTitle": "Cape is on",
-      "activeHint": "RxLauncher players see it on servers and in singleplayer.",
-      "tools": "Tools",
-      "pencil": "Brush",
-      "eraser": "Eraser (or right mouse button)",
-      "fill": "Fill",
-      "picker": "Color picker",
-      "undo": "Undo (Ctrl+Z)",
-      "redo": "Redo (Ctrl+Y)",
-      "template": "Starter cape in the current color",
-      "clear": "Clear",
-      "color": "Color",
-      "editor": "Cape editor",
-      "legendCape": "Cape",
-      "legendElytra": "Elytra",
-      "upload": "Upload PNG",
-      "download": "Download",
-      "downloaded": "Cape saved to your computer",
-      "save": "Save",
-      "saving": "Saving your cape…",
-      "savingHint": "Uploading the image to the RxLauncher server.",
-      "savedTitle": "Cape saved",
-      "savedHint": "It shows up in game the next time you join a server or world.",
-      "saveFailed": "Could not save",
-      "delete": "Delete cape",
-      "deleteTitle": "Delete the cape?",
-      "deleteText": "RxLauncher players will stop seeing it. The image stays in the editor.",
-      "badFile": "This file does not fit",
-      "badSize": "A 64×32 PNG is needed (or 128×64, 256×128, 512×256). The old 22×17 format works too.",
-      "badPng": "Could not read the image — is it a PNG?",
-      "emptyCapeTitle": "The cape is empty",
-      "emptyCapeHint": "Draw something or upload a PNG.",
-      "howItWorks": "Only RxLauncher players see the cape — nothing to install in game. The yellow frame is the cape, the blue one is the elytra.",
-      "visibleOn": "The cape shows on these nicknames: {0}. The nickname you play with is added automatically.",
-      "inGame": "Show RxLauncher capes in game",
-      "inGameHint": "Your cape and other launcher players' capes. When off, the launcher does not attach the cape module to the game.",
-      "errors": {
-        "needPlus": "Custom capes are available to Player+.",
-        "badPng": "The server rejected the image: a regular PNG is needed.",
-        "badCapeSize": "The size must be 64×32, 128×64, 256×128 or 512×256.",
-        "tooLarge": "The image is too large.",
-        "tooMany": "Too often. Try again in a few minutes."
-      }
-    },
-    "skins": {
-      "title": "Player skins",
-      "subtitle": "Find a Java skin by nickname and inspect it in 3D",
-      "searchPlaceholder": "Minecraft player nickname",
-      "search": "Search",
-      "preview": "3D skin preview",
-      "defaultName": "Steve",
-      "previewUnavailable": "3D is unavailable — showing the texture",
-      "loading": "Finding skin",
-      "loadingHint": "Checking the Mojang profile and downloading its texture",
-      "previewHint": "Drag to rotate, use the wheel to zoom",
-      "models": {
-        "classic": "Classic",
-        "slim": "Slim"
-      },
-      "selectedSkin": "Selected skin",
-      "cached": "Cached",
-      "profileId": "Profile UUID",
-      "model": "Model",
-      "updated": "Updated",
-      "download": "Download PNG",
-      "apply": "Use in profile",
-      "reset": "Show Steve",
-      "applyHint": "Applying changes the profile avatar inside RxLauncher. Licensed servers use the skin attached to your game account.",
-      "readyTitle": "Skin search is ready",
-      "readyHint": "Enter a Minecraft Java Edition player nickname",
-      "recent": "Recent searches",
-      "recentHint": "Up to eight recently found profiles",
-      "clearRecent": "Clear",
-      "emptyRecent": "Found players will appear here",
-      "invalidNicknameTitle": "Invalid nickname",
-      "invalidNickname": "Use 2–16 Latin letters, digits or underscores",
-      "notFoundTitle": "Skin not found",
-      "notFoundHint": "Check the nickname — standard Steve is shown",
-      "foundTitle": "Skin found",
-      "foundHint": "The texture is ready to download or use in the launcher",
-      "foundCacheHint": "A verified local copy is shown",
-      "errorTitle": "Search error",
-      "lookupError": "Could not load the skin. Check your connection and try again",
-      "downloadedTitle": "Texture saved",
-      "downloadedHint": "The PNG was saved to the selected folder",
-      "appliedTitle": "Profile avatar updated",
-      "appliedHint": "The selected launcher profile now displays this skin",
-      "noAccountTitle": "No profile selected",
-      "noAccountHint": "Select a player profile in the top bar first",
-      "actionErrorTitle": "Action failed",
-      "applyError": "Could not apply the skin to the selected profile",
-      "exportError": "Could not save the PNG texture",
-      "errors": {
-        "invalid_nickname": "The nickname must contain 2–16 Latin letters, digits or _",
-        "not_found": "No player with this nickname was found",
-        "offline": "There is no internet connection",
-        "network_error": "Could not connect to Minecraft services",
-        "rate_limited": "Too many requests. Try again shortly",
-        "service_unavailable": "Minecraft services are temporarily unavailable",
-        "invalid_response": "Minecraft returned an invalid response",
-        "invalid_signature": "The profile authenticity could not be verified",
-        "invalid_texture": "The skin texture is damaged or has an invalid format",
-        "timeout": "Minecraft services took too long to respond",
-        "no_active_account": "Select a player profile first",
-        "unsupported_account": "This profile type does not support a local avatar",
-        "cache_miss": "The skin is no longer cached. Search for it again",
-        "apply_failed": "Could not save the skin for the selected profile",
-        "export_failed": "Could not write the PNG to the selected folder",
-        "untrusted_sender": "The launcher security system rejected the request",
-        "unknown": "Unknown error. Please try again"
-      }
-    },
     "flyout": {
       "account": "ACCOUNT",
       "version": "GAME VERSION",
@@ -938,7 +776,8 @@
       "stop": "Stop",
       "cancel": "Cancel",
       "selectAccount": "Select a player profile first",
-      "selectVersion": "Select a game version first"
+      "selectVersion": "Select a game version first",
+      "stopMany": "Close ({0})"
     },
     "versions": {
       "releases": "Release versions",
@@ -977,52 +816,6 @@
       "deleted": "Version moved to the Recycle Bin",
       "errDelete": "Could not delete the version"
     },
-    "versionsPosters": [
-      {
-        "version": "1.21",
-        "description": "Tricky Trials"
-      },
-      {
-        "version": "1.20",
-        "description": "Trails & Tales"
-      },
-      {
-        "version": "1.19",
-        "description": "The Wild Update"
-      },
-      {
-        "version": "1.18",
-        "description": "Caves & Cliffs (part 2)"
-      },
-      {
-        "version": "1.17",
-        "description": "Caves & Cliffs (part 1)"
-      },
-      {
-        "version": "1.16",
-        "description": "Nether Update"
-      },
-      {
-        "version": "1.15",
-        "description": "Buzzy Bees"
-      },
-      {
-        "version": "1.14",
-        "description": "Village & Pillage"
-      },
-      {
-        "version": "1.13",
-        "description": "The Aquatic Update"
-      },
-      {
-        "version": "1.12",
-        "description": "Color World"
-      },
-      {
-        "version": "1.11",
-        "description": "Exploration Update"
-      }
-    ],
     "units": {
       "size1": [
         "KB",
@@ -1047,42 +840,9 @@
       "mb": "MB",
       "gb": "GB"
     },
-    "rxAuth": {
-      "login": {
-        "title": "Login | RxID"
-      },
-      "register": {
-        "title": "Registration | RxID",
-        "repeatPassword": "Enter password again",
-        "go": "Create an account!",
-        "success": {
-          "title": "Registration successful!",
-          "description": "Done, you have created an account!",
-          "button": "Alright"
-        }
-      },
-      "goRegister": "I don't have an account",
-      "goLogin": "I already have an account",
-      "errors": {
-        "WRONG_CREDENTIALS": "Invalid login or password",
-        "PNG_REQUIRED": "Required to select a PNG file",
-        "FILE_BITMAP_TOO_BIG": "The file is too large or too large",
-        "UNKNOWN": "An error occurred while performing the action",
-        "ALREADY_EXISTS": "This user already exists, please select a different nickname"
-      },
-      "skin": {
-        "title": "Customizing the appearance",
-        "skin": "Skin",
-        "cape": "Cloak"
-      },
-      "useButton": "RxSkins skin system",
-      "fieldsError": "Fields are not filled in/filled in incorrectly",
-      "passwordsComp": "Passwords don't match",
-      "serviceGone": "Old RxLauncher skin accounts no longer work — use the Skins tab"
-    },
     "console": {
       "title": "Console",
-      "subtitle": "Launcher and game events appear here instantly",
+      "subtitle": "The game log while it runs, the launcher log and past launches",
       "live": "Live",
       "search": "Search log",
       "all": "All events",
@@ -1094,7 +854,26 @@
       "clear": "Clear view",
       "openDir": "Open logs folder",
       "copy": "Copy log",
-      "copied": "Log copied successfully!"
+      "copied": "Log copied successfully!",
+      "source": "Which log to show",
+      "sort": "Sort past launches",
+      "sortNew": "Newest first",
+      "sortOld": "Oldest first",
+      "sortCrash": "Crashes first",
+      "sortVersion": "By version",
+      "sortLong": "Longest first",
+      "now": "Now",
+      "launcherLog": "Launcher",
+      "history": "Past launches",
+      "archived": "Saved log",
+      "crashed": "crashed",
+      "exitOk": "Game closed normally",
+      "exitCode": "Exit code {0}",
+      "hoursShort": "h",
+      "stopClient": "Close client",
+      "empty": "Nothing here yet",
+      "deleteTitle": "Delete this launch's log?",
+      "delete": "Delete"
     },
     "selectWorld": {
       "title": "Choose a world",
@@ -1770,19 +1549,30 @@
       "offlineText": "You can play versions and packs that are already downloaded. Catalogs and updates come back with the connection.",
       "onlineTitle": "Back online"
     },
-    "eula": {
-      "title": "Welcome to RxLauncher",
-      "text": "A few words before you start:",
-      "points": [
-        "RxLauncher is free and open source. It is not an official Minecraft product and is not affiliated with Mojang or Microsoft.",
-        "Game statistics stay on your computer. An RxLauncher account (friends) is optional.",
-        "Mods are scanned for stealers, but install them only from sources you trust.",
-        "By using the launcher you accept the terms of use and the privacy policy."
-      ],
-      "eulaLink": "Terms of use",
-      "privacyLink": "Privacy policy",
-      "accept": "I accept",
-      "decline": "Exit"
+    "achievements": {
+      "title": "Achievements",
+      "yearForms": "year|years|years",
+      "playName": "{0} hours played",
+      "playText": "Play {0} hours with RxLauncher",
+      "playShort": "{0} h",
+      "ageName": "Account is {0} old",
+      "ageText": "Your RxLauncher account is {0} old",
+      "admin_thanks": "Thanks from the admin",
+      "admin_thanksText": "Special thanks from the RxLauncher team",
+      "admin_thanksShort": "Thanks",
+      "tester_plus": "Tester+",
+      "tester_plusText": "Helped find and fix important bugs",
+      "tester_plusShort": "Tester+",
+      "tester": "Tester",
+      "testerText": "Tests new RxLauncher versions",
+      "testerShort": "Tester",
+      "unlocked": "New achievement!",
+      "got": "Unlocked",
+      "gotAt": "Unlocked",
+      "locked": "Not unlocked yet",
+      "progress": "Progress",
+      "progressText": "{0} of {1} h",
+      "byAdmin": "Given by an administrator"
     }
   }
 }

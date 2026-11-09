@@ -15,11 +15,6 @@
     const paths = bridge.syncValue("app.paths");
     window.__dirname = paths.webRoot;
     window.__filename = `${paths.webRoot}\\index.ejs`;
-    // skinview3d подключается сборкой обычным скриптом (eval и unsafe-eval не нужны)
-    window.loadRxLibrary = name => {
-        if (name !== "skinview3d") throw new Error("Unknown library");
-    };
-
     // Ошибки интерфейса — в журнал ядра
     const report = (kind, error) => {
         try { bridge.value("log", {level: "error", message: `${kind}: ${error && error.stack ? error.stack : error}`}).catch(() => {}); } catch (_) {}

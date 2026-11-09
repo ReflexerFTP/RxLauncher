@@ -13,7 +13,12 @@ const MAX_LINES: usize = 50;
 const SENSITIVE: &[&str] = &["l", "log", "login", "logon", "reg", "register", "changepassword", "changepass", "changepw", "cp", "cpw", "passwd",
     "password", "pass", "unregister", "unreg", "2fa", "totp"];
 
-static WATCHED: Mutex<Option<(PathBuf, u64)>> = Mutex::new(None);
+// Папки запущенных клиентов: (папка, id наблюдателя, сколько клиентов в ней играет)
+static WATCHED: Mutex<Vec<(PathBuf, u64, usize)>> = Mutex::new(Vec::new());
+
+fn watched_dirs() -> Vec<PathBuf> {
+    WATCHED.lock().map(|w| w.iter().map(|(d, _, _)| d.clone()).collect()).unwrap_or_default()
+}
 static NEXT_WATCH: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 pub fn is_sensitive(line: &str) -> bool {
@@ -267,14 +272,14 @@ pub fn accepted_dir(user_data: &Path, supplied: &str) -> Option<PathBuf> {
     Some(target)
 }
 
-pub fn protect_everywhere(user_data: &Path, skip: Option<&Path>) -> usize {
+pub fn protect_everywhere(user_data: &Path, skip: &[PathBuf]) -> usize {
     let (enabled, strip) = settings(user_data);
     if !enabled {
         return 0;
     }
     let vault = Vault::new(user_data);
     known_dirs(user_data).iter()
-        .filter(|dir| skip.map(|s| Vault::key(s) != Vault::key(dir)).unwrap_or(true))
+        .filter(|dir| !skip.iter().any(|s| Vault::key(s) == Vault::key(dir)))
         .filter(|dir| dir.join(FILE_NAME).exists())
         .filter(|dir| vault.protect(dir, strip).0)
         .count()
@@ -282,11 +287,18 @@ pub fn protect_everywhere(user_data: &Path, skip: Option<&Path>) -> usize {
 
 // Перед запуском: вернуть историю и следить за паролями, пока идёт игра
 pub fn prepare(user_data: &Path, dir: &Path) -> Value {
+    // Второй клиент в той же папке: история уже на месте и за ней уже следят
+    if let Ok(mut watched) = WATCHED.lock() {
+        if let Some(entry) = watched.iter_mut().find(|(d, _, _)| Vault::key(d) == Vault::key(dir)) {
+            entry.2 += 1;
+            return json!({"restored": false, "lines": 0, "shared": true});
+        }
+    }
     let (_, strip) = settings(user_data);
     let (restored, lines) = Vault::new(user_data).restore(dir, strip);
     let id = NEXT_WATCH.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     if let Ok(mut watched) = WATCHED.lock() {
-        *watched = Some((dir.to_path_buf(), id));
+        watched.push((dir.to_path_buf(), id, 1));
     }
     if strip {
         let dir = dir.to_path_buf();
@@ -295,8 +307,8 @@ pub fn prepare(user_data: &Path, dir: &Path) -> Value {
             let mut last = None;
             loop {
                 std::thread::sleep(Duration::from_millis(300));
-                let current = WATCHED.lock().ok().and_then(|w| w.as_ref().map(|(_, i)| *i));
-                if current != Some(id) {
+                let alive = WATCHED.lock().map(|w| w.iter().any(|(_, i, _)| *i == id)).unwrap_or(false);
+                if !alive {
                     break;
                 }
                 let stamp = std::fs::metadata(&file).and_then(|m| m.modified()).ok();
@@ -312,28 +324,51 @@ pub fn prepare(user_data: &Path, dir: &Path) -> Value {
     json!({"restored": restored, "lines": lines})
 }
 
-// Игра закрылась — спрятать историю этой папки
-pub fn finish(user_data: &Path) {
-    let dir = WATCHED.lock().ok().and_then(|mut w| w.take()).map(|(d, _)| d);
-    let Some(dir) = dir else { return };
+// Клиент закрылся — спрятать историю его папки, когда в ней больше никто не играет.
+// Игр не осталось — спрятать и все остальные папки (на случай, если папку закрывшегося клиента не передали)
+pub fn finish(user_data: &Path, dir: Option<&Path>, none_left: bool) {
+    let done: Vec<PathBuf> = match WATCHED.lock() {
+        Ok(mut watched) => {
+            let mut done = Vec::new();
+            if let Some(dir) = dir {
+                if let Some(index) = watched.iter().position(|(d, _, _)| Vault::key(d) == Vault::key(dir)) {
+                    watched[index].2 = watched[index].2.saturating_sub(1);
+                    if watched[index].2 == 0 {
+                        done.push(watched.remove(index).0);
+                    }
+                }
+            }
+            if none_left {
+                done.extend(watched.drain(..).map(|(d, _, _)| d));
+            }
+            done
+        }
+        Err(_) => Vec::new(),
+    };
+    if done.is_empty() {
+        return;
+    }
     let (enabled, strip) = settings(user_data);
     if !enabled {
         return;
     }
     std::thread::sleep(Duration::from_millis(400));
-    let (saved, lines) = Vault::new(user_data).protect(&dir, strip);
-    crate::logs::write("info", &format!("CommandHistory: hidden after game [saved={saved}] [lines={lines}]"));
+    let vault = Vault::new(user_data);
+    for dir in done {
+        let (saved, lines) = vault.protect(&dir, strip);
+        crate::logs::write("info", &format!("CommandHistory: hidden after game [saved={saved}] [lines={lines}]"));
+    }
 }
 
 // Переключили «Анти-кражу»: спрятать всё или вернуть по местам
 pub fn setting_changed(user_data: &Path, game_active: bool) -> Value {
     let (enabled, _) = settings(user_data);
     if enabled {
-        let skip = if game_active { WATCHED.lock().ok().and_then(|w| w.as_ref().map(|(d, _)| d.clone())) } else { None };
-        return json!({"hidden": protect_everywhere(user_data, skip.as_deref())});
+        let skip = if game_active { watched_dirs() } else { Vec::new() };
+        return json!({"hidden": protect_everywhere(user_data, &skip)});
     }
     if let Ok(mut watched) = WATCHED.lock() {
-        *watched = None;
+        watched.clear();
     }
     let vault = Vault::new(user_data);
     let index = vault.read_index();

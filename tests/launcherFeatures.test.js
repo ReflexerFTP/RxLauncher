@@ -62,12 +62,14 @@ const tabsModule = load("RxTabs.js", "RxTabs", {
     document: {querySelectorAll: () => []},
     Array, Set
 });
-// По умолчанию — Главная, Настройки, Каталог, Друзья, Плащи, Статистика, Вместе, Консоль
-assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "friends", "capes", "statistics", "together", "console"]);
-// Обновления один раз добавляют новые разделы (3.0 — каталог и «Вместе», 3.9 — друзья, 4.3 — плащи) к уже настроенному меню
+// По умолчанию — Главная, Настройки, Каталог, Друзья, Статистика, Вместе, Консоль (скины, плащи и серверы — на сайте)
+assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "friends", "statistics", "together", "console"]);
+// Обновления один раз добавляют новые разделы (3.0 — каталог и «Вместе», 3.9 — друзья) к уже настроенному меню
 config.enabledTabs = ["content", "settings", "mods"];
 tabsModule.migrate();
-assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "mods", "friends", "capes", "together"]);
+assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings", "catalog", "mods", "friends", "together"]);
+// Вкладки, переехавшие на сайт, из старых настроек просто отбрасываются
+assert.deepStrictEqual([...tabsModule.normalize(["skins", "servers", "capes", "mods"])], ["content", "settings", "mods"]);
 config.enabledTabs = ["content", "settings"];
 tabsModule.migrate();
 assert.deepStrictEqual([...tabsModule.getEnabled()], ["content", "settings"], "migration must run only once");
@@ -75,7 +77,7 @@ delete config.enabledTabs;
 // Главную и Настройки выключить нельзя, мусорные значения отбрасываются, порядок как в меню
 assert.deepStrictEqual([...tabsModule.normalize(["mods", "junk", "console"])], ["content", "settings", "mods", "console"]);
 config.enabledTabs = ["mods"];
-assert.ok(tabsModule.isEnabled("settings") && tabsModule.isEnabled("mods") && !tabsModule.isEnabled("skins"));
+assert.ok(tabsModule.isEnabled("settings") && tabsModule.isEnabled("mods") && !tabsModule.isEnabled("screenshots"));
 // Неизвестные окна (versions, accounts…) не прячутся
 assert.ok(tabsModule.isEnabled("versions"));
 

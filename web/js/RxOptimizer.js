@@ -1,6 +1,6 @@
 // Оптимизация потребления ОЗУ.
 // Пока окно скрыто (обычно — во время игры), интерфейса не видно, поэтому можно
-// выгрузить тяжёлое: картинки, 3D-просмотр скинов, кеш ресурсов — и один раз собрать мусор.
+// выгрузить тяжёлое: картинки, кеш ресурсов — и один раз собрать мусор.
 // Память нужнее Minecraft, а при возвращении лаунчер подгружает всё обратно.
 class RxOptimizer {
     static _freeTimer = null;
@@ -14,9 +14,6 @@ class RxOptimizer {
         RxOptimizer._released = true;
         // Картинки обоев и обложки выгружаются CSS-правилом html.rx-memory-saver
         document.documentElement.classList.add("rx-memory-saver");
-        try {
-            if (typeof RxSkinBrowserUI !== "undefined" && RxSkinBrowserUI.viewer) RxSkinBrowserUI.disposeViewer();
-        } catch (_) {}
         if (typeof RxModMeta !== "undefined") RxModMeta.cache.clear();
         try {
             require("electron").webFrame.clearCache();
@@ -43,12 +40,6 @@ class RxOptimizer {
         if (!RxOptimizer._released) return false;
         RxOptimizer._released = false;
         document.documentElement.classList.remove("rx-memory-saver");
-        if (typeof RxSkinBrowserUI !== "undefined" && RxSkinBrowserUI.visible && !RxSkinBrowserUI.viewer) {
-            try {
-                const mounted = RxSkinBrowserUI.mountViewer(RxSkinBrowserUI.currentProfile || RxSkinBrowserUI.createDefaultProfile());
-                mounted?.catch?.(() => {});
-            } catch (_) {}
-        }
         return true;
     }
 

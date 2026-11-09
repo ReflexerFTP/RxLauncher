@@ -24,6 +24,7 @@
     <link href="./css/animate.min.css" rel="stylesheet">
 
     <script type="application/x-rx-script" src="./js/RxConsoleUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxGameLogs.js"></script>
     <script type="application/x-rx-script" src="./js/RxCollector.js"></script>
     <script type="application/x-rx-script" src="./js/RxTranslator.js"></script>
     <script type="application/x-rx-script">RxTranslator.loadCurrentLanguageToGlobalVariable()</script>
@@ -54,8 +55,6 @@
     <script type="application/x-rx-script" src="./js/RxStatisticsUI.js"></script>
     <script type="application/x-rx-script" src="./js/RxRequests.js"></script>
     <script type="application/x-rx-script" src="./js/RxMinecraftServers.js"></script>
-    <script type="application/x-rx-script" src="./js/RxServersUI.js"></script>
-    <script type="application/x-rx-script" src="./js/RxSkinBrowserUI.js"></script>
     <script type="application/x-rx-script" src="./js/RxStarter.js"></script>
     <script type="application/x-rx-script" src="./js/RxTests.js"></script>
     <script type="application/x-rx-script" src="./js/RxThemes.js"></script>
@@ -89,9 +88,9 @@
     <script type="application/x-rx-script" src="./js/RxFriends.js"></script>
     <script type="application/x-rx-script" src="./js/RxFriendsUI.js"></script>
     <script type="application/x-rx-script" src="./js/RxAdminUI.js"></script>
+    <script type="application/x-rx-script" src="./js/RxAchievements.js"></script>
     <script type="application/x-rx-script" src="./js/RxFeed.js"></script>
     <script type="application/x-rx-script" src="./js/RxCapes.js"></script>
-    <script type="application/x-rx-script" src="./js/RxCapesUI.js"></script>
     <link href="./css/rx-dialog.css" rel="stylesheet">
 
     <title>RxLauncher</title>
@@ -119,9 +118,6 @@
         <%- include('modals/changelog'); %>
         <%- include('modals/installMods'); %>
         <%- include('modals/mods'); %>
-        <%- include('modals/servers'); %>
-        <%- include('modals/skins'); %>
-        <%- include('modals/capes'); %>
         <%- include('modals/statistics'); %>
         <%- include('modals/screenshots'); %>
         <%- include('modals/instances'); %>
@@ -274,6 +270,9 @@
         RxAssetsParsers.clearAssetsCache();
 
         loadSettingsUI();
+
+        // Первый запуск: предложить перенести всё из TLauncher / TL Legacy
+        if (!IS_APP_IN_TEST) setTimeout(() => RxImportUI.offerFirstRun().catch(error => RxCollector.writeLog(`Import: first-run offer failed [error=${error?.message || error}]`)), 1500);
 
         // Начинаем тестирование
         if (IS_APP_IN_TEST) {

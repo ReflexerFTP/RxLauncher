@@ -1,27 +1,14 @@
-// В лаунчер (и на GitHub) не попадают сервер API, сайт и секреты; exe защищён флагами Electron от подмены и отладки
+// В лаунчер (и на GitHub) не попадают сервер API, сайт и секреты
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
-const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
 // Сервер, сайт и Discord-бот — только локально и на VPS
 for (const folder of ["server", "site", "bot"]) {
-    assert.ok(pkg.build.files.includes(`!${folder}{,/**/*}`), `${folder}/ must be excluded from the build`);
     assert.ok(fs.readFileSync(path.join(root, ".gitignore"), "utf8").split(/\r?\n/).includes(`${folder}/`), `${folder}/ must be gitignored`);
 }
-
-// Флаги Electron: не запустить как Node, не подключить отладчик, не подменить app.asar
-assert.deepStrictEqual(pkg.build.electronFuses, {
-    runAsNode: false,
-    enableNodeOptionsEnvironmentVariable: false,
-    enableNodeCliInspectArguments: false,
-    enableEmbeddedAsarIntegrityValidation: true,
-    onlyLoadAppFromAsar: true
-});
-assert.match(fs.readFileSync(path.join(root, "windows", "mainWindow.js"), "utf8"), /devTools: !app\.isPackaged/);
-assert.match(fs.readFileSync(path.join(root, "app.js"), "utf8"), /app\.isPackaged && \["remote-debugging-port"/);
 
 // Секретов в исходниках лаунчера нет: всё секретное живёт только на сервере
 const SECRET = [

@@ -66,7 +66,8 @@
         resultConfig = RxLaunchConfigurator.applySettingsFixesToConfig(versionParsed, resultConfig);
         RxCollector.writeLog("Config: Fixes applied");
 
-        resultConfig = RxLaunchConfigurator.applyRuntimeEnhancements(resultConfig);
+        resultConfig = RxLaunchConfigurator.applyRuntimeEnhancements(resultConfig,
+            RxConfig.read("autoSelectJava", true) === true ? Number(javaVersion) || 0 : 0);
         RxCollector.writeLog("Config: Runtime enhancements applied");
 
         resultConfig = await RxLaunchConfigurator.applyRxClientLobbyMode(versionParsed, rxClientMeta, resultConfig);
@@ -1137,8 +1138,13 @@ variable {
         return configResult;
     }
 
-    static applyRuntimeEnhancements = (config) => {
+    static applyRuntimeEnhancements = (config, javaMajor = 0) => {
         let configResult = config;
+
+        // Экономия ОЗУ — первой: остальные профили не перекрывают её флаги, а дополняют
+        if (RxConfig.read("ramSaverMode", true) === true) {
+            configResult = RxLaunchConfigurator.applyRamSaverProfile(configResult, javaMajor);
+        }
 
         // Режим слабого ПК — раньше профиля оптимизации, чтобы его значения были главными
         if (RxConfig.read("lowEndMode", false) === true) {
@@ -1154,6 +1160,32 @@ variable {
         }
 
         return configResult;
+    }
+
+    // Экономия оперативной памяти: Java не держит лишнюю кучу. Неиспользуемая память возвращается системе
+    // (периодическая сборка G1 — Java 12+), куча сжимается после сборок, одинаковые строки хранятся один раз,
+    // мягкие ссылки (кеши модов) живут меньше, стартовая куча — 512 МБ вместо 1.5 ГБ (растёт по мере надобности).
+    // javaMajor 0 — своя Java игрока, версия неизвестна: только флаги, которые есть и в Java 8
+    static RAM_SAVER_FLAGS = ["-XX:+UseStringDeduplication", "-XX:MinHeapFreeRatio=10", "-XX:MaxHeapFreeRatio=30",
+        "-XX:SoftRefLRUPolicyMSPerMB=25"];
+
+    static applyRamSaverProfile = (config, javaMajor = 0) => {
+        if (!Array.isArray(config.customArgs)) {
+            config.customArgs = [];
+        }
+        // Другой сборщик мусора, выбранный игроком, не трогаем: флаги ниже рассчитаны на G1
+        if (config.customArgs.some(arg => /^-XX:\+Use(?!G1GC)\w+GC$/.test(arg))) {
+            RxCollector.writeLog("Config: RAM saver skipped (custom GC)");
+            return config;
+        }
+        const flags = ["-XX:+UseG1GC", ...RxLaunchConfigurator.RAM_SAVER_FLAGS];
+        if (javaMajor >= 12) flags.push("-XX:G1PeriodicGCInterval=30000");
+        flags.forEach(flag => RxLaunchConfigurator.pushUniqueJvmFlag(config.customArgs, flag));
+        if (config.memory && Number(config.memory.max) > 0) {
+            config.memory.min = Math.min(Number(config.memory.min) || 512, 512, Number(config.memory.max));
+        }
+        RxCollector.writeLog(`Config: RAM saver profile enabled [java=${javaMajor || "custom"}]`);
+        return config;
     }
 
     static applyNetworkCompatibilityProfile = (config) => {

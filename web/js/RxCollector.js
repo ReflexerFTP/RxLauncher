@@ -17,6 +17,15 @@ class RxCollector {
             // Журнал уже вычищен при записи, но секреты могли стать известны позже — вычищаем ещё раз
             const scrub = (text) => paranoid ? RxPrivacy.maskUserPaths(RxCollector.redact(text)) : RxCollector.redact(text);
             fs.writeFileSync(filesList[0], scrub(LAST_LOG));
+            // Лог последнего запуска игры (в журнал лаунчера вывод игры больше не попадает)
+            try {
+                const gameLog = RxGameLogs.latestFile();
+                if (gameLog && fs.existsSync(gameLog)) {
+                    const target = path.join(archiveDirPath, "game.log");
+                    fs.writeFileSync(target, scrub(fs.readFileSync(gameLog, "utf8").slice(-4 * 1024 * 1024)));
+                    filesList.push(target);
+                }
+            } catch (_) {}
             fs.writeFileSync(filesList[1], Date.now().toString());
             fs.writeFileSync(filesList[2], scrub(JSON.stringify(window.localStorage)));
             const debugInfo = {

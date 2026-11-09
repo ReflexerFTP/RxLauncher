@@ -1,5 +1,5 @@
 "use strict";
-// 180 named regression/security/reliability cases. All network traffic stays on loopback.
+// Named regression/security/reliability cases. All network traffic stays on loopback.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -11,8 +11,6 @@ const zlib = require('node:zlib');
 const {getEventListeners} = require('node:events');
 const {pathToFileURL} = require('node:url');
 const safety = require('../modrinthPackSafety');
-const {validateZip} = require('../archiveSafety');
-const {createTrustedIpc} = require('../ipcSecurity');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rx-hardening-'));
 const cases = [], results = [];
 // Группа http проверяла RxHttp на Node; в Tauri сеть в Rust-ядре (src-tauri/src/tests.rs)
@@ -89,13 +87,6 @@ function makeZip(entries) {
     const centralBytes=Buffer.concat(centrals),end=Buffer.alloc(22);end.writeUInt32LE(0x06054b50);end.writeUInt16LE(entries.length,8);end.writeUInt16LE(entries.length,10);end.writeUInt32LE(centralBytes.length,12);end.writeUInt32LE(offset,16);
     const file=target(`fixture-${zipSequence++}.zip`);fs.writeFileSync(file,Buffer.concat([...locals,centralBytes,end]));return file;
 }
-for(const name of ['../escape','/absolute','C:/escape','mods\\x.jar','world/aux.txt','world/file:stream','world/x.','world/x ','world//x']) test('zip',`reject ${name}`,()=>assert.rejects(validateZip(makeZip([{name}]),target('out'))));
-test('zip','accept ordinary archive',()=>validateZip(makeZip([{name:'world/level.dat'}]),target('out')));
-test('zip','reject symlink',()=>assert.rejects(validateZip(makeZip([{name:'link',mode:0xa1ff}]),target('out')),/symbolic/));
-test('zip','reject encrypted entry',()=>assert.rejects(validateZip(makeZip([{name:'secret',flags:1}]),target('out')),/Encrypted/));
-test('zip','reject case-insensitive duplicates',()=>assert.rejects(validateZip(makeZip([{name:'mods/A.jar'},{name:'mods/a.jar'}]),target('out')),/Duplicate/));
-test('zip','limit extracted bytes',()=>assert.rejects(validateZip(makeZip([{name:'a',data:Buffer.alloc(100)}]),target('out'),{maxBytes:99}),/limit/));
-test('zip','limit entry count',()=>assert.rejects(validateZip(makeZip([{name:'a'},{name:'b'}]),target('out'),{maxEntries:1}),/limit/));
 
 // 30 memory-selection cases, including damaged persisted configuration.
 const memory = (config={},instance=null,total=16384)=>load('RxMemoryAdvisor',{os:{totalmem:()=>total*1024**2},RxConfig:{read:(k,d)=>k in config?config[k]:d},RxInstancesUI:{activeManifest:()=>instance}});
@@ -172,26 +163,22 @@ function optimizer() {
     const document={hidden:true,documentElement:{classList:{add:n=>classes.add(n),remove:n=>classes.delete(n),toggle:(n,on)=>on?classes.add(n):classes.delete(n)}},addEventListener:(n,f)=>{const a=docEvents.get(n)||[];a.push(f);docEvents.set(n,a)}};
     const viewer={viewer:{},visible:true,currentProfile:{},disposeViewer(){s.disposed++;this.viewer=null},mountViewer(){s.mounted++;this.viewer={}},createDefaultProfile:()=>({})};
     const cache=new Map([['x',{}]]);
-    const C=load('RxOptimizer',{document,window:{gc:()=>s.gc++,addEventListener:(n,f)=>winEvents.set(n,f)},RxSkinBrowserUI:viewer,RxModMeta:{cache},RxCollector:{writeLog(){}},require:()=>({webFrame:{clearCache:()=>s.cleared++}}),setTimeout:fn=>{timers.set(++id,fn);return id},clearTimeout:n=>timers.delete(n)});
+    const C=load('RxOptimizer',{document,window:{gc:()=>s.gc++,addEventListener:(n,f)=>winEvents.set(n,f)},RxModMeta:{cache},RxCollector:{writeLog(){}},require:()=>({webFrame:{clearCache:()=>s.cleared++}}),setTimeout:fn=>{timers.set(++id,fn);return id},clearTimeout:n=>timers.delete(n)});
     const runTimers=()=>{const list=[...timers.values()];timers.clear();list.forEach(f=>f())};
     const visibility=hidden=>{document.hidden=hidden;(docEvents.get('visibilitychange')||[]).forEach(f=>f())};
     return {C,s,document,viewer,cache,timers,classes,docEvents,winEvents,runTimers,visibility};
 }
 test('optimizer','visible window not released',()=>{const o=optimizer();o.document.hidden=false;assert.equal(o.C.releaseHiddenResources(),false)});
 test('optimizer','hidden release happens once',()=>{const o=optimizer();o.C.releaseHiddenResources();o.C.releaseHiddenResources();assert.equal(o.s.cleared,1)});
-test('optimizer','3D viewer disposed',()=>{const o=optimizer();o.C.releaseHiddenResources();assert.equal(o.s.disposed,1);assert.equal(o.viewer.viewer,null)});
 test('optimizer','metadata cache cleared',()=>{const o=optimizer();o.C.releaseHiddenResources();assert.equal(o.cache.size,0)});
 test('optimizer','memory-saver CSS class enabled',()=>{const o=optimizer();o.C.releaseHiddenResources();assert.ok(o.classes.has('rx-memory-saver'))});
 test('optimizer','restore removes saver CSS',()=>{const o=optimizer();o.C.releaseHiddenResources();o.C.restoreResources();assert.equal(o.classes.has('rx-memory-saver'),false)});
-test('optimizer','viewer remounts only once',()=>{const o=optimizer();o.C.releaseHiddenResources();o.C.restoreResources();o.C.restoreResources();assert.equal(o.s.mounted,1)});
 test('optimizer','restore cancels deferred GC',()=>{const o=optimizer();o.C.releaseHiddenResources();o.C.restoreResources();assert.equal(o.timers.size,0)});
 test('optimizer','hidden GC runs once',()=>{const o=optimizer();o.C.releaseHiddenResources();o.runTimers();assert.equal(o.s.gc,1)});
-test('optimizer','viewer disposal error does not stop release',()=>{const o=optimizer();o.viewer.disposeViewer=()=>{throw Error('GPU error')};assert.doesNotThrow(()=>o.C.releaseHiddenResources());assert.equal(o.s.cleared,1)});
-test('optimizer','viewer restore error does not crash',()=>{const o=optimizer();o.C.releaseHiddenResources();o.viewer.mountViewer=()=>{throw Error('GPU error')};assert.doesNotThrow(()=>o.C.restoreResources())});
 test('optimizer','initialization is idempotent',()=>{const o=optimizer();o.C.init();o.C.init();assert.equal(o.docEvents.get('visibilitychange').length,1)});
 test('optimizer','brief minimize cancels release timer',()=>{const o=optimizer();o.C.init();o.visibility(true);o.visibility(false);assert.equal(o.timers.size,0);assert.equal(o.s.cleared,0)});
 test('optimizer','unload clears all pending timers',()=>{const o=optimizer();o.C.init();o.C.scheduleFreeMemory(10);o.C.releaseHiddenResources();o.winEvents.get('beforeunload')();assert.equal(o.timers.size,0)});
-test('optimizer','1000 hide/restore cycles do not retain timers or listeners',()=>{const o=optimizer();o.C.init();for(let i=0;i<1000;i++){o.C.releaseHiddenResources();o.C.restoreResources()}assert.equal(o.timers.size,0);assert.equal(o.docEvents.get('visibilitychange').length,1);assert.equal(o.s.disposed,1000)});
+test('optimizer','1000 hide/restore cycles do not retain timers or listeners',()=>{const o=optimizer();o.C.init();for(let i=0;i<1000;i++){o.C.releaseHiddenResources();o.C.restoreResources()}assert.equal(o.timers.size,0);assert.equal(o.docEvents.get('visibilitychange').length,1);assert.equal(o.s.cleared,1000)});
 
 // 10 JAR/cache cases, using real controlled ZIPs or deterministic metadata reads.
 const metadata=()=>load('RxModMeta',{toml:require('toml'),RxTranslator:{getCurrentLanguage:()=> 'en'}});
@@ -207,17 +194,9 @@ test('metadata','deleted file is removed from cache',async()=>{const {C,file}=ca
 test('metadata','cache caps entries after 200 JARs',async()=>{const {C,file}=cachedMeta();for(let i=0;i<200;i++){const next=target('meta-'+i);fs.copyFileSync(file,next);await C.read(next)}assert.equal(C.cache.size,128)});
 test('metadata','cache caps retained serialized metadata bytes',async()=>{const {C,file}=cachedMeta('x'.repeat(512*1024));C.MAX_CACHE_BYTES=64*1024;for(let i=0;i<50;i++){const next=target('large-meta-'+i);fs.copyFileSync(file,next);await C.read(next)}assert.ok([...C.cache.values()].reduce((n,e)=>n+e.bytes,0)<=16*1024*1024);assert.ok(C.cache.size<50)});
 
-// 5 IPC boundary cases.
-function ipcFixture(){const handlers=new Map(),entry=path.resolve(__dirname,'../web/index.ejs'),frame={url:pathToFileURL(entry).href},sender={mainFrame:null};sender.mainFrame=frame;const win={isDestroyed:()=>false,webContents:sender};const api=createTrustedIpc({on:(n,f)=>handlers.set(n,f),handle:(n,f)=>handlers.set(n,f)},()=>win,entry);api.handleTrusted('check',(_e,v)=>v);return {fn:handlers.get('check'),frame,sender,win,event:{sender,senderFrame:frame}}}
-test('ipc','trusted main frame accepted',()=>{const f=ipcFixture();assert.equal(f.fn(f.event,7),7)});
-test('ipc','other renderer rejected',()=>{const f=ipcFixture();assert.throws(()=>f.fn({...f.event,sender:{}}),/Untrusted/)});
-test('ipc','subframe rejected',()=>{const f=ipcFixture();assert.throws(()=>f.fn({...f.event,senderFrame:{url:f.frame.url}}),/Untrusted/)});
-test('ipc','remote navigation rejected',()=>{const f=ipcFixture();f.frame.url='https://example.org';assert.throws(()=>f.fn(f.event),/Untrusted/)});
-test('ipc','destroyed window rejected',()=>{const f=ipcFixture();f.win.isDestroyed=()=>true;assert.throws(()=>f.fn(f.event),/Untrusted/)});
-
 (async()=>{
-    // В ветке Tauri 35 проверок http перенесены в Rust (src-tauri/src/tests.rs)
-    assert.equal(cases.length,145,'The audit must contain 145 independently named cases');
+    // В ветке Tauri 35 проверок http перенесены в Rust (src-tauri/src/tests.rs); zip и ipc проверяли код Electron-версии, 3D-просмотр скинов переехал на сайт
+    assert.equal(cases.length,121,'The audit must contain 121 independently named cases');
     await Promise.all([new Promise(r=>server.listen(0,'127.0.0.1',r)),new Promise(r=>otherServer.listen(0,'127.0.0.1',r))]);
     base=`http://127.0.0.1:${server.address().port}`;otherBase=`http://127.0.0.1:${otherServer.address().port}`;
     const started=Date.now();

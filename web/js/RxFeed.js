@@ -27,9 +27,6 @@ class RxFeed {
         }
         RxFeed.changed();
         RxFeed.notify();
-        try {
-            if (RxModals.isModalShown("servers")) RxServersUI.render();
-        } catch (_) {}
     };
 
     // ---------- объявления ----------

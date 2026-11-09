@@ -62,7 +62,7 @@ namespace RxSetup
             {
                 t.Eyebrow = "УСТАНОВКА"; t.Title = "RxLauncher";
                 t.Subtitle = "Версия {0} · лаунчер Minecraft";
-                t.Description = "Сборки, моды с Modrinth, скины и серверы — в одном минималистичном лаунчере.";
+                t.Description = "Сборки, моды с Modrinth, друзья и статистика — в одном минималистичном лаунчере.";
                 t.FolderLabel = "Папка установки"; t.Change = "Изменить"; t.Shortcut = "Ярлык на рабочем столе";
                 t.Install = "Установить"; t.Upgrade = "Обновить";
                 t.InstallingTitle = "Устанавливаем…"; t.Extracting = "Распаковываем установщик";
@@ -85,14 +85,14 @@ namespace RxSetup
                 t.UDoneTitle = "RxLauncher удалён"; t.UDoneText = "Спасибо, что играли! Миры и сборки в папке игры сохранены.";
                 t.UDoneTextSettings = "Лаунчер и его настройки удалены. Миры и сборки в папке игры сохранены.";
                 t.TabNames["content"] = "Главная"; t.TabNames["settings"] = "Настройки"; t.TabNames["instances"] = "Сборки";
-                t.TabNames["mods"] = "Моды"; t.TabNames["skins"] = "Скины"; t.TabNames["servers"] = "Серверы";
+                t.TabNames["mods"] = "Моды";
                 t.TabNames["statistics"] = "Статистика"; t.TabNames["screenshots"] = "Скриншоты"; t.TabNames["console"] = "Консоль";
             }
             else
             {
                 t.Eyebrow = "SETUP"; t.Title = "RxLauncher";
                 t.Subtitle = "Version {0} · Minecraft launcher";
-                t.Description = "Instances, Modrinth mods, skins and servers — in one minimal launcher.";
+                t.Description = "Instances, Modrinth mods, friends and stats — in one minimal launcher.";
                 t.FolderLabel = "Install folder"; t.Change = "Change"; t.Shortcut = "Desktop shortcut";
                 t.Install = "Install"; t.Upgrade = "Update";
                 t.InstallingTitle = "Installing…"; t.Extracting = "Unpacking the installer";
@@ -115,7 +115,7 @@ namespace RxSetup
                 t.UDoneTitle = "RxLauncher removed"; t.UDoneText = "Thanks for playing! Worlds and instances in the game folder are kept.";
                 t.UDoneTextSettings = "The launcher and its settings are removed. Worlds and instances in the game folder are kept.";
                 t.TabNames["content"] = "Home"; t.TabNames["settings"] = "Settings"; t.TabNames["instances"] = "Instances";
-                t.TabNames["mods"] = "Mods"; t.TabNames["skins"] = "Skins"; t.TabNames["servers"] = "Servers";
+                t.TabNames["mods"] = "Mods";
                 t.TabNames["statistics"] = "Statistics"; t.TabNames["screenshots"] = "Screenshots"; t.TabNames["console"] = "Console";
             }
             return t;
@@ -142,7 +142,7 @@ namespace RxSetup
         private const float X0 = 344, CW = 392; // колонка контента
 
         // Вкладки бокового меню лаунчера (data-modal). Главная и Настройки отключить нельзя
-        private static readonly string[] AllTabs = { "content", "settings", "instances", "mods", "skins", "servers", "statistics", "screenshots", "console" };
+        private static readonly string[] AllTabs = { "content", "settings", "instances", "mods", "statistics", "screenshots", "console" };
         private static readonly string[] LockedTabs = { "content", "settings" };
         private static readonly string[] DefaultTabs = { "content", "settings", "statistics", "console" };
 

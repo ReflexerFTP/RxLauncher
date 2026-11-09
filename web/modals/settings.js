@@ -148,10 +148,6 @@ $(function () {
             }
         }
 
-        if (setting === "serverPrivacyMode" && typeof RxServersUI !== "undefined") {
-            RxServersUI.refreshServersInfo();
-        }
-
         if (setting.startsWith("discordRpc") || setting === "serverPrivacyMode" || setting === "lessDataCollection") {
             updateDiscordRpcSettingsUI();
             RxDiscordRpc.syncSettings();

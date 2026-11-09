@@ -239,6 +239,37 @@ class RxImportUI {
         }
         return RxImportUI.start({name: path.basename(dir), path: path.resolve(dir), kind: "folder"});
     };
+
+    // Первый запуск: нашли TLauncher или TL Legacy — сразу предлагаем переехать (один раз).
+    // У тех, кто уже пользовался лаунчером (есть аккаунты), окно не показывается
+    static FIRST_RUN_KEY = "firstRunImportOffered";
+    static offerFirstRun = async () => {
+        if (RxConfig.read(RxImportUI.FIRST_RUN_KEY, false) === true) return false;
+        RxConfig.write(RxImportUI.FIRST_RUN_KEY, true);
+        if (Object.keys(RxAccountsManager.getAccounts() || {}).length > 0) return false;
+        let sources = [];
+        try {
+            sources = RxImport.detectSources().filter(source => !source.instance && (source.kind === "tlauncher" || source.kind === "legacy"));
+        } catch (_) {}
+        if (!sources.length) return false;
+        const t = (key, fallback) => RxImport.text(key, fallback);
+        const result = await RxDialog.open({
+            icon: "move_to_inbox",
+            title: t("firstRunTitle", "Переезжаете с TLauncher или TL Legacy?"),
+            text: t("firstRunText", "Перенесём миры, моды, ресурспаки, шейдеры, настройки игры, серверы и аккаунты. Старый лаунчер при этом не пострадает"),
+            choices: sources.map((source, index) => ({icon: "rocket_launch", title: source.name, text: source.path, value: index})),
+            buttons: [{id: "later", text: t("firstRunLater", "Не сейчас")}]
+        });
+        const source = result?.button === "choice" && Number.isInteger(result.value) ? sources[result.value] : null;
+        if (!source) {
+            RxToasts.create(t("firstRunHint", "Перенести можно в любой момент: Настройки → Импорт"), "move_to_inbox");
+            return false;
+        }
+        // Прогресс переноса виден в настройках, во вкладке «Импорт»
+        RxModals.switchModal("settings");
+        $("#modal-settings .tabs .tab[data-tab='import']").trigger("click");
+        return RxImportUI.start(source);
+    };
 }
 
 $(function () {

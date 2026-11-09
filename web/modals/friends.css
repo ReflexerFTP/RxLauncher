@@ -234,3 +234,33 @@
     .fx-actions button:not(.icon) span:last-child { display: none; }
     .fx-actions button:not(.icon) { width: 36px; padding: 0 !important; justify-content: center; }
 }
+
+/* Достижения: плитки-значки, полученные — цветные, остальные приглушены */
+.fx-ach .fx-card-title { align-items: center; }
+.fx-ach-count { margin-left: auto; color: var(--text-sub); font-size: 8.5pt; font-weight: 700; }
+.fx-ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
+.fx-ach-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    height: auto !important;
+    padding: 7px 4px 6px !important;
+    border: 1px solid var(--rx-stroke) !important;
+    border-radius: 10px !important;
+    background: var(--theme-primaryBgLight) !important;
+    color: var(--text-sub) !important;
+    opacity: .55;
+}
+.fx-ach-tile.got { opacity: 1; color: var(--text-color) !important; border-color: color-mix(in srgb, var(--theme-primary) 40%, transparent) !important; }
+.fx-ach-tile:hover { opacity: 1; }
+.fx-ach-icon { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, .06); }
+.fx-ach-icon .material-symbols-outlined { font-size: 19px; color: inherit; }
+.fx-ach-tile.got .fx-ach-icon { background: color-mix(in srgb, var(--theme-primary) 22%, transparent); color: var(--theme-primaryLighter); }
+.fx-ach-tile.got.kind-badge .fx-ach-icon { background: color-mix(in srgb, #f5b942 24%, transparent); color: #f5c55a; }
+.fx-ach-icon b { position: absolute; right: -4px; bottom: -3px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--theme-primaryBgDark); color: inherit; font-size: 7.5pt; line-height: 15px; text-align: center; }
+.fx-ach-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 7.5pt; font-weight: 700; color: inherit; }
+.fx-ach-bar { display: block; width: 80%; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.fx-ach-bar i { display: block; height: 100%; background: var(--theme-primary); }

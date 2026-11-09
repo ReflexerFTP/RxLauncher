@@ -150,6 +150,21 @@
     </label>
 </div>
 
+<!-- Экономия ОЗУ: Java возвращает неиспользуемую память системе -->
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">memory</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.startup.ramSaverMode.title}}</span>
+        <div class="description">{{settings.startup.ramSaverMode.description}}</div>
+    </div>
+    <label class="switch" data-setting="ramSaverMode" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
 <div class="flex flex-center flex-gap-8 settings-item">
     <div class="icon">
         <span class="material-symbols-outlined">bolt</span>

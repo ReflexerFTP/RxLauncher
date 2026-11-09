@@ -150,3 +150,28 @@ html.noAnimations .console-live i { animation: none; }
     .console-toolbar button span:last-child { display: none; }
     .console-toolbar button { width: 42px; min-width: 42px; padding: 0 !important; }
 }
+
+/* Чей лог: запущенный клиент, лаунчер или прошлый запуск */
+.console-sources > .rx-select:first-child,
+.console-sources > [data-console-source] { flex: 1 1 auto !important; min-width: 0 !important; max-width: 560px !important; }
+.console-sources .rx-select-trigger .rx-select-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.console-source-info { flex: 0 1 auto; margin-left: auto; color: var(--text-sub); font-size: 9pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.console-toolbar button.console-stop:hover { color: var(--error); border-color: color-mix(in srgb, var(--error) 45%, transparent); }
+.console-live.paused { color: var(--text-sub); border-color: var(--rx-stroke); background: transparent; }
+.console-live.paused i { animation: none; box-shadow: none; }
+
+.console-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-sub);
+    font-size: 10pt;
+    pointer-events: none;
+}
+.console-empty[hidden] { display: none; }
+.console-empty .material-symbols-outlined { font-size: 34px; opacity: .5; }
+.console-sources .rx-select-trigger { width: 100% !important; min-width: 0 !important; justify-content: space-between; }

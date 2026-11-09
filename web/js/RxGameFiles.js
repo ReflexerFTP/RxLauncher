@@ -153,20 +153,42 @@ class RxGameFiles {
         return [...unique.values()].filter(item => !RxGameFiles.present(item.path, item.size));
     };
 
-    // false — подготовить не вышло или запуск отменили (тогда MCLC докачает сам либо запуск остановится)
-    static prepare = async (config) => {
+    // false — подготовить не вышло или запуск отменили (тогда ядро докачает само либо запуск остановится).
+    // Если связь так и не появилась, игрок выбирает: повторить, повторить через зеркало или запускать как есть
+    static prepare = async (config, source = RxGameFiles.source()) => {
         const started = Date.now();
         let items = [];
         try {
-            items = await RxGameFiles.collect(config);
+            items = await RxGameFiles.collect(config, source);
             if (!items.length) return true;
-            RxCollector.writeLog(`GameFiles: Downloading ${items.length} files [source=${RxGameFiles.source()}]`);
+            RxCollector.writeLog(`GameFiles: Downloading ${items.length} files [source=${source}]`);
             await RxDownloader.downloadMany(items, MESSAGES.starter.gameFiles || "Minecraft", RxGameFiles.CONCURRENCY);
             RxCollector.writeLog(`GameFiles: Done in ${Math.round((Date.now() - started) / 1000)} s`);
             return true;
         } catch (error) {
-            RxCollector.writeLog(`GameFiles: Prefetch failed, MCLC will continue [files=${items.length}] [error=${error.message}]`);
+            RxCollector.writeLog(`GameFiles: Prefetch failed [source=${source}] [files=${items.length}] [error=${error.message}]`);
+            if (typeof RxStarter !== "undefined" && RxStarter.cancelRequested) return false;
+            const choice = await RxGameFiles.askRetry(error);
+            if (choice === "retry") return RxGameFiles.prepare(config, source);
+            if (choice === "mirror") return RxGameFiles.prepare(config, "mirror");
             return false;
         }
+    };
+
+    static askRetry = async (error) => {
+        if (typeof RxDialog === "undefined") return "continue";
+        const t = MESSAGES.starter.netFail || {};
+        const result = await RxDialog.open({
+            icon: "wifi_off",
+            title: t.title || "Не получилось скачать файлы игры",
+            text: t.text || "Интернет обрывается или сервер Mojang не отвечает. Уже скачанное сохранено — повтор продолжит с того же места",
+            items: error?.file ? [{icon: "description", title: t.file || "Файл", text: String(error.file)}] : [],
+            buttons: [
+                {id: "continue", text: t.continue || "Запустить как есть"},
+                {id: "mirror", text: t.mirror || "Через зеркало", icon: "alt_route"},
+                {id: "retry", text: t.retry || "Повторить", icon: "refresh", primary: true}
+            ]
+        });
+        return result?.button || "continue";
     };
 }

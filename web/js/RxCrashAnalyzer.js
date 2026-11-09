@@ -7,17 +7,20 @@ class RxCrashAnalyzer {
     static REPORT_FILE = () => path.join(USERDATA_PATH, "last-crash.json");
 
     // ---------- сбор данных во время игры ----------
+    // У каждого запущенного клиента своя сессия со своими строками; без сессии — последняя начатая
     static beginSession = ({gameRoot, gameDirectory, versionId}) => {
         RxCrashAnalyzer.lines = [];
-        RxCrashAnalyzer.session = {gameRoot, gameDirectory: gameDirectory || gameRoot, versionId, startedAt: Date.now()};
+        RxCrashAnalyzer.session = {gameRoot, gameDirectory: gameDirectory || gameRoot, versionId, startedAt: Date.now(), lines: RxCrashAnalyzer.lines};
+        return RxCrashAnalyzer.session;
     };
 
-    static record = (chunk) => {
+    static record = (chunk, session = RxCrashAnalyzer.session) => {
         if (!chunk) return;
+        const lines = session?.lines || RxCrashAnalyzer.lines;
         const parts = String(chunk).split(/\r?\n/);
-        for (const line of parts) if (line.trim()) RxCrashAnalyzer.lines.push(line.length > 2000 ? line.slice(0, 2000) : line);
-        const overflow = RxCrashAnalyzer.lines.length - RxCrashAnalyzer.MAX_LINES;
-        if (overflow > 0) RxCrashAnalyzer.lines.splice(0, overflow);
+        for (const line of parts) if (line.trim()) lines.push(line.length > 2000 ? line.slice(0, 2000) : line);
+        const overflow = lines.length - RxCrashAnalyzer.MAX_LINES;
+        if (overflow > 0) lines.splice(0, overflow);
     };
 
     // ---------- вспомогательное ----------
@@ -126,10 +129,10 @@ class RxCrashAnalyzer {
     ];
 
     // ---------- анализ ----------
-    static analyze = async (exitCode) => {
-        const session = RxCrashAnalyzer.session || {startedAt: Date.now() - 3600000};
+    static analyze = async (exitCode, session = RxCrashAnalyzer.session) => {
+        session = session || {startedAt: Date.now() - 3600000};
         const roots = [...new Set([session.gameDirectory, session.gameRoot].filter(Boolean))];
-        const log = RxCrashAnalyzer.lines.join("\n");
+        const log = (session.lines || RxCrashAnalyzer.lines).join("\n");
 
         // crash-report: путь печатает сама игра, иначе ищем самый свежий
         let crashReportPath = "";
@@ -303,11 +306,11 @@ class RxCrashAnalyzer {
     };
 
     // ---------- реакция на завершение игры ----------
-    static onGameExit = async (exitCode) => {
+    static onGameExit = async (exitCode, session = RxCrashAnalyzer.session) => {
         const code = Number(exitCode);
         if (!Number.isFinite(code) || code === 0) return null;
         RxCollector.writeLog(`Crash: Exit code ${code} (${RxCrashAnalyzer.exitCodeHex(code)}), analyzing`);
-        const report = await RxCrashAnalyzer.analyze(code);
+        const report = await RxCrashAnalyzer.analyze(code, session);
         RxCollector.writeLog(`Crash: ${report.findings.length} finding(s) [${report.findings.map((item) => item.rule).join(", ")}]`);
         if (typeof RxCrashUI !== "undefined") RxCrashUI.show(report);
         return report;

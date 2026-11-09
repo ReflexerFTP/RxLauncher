@@ -206,6 +206,25 @@
     </label>
 </div>
 
+<!-- Плащи RxLauncher в игре (свой плащ создаётся на сайте) -->
+<div class="flex flex-center flex-gap-8 settings-item">
+    <div class="icon">
+        <span class="material-symbols-outlined">checkroom</span>
+    </div>
+    <div class="flex flex-grow flex-col flex-justify-center">
+        <span class="name">{{settings.game.rxCapes.title}}</span>
+        <div class="description">{{settings.game.rxCapes.description}}</div>
+        <button class="button pill small network-help" type="button" data-rx-onclick="openExternal(SITE_URL + '/account/#cape')">
+            <span class="material-symbols-outlined">open_in_new</span>
+            <span>{{settings.game.rxCapes.site}}</span>
+        </button>
+    </div>
+    <label class="switch" data-setting="rxCapesInGame" data-checked>
+        <input type="checkbox">
+        <span class="inner"></span>
+    </label>
+</div>
+
 <style>
     #modal-settings .discord-rpc-options {
         display: grid;

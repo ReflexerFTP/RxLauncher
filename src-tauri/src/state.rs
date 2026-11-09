@@ -1,8 +1,8 @@
 // Общее состояние ядра
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 use tauri::AppHandle;
@@ -10,8 +10,8 @@ use tauri::AppHandle;
 pub struct AppState {
     pub user_data: PathBuf,
     pub web_root: PathBuf,
-    game_active: AtomicBool,
-    game_pid: AtomicU32,
+    // Запущенные клиенты Minecraft (их может быть несколько одновременно)
+    games: Mutex<HashSet<u32>>,
     force_close: AtomicBool,
     pub files: Mutex<FileTable>,
     pub http_aborts: Mutex<HashMap<u64, tokio::sync::watch::Sender<Option<String>>>>,
@@ -39,8 +39,7 @@ impl AppState {
         Ok(Self {
             web_root: crate::paths::web_root(app),
             user_data,
-            game_active: AtomicBool::new(false),
-            game_pid: AtomicU32::new(0),
+            games: Mutex::new(HashSet::new()),
             force_close: AtomicBool::new(false),
             files: Mutex::new(FileTable::default()),
             http_aborts: Mutex::new(HashMap::new()),
@@ -48,7 +47,7 @@ impl AppState {
     }
 
     pub fn game_active(&self) -> bool {
-        self.game_active.load(Ordering::SeqCst)
+        self.games.lock().map(|games| !games.is_empty()).unwrap_or(false)
     }
 
     pub fn force_close(&self) -> bool {
@@ -59,12 +58,17 @@ impl AppState {
         self.force_close.store(value, Ordering::SeqCst);
     }
 
-    pub fn game_pid(&self) -> u32 {
-        self.game_pid.load(Ordering::SeqCst)
+    pub fn add_game(&self, pid: u32) {
+        if let Ok(mut games) = self.games.lock() {
+            games.insert(pid);
+        }
     }
 
-    pub fn set_game(&self, active: bool, pid: u32) {
-        self.game_active.store(active, Ordering::SeqCst);
-        self.game_pid.store(if active { pid } else { 0 }, Ordering::SeqCst);
+    // Убрать закрывшийся клиент. true — больше ни одной игры не запущено
+    pub fn remove_game(&self, pid: u32) -> bool {
+        self.games.lock().map(|mut games| {
+            games.remove(&pid);
+            games.is_empty()
+        }).unwrap_or(true)
     }
 }
