@@ -140,3 +140,33 @@ const animateCSSNode = (node, animation, fast = true, prefix = "animate__") => {
         node.addEventListener("animationend", handleAnimationEnd, {once: true});
     });
 }
+
+// Системные подсказки Windows (атрибут title) в лаунчере не показываем — по просьбе автора они только мешают.
+// Подпись переносится в aria-label, чтобы кнопки без текста остались понятны экранному диктору
+(() => {
+    const strip = (element) => {
+        const title = element.getAttribute("title");
+        if (title === null) return;
+        if (title && !element.hasAttribute("aria-label")) element.setAttribute("aria-label", title);
+        element.removeAttribute("title");
+    };
+    const observer = new MutationObserver((records) => {
+        for (const record of records) {
+            if (record.type === "attributes") {
+                strip(record.target);
+                continue;
+            }
+            record.addedNodes.forEach((node) => {
+                if (node.nodeType !== 1) return;
+                strip(node);
+                node.querySelectorAll("[title]").forEach(strip);
+            });
+        }
+    });
+    const start = () => {
+        document.querySelectorAll("[title]").forEach(strip);
+        observer.observe(document.documentElement, {subtree: true, childList: true, attributes: true, attributeFilter: ["title"]});
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, {once: true});
+    else start();
+})();

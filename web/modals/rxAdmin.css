@@ -105,6 +105,8 @@
 .rxad-tabs button.active { background: var(--theme-primary) !important; color: #fff !important; }
 .rxad-pane { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
 .rxad-pane[hidden] { display: none; }
+/* Блоки окна не сжимаются по высоте: если не влезают — прокрутка, а не обрезанный текст и налезающие строки */
+#modal-rxAdmin > :not(.rxad-pane), .rxad-player > *, .rxad-statpane > *, [data-admin-pane="players"] > :not(.rxad-list), .rxad-top-row { flex-shrink: 0; }
 .rxad-player, .rxad-statpane { overflow-y: auto; padding-right: 4px; }
 .rxad-loading { flex: 1; display: grid; place-items: center; }
 .rxad-loading .material-symbols-outlined { font-size: 30px; color: var(--theme-primaryLighter); }

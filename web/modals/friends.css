@@ -154,7 +154,8 @@
 .fr-state.launcher i { background: var(--success); opacity: 1; }
 .fr-state.playing { color: var(--theme-primaryLighter); }
 .fr-state.playing i { background: var(--theme-primary); opacity: 1; animation: fr-pulse 1.6s ease-out infinite; }
-@keyframes fr-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-primary) 60%, transparent); } 100% { box-shadow: 0 0 0 7px transparent; } }
+/* Пульс яркостью, а не расходящимся кольцом: кольцо обрезалось краем строки */
+@keyframes fr-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 .fr-chip {
     display: inline-flex;
     align-items: center;
