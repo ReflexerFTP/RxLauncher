@@ -220,3 +220,79 @@ html.light .title-wrapper .account-chip:hover {
 .title-wrapper .win-close:hover .material-symbols-outlined {
     color: white;
 }
+
+/* ===== «Остров» Spotify: чёрная капсула по центру шапки, как Dynamic Island ===== */
+.title-wrapper { position: relative; }
+.title-wrapper .media-island {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(460px, 42vw);
+    min-width: 0;
+    height: 34px;
+    padding: 0 16px 0 12px;
+    border-radius: 999px;
+    background: #000;
+    box-shadow: 0 6px 22px -8px rgba(0, 0, 0, .9), inset 0 0 0 1px rgba(255, 255, 255, .06);
+    color: #fff;
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(.6);
+    transition: opacity .28s ease, transform .38s cubic-bezier(.22, 1.3, .36, 1), height .3s cubic-bezier(.22, 1, .36, 1), max-width .3s ease;
+    -webkit-app-region: no-drag;
+}
+.title-wrapper .media-island.visible { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+.title-wrapper .media-island:hover,
+.title-wrapper .media-island.pinned { height: 46px; max-width: min(520px, 46vw); }
+
+/* Эквалайзер цвета Spotify */
+.media-island .mi-bars { display: flex; align-items: flex-end; gap: 2px; flex: 0 0 auto; width: 14px; height: 13px; }
+.media-island .mi-bars i { display: block; width: 3px; height: 100%; border-radius: 2px; background: #1ed760; transform-origin: bottom; animation: miBar .9s ease-in-out infinite; }
+.media-island .mi-bars i:nth-child(2) { animation-delay: -.3s; }
+.media-island .mi-bars i:nth-child(3) { animation-delay: -.6s; }
+.media-island.paused .mi-bars i { animation: none; transform: scaleY(.35); background: rgba(255, 255, 255, .45); }
+@keyframes miBar { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+
+.media-island .mi-body { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.media-island .mi-line {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 10.5pt;
+    font-weight: 700;
+    letter-spacing: .1px;
+    color: #fff;
+    transition: opacity .14s ease, transform .14s ease;
+}
+.media-island .mi-line.swap { opacity: 0; transform: translateY(4px); }
+.media-island .mi-sub {
+    display: flex;
+    gap: 6px;
+    max-height: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 8.3pt;
+    color: rgba(255, 255, 255, .55);
+    opacity: 0;
+    transition: max-height .3s ease, opacity .2s ease;
+}
+.media-island .mi-sub b { color: rgba(255, 255, 255, .8); font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+.media-island .mi-sub span { overflow: hidden; text-overflow: ellipsis; }
+.media-island:hover .mi-sub,
+.media-island.pinned .mi-sub { max-height: 14px; opacity: 1; }
+.media-island .mi-progress { position: absolute; left: 18px; right: 18px; bottom: 3px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, .1); opacity: 0; transition: opacity .2s ease; }
+.media-island .mi-progress i { display: block; height: 100%; border-radius: 2px; background: #1ed760; }
+.media-island:hover .mi-progress,
+.media-island.pinned .mi-progress { opacity: 1; }
+html.noAnimations .media-island .mi-bars i { animation: none; }
+
+/* Лупа: люди в RxLauncher */
+.title-wrapper .topbar-people { width: 38px; height: 38px; border-radius: 11px !important; border: 1px solid var(--theme-primaryBgLighter) !important; background: var(--theme-primaryBgLight) !important; -webkit-app-region: no-drag; }
+.title-wrapper .topbar-people:hover { filter: brightness(112%); }
+.title-wrapper .topbar-people .material-symbols-outlined { font-size: 20px; }

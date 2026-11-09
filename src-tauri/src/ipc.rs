@@ -127,6 +127,7 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
         "clear-curseforge-api-key" => crate::curseforge::clear_key(&user_data),
         "curseforge-request" => crate::curseforge::api_request(&user_data, &arg(&args, 0)).await,
         "update-status" => ok(crate::updater::status()),
+        "media-now-playing" => blocking(|| ok(crate::media::now_playing())).await,
         "update-download" => {
             crate::updater::begin_download(app);
             ok(crate::updater::status())

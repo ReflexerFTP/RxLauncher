@@ -1,0 +1,38 @@
+<link rel="stylesheet" href="modals/profile.css"/>
+
+<!-- Профиль игрока RxLauncher: баннер (Игрок+), аватарка, описание, достижения; свой — можно редактировать -->
+<div class="modal overlay centered" id="modal-profile" style="display: none;">
+    <div class="pf-banner" data-pf-banner></div>
+    <button type="button" class="pf-close square small transparent" data-rx-onclick="RxModals.hideModal('profile')" aria-label="{{commons.close}}">
+        <span class="material-symbols-outlined">close</span>
+    </button>
+    <div class="pf-head">
+        <img class="pf-avatar" data-pf-avatar alt=""/>
+        <div class="pf-name">
+            <h1 data-pf-nick></h1>
+            <div class="pf-tags" data-pf-tags></div>
+        </div>
+        <div class="pf-actions" data-pf-actions></div>
+    </div>
+    <div class="pf-body" data-pf-body></div>
+</div>
+
+<!-- Люди в RxLauncher: все игроки, поиск по нику, клик — профиль -->
+<div class="modal overlay centered" id="modal-people" style="display: none;">
+    <header class="pp-head">
+        <span class="pp-icon material-symbols-outlined">group_search</span>
+        <div class="pp-title">
+            <h1>{{profiles.peopleTitle}}</h1>
+            <p data-people-count>{{profiles.peopleText}}</p>
+        </div>
+        <button type="button" class="square small transparent" data-rx-onclick="RxModals.hideModal('people')" aria-label="{{commons.close}}">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </header>
+    <label class="pp-search">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" data-people-query maxlength="16" spellcheck="false" autocomplete="off" placeholder="{{profiles.search}}"/>
+    </label>
+    <div class="pp-list" data-people-list></div>
+    <button type="button" class="transparent pp-more" data-people-more hidden><span>{{profiles.more}}</span></button>
+</div>

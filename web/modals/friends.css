@@ -264,3 +264,6 @@
 .fx-ach-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 7.5pt; font-weight: 700; color: inherit; }
 .fx-ach-bar { display: block; width: 80%; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .08); overflow: hidden; }
 .fx-ach-bar i { display: block; height: 100%; background: var(--theme-primary); }
+.fx-me-actions .fx-me-profile { grid-column: 1 / -1; justify-content: center; }
+.fx-friend .fx-avatar, .fx-friend .fx-name span { cursor: pointer; }
+.fx-friend .fx-name span:hover { text-decoration: underline; }

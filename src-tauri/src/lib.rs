@@ -12,6 +12,7 @@ mod ipc;
 mod loaders;
 mod logs;
 mod loopback;
+mod media;
 mod modscan;
 mod net;
 mod paths;

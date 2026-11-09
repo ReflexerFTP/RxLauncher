@@ -8,8 +8,23 @@
         <span class="material-symbols-outlined brand-caret">expand_more</span>
     </div>
 
+    <!-- «Остров» Spotify: строка текста песни по центру шапки (RxMediaIsland) -->
+    <div class="media-island" data-media-island>
+        <span class="mi-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="mi-body">
+            <span class="mi-line" data-mi-line></span>
+            <span class="mi-sub"><b data-mi-title></b><span data-mi-artist></span></span>
+        </span>
+        <span class="mi-progress"><i data-mi-progress></i></span>
+    </div>
+
     <!-- Правый кластер -->
     <div class="topbar-right flex flex-align-center flex-gap-8">
+        <!-- Люди в RxLauncher: поиск и профили -->
+        <button type="button" class="square small transparent topbar-people" data-rx-onclick="RxProfiles.openPeople()" aria-label="{{profiles.peopleTitle}}">
+            <span class="material-symbols-outlined">search</span>
+        </button>
+
         <!-- Аккаунт-чип -->
         <div class="account-chip" data-rx-onclick="RxAccountsUI.open()">
             <div class="line-spinner custom-select" id="accountSelectPlaceholder"></div>

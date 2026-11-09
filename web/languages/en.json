@@ -567,6 +567,10 @@
             "together": "Together",
             "friends": "Friends"
           }
+        },
+        "mediaIsland": {
+          "title": "Spotify island",
+          "description": "When music plays in Spotify, a capsule with the song's lyrics appears at the top of the launcher (like Dynamic Island on iPhone). Hover to see the title and artist. Lyrics come from the open LRCLIB service"
         }
       },
       "startup": {
@@ -1573,6 +1577,57 @@
       "progress": "Progress",
       "progressText": "{0} of {1} h",
       "byAdmin": "Given by an administrator"
+    },
+    "mediaIsland": {
+      "paused": "Paused"
+    },
+    "profiles": {
+      "peopleTitle": "People",
+      "peopleText": "All RxLauncher players",
+      "search": "Search by nickname",
+      "more": "Show more",
+      "peopleCount": "Players: {0}",
+      "myProfile": "My profile",
+      "needAccount": "Sign in to your RxLauncher account",
+      "hours": "{0} h",
+      "online": "Online",
+      "friend": "Friend",
+      "private": "Friends only",
+      "accept": "Accept request",
+      "requested": "Request sent",
+      "add": "Add friend",
+      "edit": "Edit",
+      "adminEdit": "Edit (admin)",
+      "hiddenTitle": "Profile is hidden",
+      "hiddenText": "Only this player's friends can see it",
+      "playingNow": "Playing now",
+      "noBio": "Tell others about yourself — press “Edit”",
+      "playTime": "played",
+      "since": "member since",
+      "friends": "friends",
+      "achievements": "achievements",
+      "adminNote": "You are editing someone else's profile as an administrator",
+      "avatar": "Avatar",
+      "avatarHint": "A square image; the rest is cropped",
+      "upload": "Upload",
+      "remove": "Remove",
+      "banner": "Banner",
+      "bannerHint": "A wide 3:1 image above the profile",
+      "bannerPlus": "Banners are for Player+",
+      "bio": "About",
+      "bioPlaceholder": "A few words about yourself: where you play, what you like…",
+      "privateTitle": "Only friends can see my profile",
+      "privateText": "Others see just your nickname and avatar, and you won't show up in people search",
+      "adminBadges": "Admin awards",
+      "save": "Save",
+      "saved": "Profile saved",
+      "avatarSaved": "Avatar updated",
+      "bannerSaved": "Banner updated",
+      "badImage": "Couldn't open the image",
+      "requestSent": "Friend request sent",
+      "nowFriends": "You are now friends",
+      "you": "That's you",
+      "nobody": "Nobody found"
     }
   }
 }

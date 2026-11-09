@@ -4,6 +4,10 @@ class RxFriendsUI {
     static escape = (value) => RxDialog.escape(value);
     static $card = () => $("#modal-friends");
     static $account = () => $("#modal-rxAccount");
+    // Своя аватарка игрока (профиль RxLauncher), иначе голова скина
+    static avatar = (person, size = 32) => person?.avatar
+        ? (/^https?:/.test(person.avatar) ? person.avatar : `${SITE_URL}${person.avatar}`)
+        : RxFriendsUI.head(person?.nick, size);
     static head = (nick, size = 32) => RxPrivacy.remoteAvatar(`https://minotar.net/helm/${encodeURIComponent(nick || "Steve")}/${size}`);
 
     static LOADERS = {vanilla: "Vanilla", fabric: "Fabric", quilt: "Quilt", forge: "Forge", forgeOptiFine: "OptiFine", neoforge: "NeoForge"};
@@ -98,7 +102,7 @@ class RxFriendsUI {
             actions = b("cancel", "close", RxFriendsUI.t("cancelRequest"));
         }
         return `<div class="fx-friend ${state}" data-friend-id="${esc(person.id)}" data-friend-kind="${kind}">
-            <div class="fx-avatar"><img alt="" loading="lazy" src="${esc(RxFriendsUI.head(person.nick, 46))}"/>${kind === "friend" ? "<i></i>" : ""}</div>
+            <div class="fx-avatar"><img alt="" loading="lazy" src="${esc(RxFriendsUI.avatar(person, 46))}"/>${kind === "friend" ? "<i></i>" : ""}</div>
             <div class="fx-info">
                 <div class="fx-name"><span>${esc(person.nick)}</span>${RxFriendsUI.groupBadge(person.group)}</div>
                 <div class="fr-status" title="${kind === "friend" ? esc(RxFriendsUI.statusText(person)) : ""}">${status}</div>
@@ -215,7 +219,7 @@ class RxFriendsUI {
         const user = RxAccount.user;
         $card.find("[data-friends-me-nick]").text(user.nick);
         $card.find("[data-friends-me-group]").html(RxFriendsUI.groupBadge(user.group) || `<span class="rx-group" data-group="player"><span class="material-symbols-outlined">person</span>${RxFriendsUI.escape(RxFriendsUI.groupName("player"))}</span>`);
-        $card.find("[data-friends-me-head]").attr("src", RxFriendsUI.head(user.nick, 54));
+        $card.find("[data-friends-me-head]").attr("src", RxFriendsUI.avatar(user, 54));
         $card.find('[data-friends-action="admin"]').prop("hidden", user.group !== "admin");
         $card.find("[data-friends-password-text]").text(user.hasPassword === false ? RxFriendsUI.t("setPassword") : RxFriendsUI.t("short").password);
         const mode = RxFriends.copyMode();
@@ -408,6 +412,7 @@ class RxFriendsUI {
     // ---------- профиль ----------
     static profileAction = async (action) => {
         if (action === "admin") return RxAdminUI.open();
+        if (action === "profile") return RxProfiles.open({id: RxAccount.user?.id});
         if (action === "rename") return RxFriendsUI.rename();
         if (action === "site") return openExternal(`${SITE_URL}/account/`);
         if (action === "password" || action === "delete") return RxFriendsUI.openAccount(action);
