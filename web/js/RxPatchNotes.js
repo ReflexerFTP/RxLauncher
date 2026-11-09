@@ -1,6 +1,44 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.4.0-profiles",
+            version: "4.4.0",
+            date: "2026-11-10T03:00:00+03:00",
+            image: "assets/version-heroes/1.21.png",
+            tag: {ru: "НОВОЕ", en: "NEW"},
+            title: {ru: "Профили, остров Spotify и несколько клиентов", en: "Profiles, Spotify island and multiple clients"},
+            summary: {
+                ru: "Профили игроков с аватарками и баннерами, поиск людей, достижения, остров Spotify в шапке, сколько угодно клиентов одновременно и новая консоль с логами игры.",
+                en: "Player profiles with avatars and banners, people search, achievements, a Spotify island in the title bar, any number of clients at once and a new console with game logs."
+            },
+            changes: {
+                ru: [
+                    "Профили: своя аватарка, баннер для Игрок+, описание и достижения. Профиль можно открыть у любого игрока — лупа в шапке показывает всех людей в RxLauncher. Профиль можно скрыть от всех, кроме друзей.",
+                    "Достижения: 10, 100 и 1000 часов в игре, возраст аккаунта от 1 до 8 лет и награды от администрации — «Благодарность от админа», «Тестер+» и «Тестер».",
+                    "Остров Spotify: если в Spotify играет музыка, сверху лаунчера появляется капсула с текстом песни. Выключается в настройках оформления.",
+                    "Можно запускать сколько угодно клиентов Minecraft одновременно. Второму клиенту лаунчер выделяет не больше памяти, чем свободно.",
+                    "Консоль показывает лог самой игры: выберите любой из запущенных клиентов, лог лаунчера или прошлые запуски с сортировкой.",
+                    "Экономия оперативной памяти: Java отдаёт системе неиспользуемую память, игра стартует с 512 МБ.",
+                    "Плохой интернет: обновления и файлы игры докачиваются с места обрыва, до 6 повторов и запасное зеркало, если GitHub или Mojang не открываются.",
+                    "При первом запуске лаунчер предлагает перенести всё из TLauncher или TL Legacy.",
+                    "Скины, плащи и каталог серверов переехали на сайт rxlauncher.xyz. Плащи в игре по-прежнему видны (переключатель — в настройках игры).",
+                    "Лаунчер стал легче: удалён старый код и лишние файлы."
+                ],
+                en: [
+                    "Profiles: your own avatar, a banner for Player+, a bio and achievements. Open anyone's profile — the magnifier in the title bar shows everyone in RxLauncher. A profile can be hidden from everyone except friends.",
+                    "Achievements: 10, 100 and 1000 hours played, account age from 1 to 8 years and staff awards — Thanks from the admin, Tester+ and Tester.",
+                    "Spotify island: when music plays in Spotify, a capsule with the lyrics appears at the top of the launcher. Turn it off in appearance settings.",
+                    "Run as many Minecraft clients at once as you like. An extra client never gets more memory than is free.",
+                    "The console shows the game's own log: pick any running client, the launcher log or past launches with sorting.",
+                    "RAM saver: Java returns unused memory to the system and the game starts with 512 MB.",
+                    "Bad internet: updates and game files resume where they stopped, up to 6 retries and a backup mirror when GitHub or Mojang won't load.",
+                    "On first launch the launcher offers to move everything from TLauncher or TL Legacy.",
+                    "Skins, capes and the server catalog moved to rxlauncher.xyz. Capes still show in game (toggle in game settings).",
+                    "The launcher got lighter: old code and unused files were removed."
+                ]
+            }
+        },
+        {
             id: "4.3.0-capes",
             version: "4.3.0",
             date: "2026-11-08T19:00:00+03:00",
