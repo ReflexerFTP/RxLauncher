@@ -59,9 +59,10 @@ const {RxCollector, RxHttp, RxImport, RxCurseForge, RxDownloader} = context;
         // Ely.by отдаёт свои xuid/clientId, а не токены
         assert.match(read("web/js/RxElybyManager.js"), /meta: \{type: "mojang", xuid: "0", clientId: "0"\}/);
         assert.match(read("web/js/RxLaunchConfigurator.js"), /RxCollector\.addSecrets\(resultConfig\.authorization\.access_token, resultConfig\.authorization\.client_token\)/);
-        // MCLC подставляет meta.xuid/meta.clientId, только если их нет — берёт токены (поэтому meta обязательна)
-        const handler = fs.readFileSync(path.join(root, "node_modules/minecraft-launcher-core/components/handler.js"), "utf8");
-        assert.match(handler, /'\$\{auth_xuid\}': this\.options\.authorization\.meta\.xuid \|\|/);
+        // Ядро (game.rs) берёт xuid и clientId только из meta и никогда не подставляет вместо них токены
+        const core = fs.readFileSync(path.join(root, "src-tauri/src/game.rs"), "utf8");
+        assert.match(core, /values\.insert\("auth_xuid", str_of\(&meta, "xuid"\)\.unwrap_or\("0"\)/);
+        assert.match(core, /values\.insert\("clientid", str_of\(&meta, "clientId"\)\.unwrap_or\("0"\)/);
 
         // ---------- RX-03: DNS-имя, ведущее в локальную сеть, при загрузке сборки не открывается ----------
         assert.equal(safety.isLocalAddress("127.0.0.1"), true);
