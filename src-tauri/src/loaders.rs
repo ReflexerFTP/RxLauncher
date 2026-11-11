@@ -19,6 +19,19 @@ fn valid(value: &str) -> bool {
         && value.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '+' | '-'))
 }
 
+// Имя своей версии — это имя папки в versions/. TLauncher и другие лаунчеры называют их «Fabric 1.21.4»,
+// «OptiFine 1.20.1 (HD U I6)»: пробелы и скобки допустимы, пути и запрещённые Windows символы — нет
+pub fn valid_folder_name(value: &str) -> bool {
+    !value.is_empty() && value.chars().count() <= 80 && value != "." && value != ".."
+        && !value.starts_with([' ', '.']) && !value.ends_with([' ', '.'])
+        && !value.chars().any(|c| c.is_control() || matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|'))
+}
+
+// Ошибка с кодом: интерфейс по нему объясняет игроку, что случилось
+fn fail(code: &str, message: impl Into<String>) -> BridgeError {
+    BridgeError::code(message, code)
+}
+
 fn atomic_write(file: &Path, data: &[u8]) -> Result<(), BridgeError> {
     if let Some(parent) = file.parent() {
         std::fs::create_dir_all(parent).map_err(|e| crate::fsops::io_error(e, "mkdir", &parent.to_string_lossy(), None))?;
@@ -51,37 +64,110 @@ fn folder_type(kind: &str) -> &str {
     if kind == "forgeOptiFine" { "forge" } else { kind }
 }
 
-// Уже установленная версия загрузчика — без сети
-fn local_config(kind: &str, version: &str, root: &Path) -> Option<Value> {
+// Уже установленная версия загрузчика — без сети. pinned — закреплённая версия загрузчика (у сборок)
+pub(crate) fn local_config(kind: &str, version: &str, pinned: Option<&str>, root: &Path) -> Option<Value> {
     let folder = folder_type(kind);
-    let custom = format!("{folder}-{version}");
-    let dir = root.join("versions").join(&custom);
+    let (id, runtime_root) = match pinned {
+        Some(pin) if folder == "fabric" || folder == "quilt" => (format!("{folder}-{version}-{pin}"), root.to_path_buf()),
+        Some(pin) => {
+            let id = format!("{folder}-{version}-{pin}");
+            let runtime_root = root.join("loader-runtimes").join(&id);
+            (id, runtime_root)
+        }
+        None => (format!("{folder}-{version}"), root.to_path_buf()),
+    };
+    let dir = runtime_root.join("versions").join(&id);
     if folder == "fabric" || folder == "quilt" {
-        return dir.join(format!("{custom}.json")).is_file().then(|| release(version, root, Some(&custom)));
+        return dir.join(format!("{id}.json")).is_file().then(|| release(version, &runtime_root, Some(&id)));
     }
     let installer = dir.join(format!("{folder}.jar"));
     installer.is_file().then(|| {
-        let mut config = release(version, root, Some(&custom));
+        let mut config = release(version, &runtime_root, Some(&id));
         config["forge"] = Value::String(installer.to_string_lossy().to_string());
         config["clientPackage"] = Value::Null;
         config
     })
 }
 
-// Своя версия: versions/<имя>/<имя>.json; с inheritsFrom — поверх базовой
-fn custom_config(name: &str, root: &Path) -> Value {
-    if !valid(name) {
-        return Value::Bool(false);
+// Fabric/Quilt нужной версии игры, установленный как угодно (другая версия загрузчика, профиль официального
+// лаунчера или TLauncher): versions/<id>/<id>.json, наследуется от этой версии игры и содержит загрузчик.
+// Сначала — с той же версией загрузчика, что просили, потом — самая новая из установленных
+pub(crate) fn any_installed_fabric(loader: &str, version: &str, wanted: Option<&str>, root: &Path) -> Option<Value> {
+    let coordinate = coordinate(loader);
+    let mut found: Vec<(String, String)> = Vec::new(); // (id, версия загрузчика)
+    for entry in std::fs::read_dir(root.join("versions")).ok()?.flatten() {
+        let id = entry.file_name().to_string_lossy().to_string();
+        if !valid_folder_name(&id) {
+            continue;
+        }
+        let Some(profile) = std::fs::read(entry.path().join(format!("{id}.json"))).ok().filter(|b| b.len() <= 4 * 1024 * 1024)
+            .and_then(|b| serde_json::from_slice::<Value>(&b).ok()) else { continue };
+        if profile.get("inheritsFrom").and_then(Value::as_str) != Some(version) {
+            continue;
+        }
+        let loader_version = profile.get("libraries").and_then(Value::as_array).and_then(|libs| libs.iter()
+            .filter_map(|l| l.get("name").and_then(Value::as_str))
+            .find_map(|name| name.strip_prefix(coordinate).map(str::to_string)));
+        if let Some(loader_version) = loader_version {
+            found.push((id, loader_version));
+        }
     }
-    let manifest: Value = match std::fs::read(root.join("versions").join(name).join(format!("{name}.json"))).ok().and_then(|b| serde_json::from_slice(&b).ok()) {
-        Some(Value::Object(map)) => Value::Object(map),
-        _ => return Value::Bool(false),
+    let pick = wanted.and_then(|w| found.iter().find(|(_, v)| v == w)).or_else(|| found.iter().max_by_key(|(_, v)| version_key(v)))?;
+    Some(release(version, root, Some(&pick.0)))
+}
+
+// Своя версия: versions/<имя>/<имя>.json; с inheritsFrom — поверх базовой.
+// Если файл назван не по имени папки (переименовали папку), берётся единственный подходящий .json из неё и
+// копируется под правильное имя — версия чинится сама
+fn custom_manifest(name: &str, root: &Path) -> Result<serde_json::Map<String, Value>, BridgeError> {
+    let dir = root.join("versions").join(name);
+    let read = |path: &Path| -> Option<serde_json::Map<String, Value>> {
+        let bytes = std::fs::read(path).ok().filter(|b| b.len() <= 16 * 1024 * 1024)?;
+        match serde_json::from_slice::<Value>(&bytes).ok()? {
+            Value::Object(map) if map.get("inheritsFrom").is_some() || map.get("mainClass").is_some() => Some(map),
+            _ => None,
+        }
     };
+    let expected = dir.join(format!("{name}.json"));
+    if let Some(manifest) = read(&expected) {
+        return Ok(manifest);
+    }
+    if !dir.is_dir() {
+        return Err(fail("version_missing", format!("Version folder not found: {name}")));
+    }
+    let candidates: Vec<(PathBuf, serde_json::Map<String, Value>)> = std::fs::read_dir(&dir).map(|entries| {
+        entries.flatten().map(|e| e.path())
+            .filter(|p| p.extension().map(|e| e.eq_ignore_ascii_case("json")).unwrap_or(false))
+            .filter_map(|p| read(&p).map(|m| (p, m))).collect()
+    }).unwrap_or_default();
+    match candidates.as_slice() {
+        [(path, manifest)] => {
+            let mut fixed = manifest.clone();
+            fixed.insert("id".into(), Value::String(name.to_string()));
+            atomic_write(&expected, &serde_json::to_vec_pretty(&Value::Object(fixed.clone())).unwrap_or_default())?;
+            // Jar той же версии — тоже под имя папки (иначе игра не найдёт свою сборку клиента)
+            let jar = path.with_extension("jar");
+            let expected_jar = dir.join(format!("{name}.jar"));
+            if jar.is_file() && !expected_jar.exists() {
+                let _ = std::fs::copy(&jar, &expected_jar);
+            }
+            crate::logs::write("info", &format!("Version {name}: manifest restored from {}", path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()));
+            Ok(fixed)
+        }
+        _ => Err(fail("version_missing", format!("Version manifest not found or broken: {name}"))),
+    }
+}
+
+pub(crate) fn custom_config(name: &str, root: &Path) -> Result<Value, BridgeError> {
+    if !valid_folder_name(name) {
+        return Err(fail("version_name", format!("Unsupported version name: {name}")));
+    }
+    let manifest = custom_manifest(name, root)?;
     let kind = manifest.get("type").and_then(Value::as_str).filter(|t| matches!(*t, "release" | "snapshot" | "old_alpha" | "old_beta")).unwrap_or("release");
     match manifest.get("inheritsFrom").and_then(Value::as_str).filter(|s| !s.is_empty()) {
-        Some(parent) if valid(parent) => json!({"root": root, "version": {"number": parent, "type": kind, "custom": name}}),
-        Some(_) => Value::Bool(false),
-        None => json!({"root": root, "version": {"number": name, "type": kind}}),
+        Some(parent) if valid_folder_name(parent) => Ok(json!({"root": root, "version": {"number": parent, "type": kind, "custom": name}})),
+        Some(parent) => Err(fail("version_name", format!("Unsupported parent version name: {parent}"))),
+        None => Ok(json!({"root": root, "version": {"number": name, "type": kind}})),
     }
 }
 
@@ -206,15 +292,29 @@ pub async fn generate_config(input: Value) -> BridgeResult {
     let version = input.get("version").and_then(Value::as_str).unwrap_or("");
     let loader_version = input.get("loaderVersion").and_then(Value::as_str).filter(|s| !s.is_empty());
     let game_data = input.get("gameData").and_then(Value::as_str).unwrap_or("");
-    if !["vanilla", "custom", "forge", "forgeOptiFine", "neoforge", "fabric", "quilt"].contains(&kind) || !valid(version)
+    let version_ok = if kind == "custom" { valid_folder_name(version) } else { valid(version) };
+    if !["vanilla", "custom", "forge", "forgeOptiFine", "neoforge", "fabric", "quilt"].contains(&kind) || !version_ok
         || loader_version.map(|v| !valid(v)).unwrap_or(false) || game_data.is_empty() || !Path::new(game_data).is_absolute() || game_data.contains("..") {
-        return ok(false);
+        crate::logs::write("warn", &format!("Loader config rejected: type={kind} version={version} loader={loader_version:?}"));
+        return Err(fail(if version_ok { "bad_request" } else { "version_name" }, format!("Unsupported launch request: {kind} {version}")));
     }
     let root = PathBuf::from(game_data);
     match kind {
         "vanilla" => return ok(json!({"version": {"type": "release", "number": version}, "root": root})),
-        "custom" => return ok(custom_config(version, &root)),
+        "custom" => {
+            return custom_config(version, &root).map(|config| (config, None)).map_err(|error| {
+                crate::logs::write("warn", &format!("Custom version {version}: {}", error.message));
+                error
+            })
+        }
         _ => {}
+    }
+    // Закреплённая версия загрузчика уже установлена — она не меняется, сеть не нужна
+    if loader_version.is_some() {
+        if let Some(local) = local_config(kind, version, loader_version, &root) {
+            crate::logs::write("info", &format!("Loader config {kind}-{version}-{}: installed, no network needed", loader_version.unwrap_or("")));
+            return ok(local);
+        }
     }
     let online = async {
         match folder_type(kind) {
@@ -222,9 +322,13 @@ pub async fn generate_config(input: Value) -> BridgeResult {
             _ => forge_like(kind, version, loader_version, &root).await,
         }
     };
-    // Если версия уже установлена — при недоступной сети запускаем её с диска
+    // Если версия уже установлена — при недоступной сети запускаем её с диска.
+    // Для закреплённой версии, которой нет на диске, запасной вариант — любая установленная версия того же загрузчика
     let offline = input.get("offline").and_then(Value::as_bool).unwrap_or(false);
-    let local = if loader_version.is_none() || offline { local_config(kind, version, &root) } else { None };
+    let fabric_like_kind = matches!(folder_type(kind), "fabric" | "quilt");
+    let local = local_config(kind, version, None, &root)
+        .filter(|_| loader_version.is_none() || offline)
+        .or_else(|| fabric_like_kind.then(|| any_installed_fabric(folder_type(kind), version, loader_version, &root)).flatten());
     // Офлайн-режим: интернета нет — не ждём серверов загрузчиков
     if offline {
         if let Some(local) = local {
@@ -233,13 +337,19 @@ pub async fn generate_config(input: Value) -> BridgeResult {
         }
     }
     let limit = Duration::from_secs(if local.is_some() { 8 } else { 90 });
-    match tokio::time::timeout(limit, online).await {
-        Ok(Ok(config)) => ok(config),
-        Ok(Err(error)) => {
-            crate::logs::write("warn", &format!("Loader config {kind}-{version} failed: {} (local={})", error.message, local.is_some()));
-            ok(local.unwrap_or(Value::Bool(false)))
+    let error = match tokio::time::timeout(limit, online).await {
+        Ok(Ok(config)) => return ok(config),
+        Ok(Err(error)) => error,
+        Err(_) => fail("loader_offline", format!("Loader servers did not answer in {} s", limit.as_secs())),
+    };
+    crate::logs::write("warn", &format!("Loader config {kind}-{version} failed: {} (local={})", error.message, local.is_some()));
+    match local {
+        Some(local) => {
+            crate::logs::write("info", &format!("Loader config {kind}-{version}: using installed loader {}", local["version"]["custom"].as_str().unwrap_or("")));
+            ok(local)
         }
-        Err(_) => ok(local.unwrap_or(Value::Bool(false))),
+        // Нет ни сети, ни установленной версии
+        None => Err(fail("loader_offline", error.message)),
     }
 }
 

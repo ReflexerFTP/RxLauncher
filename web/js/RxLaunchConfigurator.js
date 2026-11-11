@@ -4,6 +4,7 @@
 
     static createConfigForVersion = async (version, javaVersion, loaderVersion = "") => {
         RxCollector.writeLog(`Config: Preparing launch config [version=${version}] [java=${javaVersion}]`);
+        RxLaunchConfigurator.lastError = null;
         if (version.split("-").length < 2) {
             return false;
         }
@@ -434,8 +435,19 @@
             RxCollector.writeLog("Config: We got modded launch config");
             return result;
         } catch (error) {
-            RxCollector.writeLog(`Config: Modded launch config failed [error=${error.message}]`);
+            // Код причины (version_name, version_missing, loader_offline) — игрок увидит понятное объяснение
+            RxLaunchConfigurator.lastError = {code: error.code || "", message: error.message || String(error)};
+            RxCollector.writeLog(`Config: Modded launch config failed [code=${error.code || "-"}] [error=${error.message}]`);
             return false;
         }
     }
+
+    // Причина последней неудачной подготовки запуска (см. RxStarter.recoverFromLaunchFailure)
+    static lastError = null;
+
+    static failureText = (error = RxLaunchConfigurator.lastError) => {
+        if (!error?.code) return "";
+        const reasons = MESSAGES.starter?.reasons || {};
+        return reasons[error.code] || "";
+    };
 }

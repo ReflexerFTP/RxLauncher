@@ -57,6 +57,8 @@ pub fn run() {
             });
             logs::write("info", &format!("RxLauncher {} started (Tauri {})", app.package_info().version, tauri::VERSION));
             updater::start(app.handle());
+            // Смена трека в Spotify — событием, остров над лаунчером обновляется сразу
+            media::watch(app.handle());
             Ok(())
         })
         .on_page_load(|webview, payload| {

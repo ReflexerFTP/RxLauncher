@@ -392,7 +392,13 @@
       },
       "busy": "Wait — the previous client is still starting",
       "memoryLowered": "Low free memory — this client gets {0} MB",
-      "serversSyncFailed": "Could not update Minecraft's server list"
+      "serversSyncFailed": "Could not update Minecraft's server list",
+      "reasons": {
+        "version_name": "The version name has characters Windows does not allow in folder names. Rename the version folder in versions.",
+        "version_missing": "This version's files are missing or damaged. Remove it in the version list and install it again, or pick the regular version with the same loader.",
+        "loader_offline": "The loader server (Fabric, Forge, Quilt) does not answer and this version is not downloaded yet. Check your connection and try again.",
+        "bad_request": "The launcher could not read the selected version. Pick it again in the version list."
+      }
     },
     "updater": {
       "available": "New update available",

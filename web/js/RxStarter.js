@@ -498,7 +498,9 @@ class RxStarter {
         RxFlyout.setUIStartMode(false);
         await RxFlyout.changeMode("idle");
         RxStarter.updateRunningUI();
-        RxToasts.create(MESSAGES.starter.failed, "error");
+        // Понятная причина, если ядро её назвало (версия повреждена, нет сети для загрузчика)
+        const reason = RxLaunchConfigurator.failureText();
+        RxToasts.create(MESSAGES.starter.failed, "error", reason, reason ? {duration: 12000} : {});
         return false;
     }
 

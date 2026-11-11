@@ -221,3 +221,73 @@ fn folder_is_listed_in_one_call() {
     assert!(crate::fsops::list_dir(&dir.join("missing"), 1, 0, 10).is_err());
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn version_folder_names_like_other_launchers() {
+    use crate::loaders::valid_folder_name;
+    for good in ["Fabric 1.21.4", "OptiFine 1.20.1 (HD U I6)", "fabric-loader-0.16.10-1.21.4", "1.21.4", "Сборка 1.20"] {
+        assert!(valid_folder_name(good), "{good} must be accepted");
+    }
+    for bad in ["", ".", "..", "a/b", r"a\b", "C:x", "x?", "x*", "x|y", "name.", "name ", " name", "x\u{0007}"] {
+        assert!(!valid_folder_name(bad), "{bad:?} must be rejected");
+    }
+}
+
+fn temp_root(tag: &str) -> std::path::PathBuf {
+    let root = std::env::temp_dir().join(format!("rx-{tag}-{:016x}", rand::random::<u64>()));
+    std::fs::create_dir_all(root.join("versions")).unwrap();
+    root
+}
+
+fn write_json(path: std::path::PathBuf, value: serde_json::Value) {
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(path, serde_json::to_vec(&value).unwrap()).unwrap();
+}
+
+#[test]
+fn custom_version_with_spaces_launches_and_repairs_itself() {
+    let root = temp_root("custom");
+    // Как у TLauncher: «Fabric 1.21.4» поверх 1.21.4
+    write_json(root.join("versions/Fabric 1.21.4/Fabric 1.21.4.json"), json!({"id": "Fabric 1.21.4", "inheritsFrom": "1.21.4", "type": "release"}));
+    let config = crate::loaders::custom_config("Fabric 1.21.4", &root).unwrap();
+    assert_eq!(config["version"]["custom"], "Fabric 1.21.4");
+    assert_eq!(config["version"]["number"], "1.21.4");
+
+    // Папку переименовали, файлы внутри остались со старым именем — манифест и jar восстанавливаются
+    write_json(root.join("versions/Моя версия/old-name.json"), json!({"id": "old-name", "inheritsFrom": "1.20.1"}));
+    std::fs::write(root.join("versions/Моя версия/old-name.jar"), b"PK\x03\x04").unwrap();
+    let config = crate::loaders::custom_config("Моя версия", &root).unwrap();
+    assert_eq!(config["version"]["number"], "1.20.1");
+    let restored: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("versions/Моя версия/Моя версия.json")).unwrap()).unwrap();
+    assert_eq!(restored["id"], "Моя версия");
+    assert!(root.join("versions/Моя версия/Моя версия.jar").is_file());
+
+    // Нет файлов — понятная ошибка с кодом, а не молчаливое «нет конфигурации»
+    std::fs::create_dir_all(root.join("versions/Пустая")).unwrap();
+    assert_eq!(crate::loaders::custom_config("Пустая", &root).unwrap_err().code.as_deref(), Some("version_missing"));
+    assert_eq!(crate::loaders::custom_config("Нет такой", &root).unwrap_err().code.as_deref(), Some("version_missing"));
+    assert_eq!(crate::loaders::custom_config("a/../b", &root).unwrap_err().code.as_deref(), Some("version_name"));
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
+fn pinned_and_any_installed_loader_work_without_network() {
+    let root = temp_root("loader");
+    let profile = |id: &str, loader: &str| json!({"id": id, "inheritsFrom": "1.21.4", "libraries": [{"name": format!("net.fabricmc:fabric-loader:{loader}")}, {"name": "org.ow2.asm:asm:9.7"}]});
+    // Закреплённая версия сборки уже скачана — берётся с диска
+    write_json(root.join("versions/fabric-1.21.4-0.20.1/fabric-1.21.4-0.20.1.json"), profile("fabric-1.21.4-0.20.1", "0.20.1"));
+    let local = crate::loaders::local_config("fabric", "1.21.4", Some("0.20.1"), &root).unwrap();
+    assert_eq!(local["version"]["custom"], "fabric-1.21.4-0.20.1");
+    assert!(crate::loaders::local_config("fabric", "1.21.4", Some("0.19.0"), &root).is_none());
+
+    // Нужной нет — запасной вариант: та же версия загрузчика под другим именем, иначе самая новая установленная
+    write_json(root.join("versions/fabric-loader-0.16.10-1.21.4/fabric-loader-0.16.10-1.21.4.json"), profile("fabric-loader-0.16.10-1.21.4", "0.16.10"));
+    write_json(root.join("versions/fabric-1.20.1/fabric-1.20.1.json"), json!({"id": "fabric-1.20.1", "inheritsFrom": "1.20.1", "libraries": [{"name": "net.fabricmc:fabric-loader:0.99.0"}]}));
+    let same = crate::loaders::any_installed_fabric("fabric", "1.21.4", Some("0.16.10"), &root).unwrap();
+    assert_eq!(same["version"]["custom"], "fabric-loader-0.16.10-1.21.4");
+    let newest = crate::loaders::any_installed_fabric("fabric", "1.21.4", Some("0.19.0"), &root).unwrap();
+    assert_eq!(newest["version"]["custom"], "fabric-1.21.4-0.20.1", "the newest installed loader for 1.21.4, never another game version");
+    assert!(crate::loaders::any_installed_fabric("quilt", "1.21.4", None, &root).is_none());
+    assert!(crate::loaders::any_installed_fabric("fabric", "1.19.2", None, &root).is_none());
+    let _ = std::fs::remove_dir_all(&root);
+}
