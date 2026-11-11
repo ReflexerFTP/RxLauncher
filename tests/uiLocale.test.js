@@ -29,13 +29,13 @@ const notesSource = fs.readFileSync(path.join(__dirname, "..", "web", "js", "RxP
 vm.runInContext(`${notesSource}\nthis.RxPatchNotes = RxPatchNotes;`, context, {filename: "RxPatchNotes.js"});
 assert.strictEqual(context.RxPatchNotes.locale(), "ru-RU");
 assert.doesNotThrow(() => context.RxPatchNotes.formatDate("2026-07-29T18:00:00+03:00"));
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Профили, остров Spotify и несколько клиентов");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Лёгкий установщик, защита файлов и горячие клавиши");
 language = "en";
 assert.strictEqual(context.RxPatchNotes.locale(), "en-US");
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Profiles, Spotify island and multiple clients");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "A lighter installer, file protection and hotkeys");
 // Устаревший сохранённый язык откатывается на английские тексты
 language = "ua";
-assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "Profiles, Spotify island and multiple clients");
+assert.strictEqual(context.RxPatchNotes.getAll()[0].title, "A lighter installer, file protection and hotkeys");
 // Каждый патч локализован для обоих языков
 for (const lang of ["ru", "en"]) {
     language = lang;

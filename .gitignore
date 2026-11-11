@@ -46,3 +46,6 @@ src-tauri/target/
 src-tauri/gen/
 src-tauri/resources/
 tauri/.deps/
+
+# Заметки о версиях для сайта (tauri/export-patchnotes.cjs)
+/patchnotes.json

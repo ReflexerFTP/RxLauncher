@@ -7,7 +7,7 @@ class RxVersionArtwork {
                 en: "Deeper caves, taller mountains and a new sense of scale. This artwork is selected automatically for every 1.18 build."
             },
             accent: "#55d6c2",
-            image: "assets/version-heroes/1.18.png"
+            image: "assets/version-heroes/1.18.webp"
         },
         "1.19": {
             title: {ru: "Дикое обновление", en: "The Wild Update"},
@@ -16,7 +16,7 @@ class RxVersionArtwork {
                 en: "Ancient cities, the deep dark and mysterious sculk glow for the 1.19 generation."
             },
             accent: "#2fd1c7",
-            image: "assets/version-heroes/1.19.png"
+            image: "assets/version-heroes/1.19.webp"
         },
         "1.20": {
             title: {ru: "Тропы и истории", en: "Trails & Tales"},
@@ -25,7 +25,7 @@ class RxVersionArtwork {
                 en: "Cherry groves, archaeology and a warmer journey — a dedicated scene for the 1.20 generation."
             },
             accent: "#ff9eb4",
-            image: "assets/version-heroes/1.20.png"
+            image: "assets/version-heroes/1.20.webp"
         },
         "1.21": {
             title: {ru: "Сложные испытания", en: "Tricky Trials"},
@@ -34,7 +34,7 @@ class RxVersionArtwork {
                 en: "Copper halls, vaults and trial chambers in a cinematic scene for the 1.21 generation."
             },
             accent: "#36e0cf",
-            image: "assets/version-heroes/1.21.png"
+            image: "assets/version-heroes/1.21.webp"
         }
     };
 

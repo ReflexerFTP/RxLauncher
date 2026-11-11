@@ -30,7 +30,6 @@
       "local": "Local account",
       "microsoft": "Microsoft Account",
       "elyby": "Ely.by account",
-      "frog": "RxClient account",
       "unknown": "Unknown account",
       "addingMs": "Adding a Microsoft Account",
       "alreadyExists": "This account has already been added",
@@ -627,10 +626,6 @@
         "rxPerformanceMode": {
           "title": "Rx performance mode",
           "description": "Adds a tuned JVM profile to reduce freezes and improve frame stability."
-        },
-        "rxClientLobbyMode": {
-          "title": "Rx Client Lobby (In-Game, 1.21.4)",
-          "description": "Adds the Rx Client menu inside Minecraft (SinglePlayer/MultiPlayer/ALT manager/Discord/Telegram). Works on 1.21.4."
         },
         "downloadSource": {
           "title": "Download source",
@@ -1628,6 +1623,38 @@
       "nowFriends": "You are now friends",
       "you": "That's you",
       "nobody": "Nobody found"
+    },
+    "tray": {
+      "open": "Open RxLauncher",
+      "stop": "Close the game",
+      "launch": "Launch"
+    },
+    "eula": {
+      "title": "User agreement",
+      "text": "To use RxLauncher, accept the user agreement and the privacy policy. Both documents open with the buttons below.",
+      "eula": "Agreement",
+      "privacy": "Privacy",
+      "accept": "I accept",
+      "exit": "Quit"
+    },
+    "microsoft": {
+      "title": "Microsoft account",
+      "intro": "Open the Microsoft sign-in page and enter the code {0} — it is already copied. The launcher never sees your password",
+      "waiting": "Waiting for confirmation. Enter the code {0} on the page that opened and sign in to your Microsoft account",
+      "open": "Open the sign-in page",
+      "openAgain": "Open the page again",
+      "checking": "Checking the Minecraft licence…",
+      "notConfigured": "Microsoft sign-in is not connected yet",
+      "declined": "Sign-in was cancelled on the Microsoft page",
+      "expired": "The sign-in code expired — start again",
+      "no_xbox": "This Microsoft account has no Xbox profile. Create one at xbox.com and sign in again",
+      "region": "Xbox Live is not available in this account's country",
+      "adult": "This account needs age verification at xbox.com",
+      "child": "A child account must be added to a family by an adult (account.microsoft.com/family)",
+      "no_game": "This account does not own Minecraft: Java Edition",
+      "app_not_approved": "Microsoft sign-in is not approved for RxLauncher yet. Try again later",
+      "relogin": "Sign in to the Microsoft account again",
+      "unavailable": "The sign-in service is unavailable. Check your connection and try again"
     }
   }
 }

@@ -24,7 +24,7 @@
 
 #modal-content .hero .hero-bg {
     inset: -1.5%;
-    background-image: url("../assets/version-heroes/1.21.png");
+    background-image: url("../assets/version-heroes/1.21.webp");
     transform: scale(1.035);
     filter: saturate(108%) contrast(103%);
     transition: background-image .45s ease, filter .45s ease;

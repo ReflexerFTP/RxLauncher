@@ -272,6 +272,46 @@ fn disk_free(_path: &str) -> Result<(u64, u64, u64), BridgeError> {
     Ok((u64::MAX / 2, u64::MAX / 2, u64::MAX / 2))
 }
 
+// Список папки вместе с размером и временем изменения — одним обращением вместо readdir и stat на каждый файл.
+// depth — сколько уровней читать (1 — только сама папка), head — сколько первых байт каждого файла вернуть (hex)
+pub fn list_dir(root: &Path, depth: u64, head: usize, limit: usize) -> std::io::Result<Vec<Value>> {
+    let mut out = Vec::new();
+    let mut queue: Vec<(PathBuf, String, u64)> = vec![(root.to_path_buf(), String::new(), 1)];
+    while let Some((dir, prefix, level)) = queue.pop() {
+        let entries = match fs::read_dir(&dir) {
+            Ok(entries) => entries,
+            Err(error) if level == 1 => return Err(error),
+            Err(_) => continue,
+        };
+        for entry in entries.flatten() {
+            if out.len() >= limit {
+                return Ok(out);
+            }
+            let name = entry.file_name().to_string_lossy().to_string();
+            let relative = if prefix.is_empty() { name } else { format!("{prefix}\\{name}") };
+            let kind = entry.file_type().map(kind_of).unwrap_or("file");
+            // Метаданные берутся из записи каталога: файл не открывается, ссылки не раскрываются
+            let meta = entry.metadata().ok();
+            let mut item = json!({
+                "name": relative,
+                "kind": kind,
+                "size": meta.as_ref().map(|m| m.len()).unwrap_or(0),
+                "mtimeMs": meta.as_ref().map(|m| millis(m.modified())).unwrap_or(0.0),
+            });
+            if head > 0 && kind == "file" {
+                let mut buffer = vec![0u8; head];
+                let count = File::open(entry.path()).and_then(|mut file| file.read(&mut buffer)).unwrap_or(0);
+                item["head"] = json!(hex::encode(&buffer[..count]));
+            }
+            if kind == "dir" && level < depth {
+                queue.push((entry.path(), relative, level + 1));
+            }
+            out.push(item);
+        }
+    }
+    Ok(out)
+}
+
 fn with_fd<T>(app: &AppHandle, fd: u64, f: impl FnOnce(&mut File) -> Result<T, BridgeError>) -> Result<T, BridgeError> {
     let state = app.state::<AppState>();
     let mut table = state.files.lock().map_err(|_| BridgeError::new("File table poisoned"))?;
@@ -314,6 +354,13 @@ pub fn run(app: &AppHandle, op: &str, args: &Value, payload: Vec<u8>) -> BridgeR
                 list.push(json!({"name": entry.file_name().to_string_lossy(), "kind": kind}));
             }
             ok(list)
+        }
+        "list" => {
+            let path = arg_str(args, "path")?;
+            let depth = arg_u64(args, "depth").unwrap_or(1).clamp(1, 8);
+            let head = arg_u64(args, "head").unwrap_or(0).min(64) as usize;
+            let limit = arg_u64(args, "limit").unwrap_or(20_000).clamp(1, 200_000) as usize;
+            ok(list_dir(Path::new(path), depth, head, limit).map_err(|e| io_error(e, "scandir", path, None))?)
         }
         "mkdir" => {
             let path = arg_str(args, "path")?;

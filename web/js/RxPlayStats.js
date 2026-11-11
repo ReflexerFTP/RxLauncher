@@ -938,6 +938,24 @@ class RxPlayStats {
         if (!gameDirectory) return result;
         const savesPath = path.join(gameDirectory, "saves");
         if (!fs.existsSync(savesPath)) return result;
+        // Ядро отдаёт миры вместе с их файлами одним обращением: проверка идёт во время игры и не должна её задерживать
+        if (typeof fs.rxListSync === "function") {
+            try {
+                const times = {};
+                fs.rxListSync(savesPath, {depth: 2}).forEach(entry => {
+                    const [world, file, deeper] = entry.name.split(/[\\/]/);
+                    if (!file || deeper || entry.kind !== "file" || (file !== "session.lock" && file !== "level.dat")) return;
+                    (times[world] = times[world] || {})[file] = entry.mtimeMs;
+                });
+                Object.entries(times).forEach(([name, files]) => {
+                    const modifiedAt = files["session.lock"] || files["level.dat"] || 0;
+                    if (modifiedAt > 0) result[path.join(savesPath, name)] = {name, modifiedAt};
+                });
+            } catch (error) {
+                RxCollector.writeLog(`Statistics: World scan failed [error=${error.message}]`);
+            }
+            return result;
+        }
         try {
             fs.readdirSync(savesPath, {withFileTypes: true}).filter(entry => entry.isDirectory()).forEach(entry => {
                 const worldPath = path.join(savesPath, entry.name);

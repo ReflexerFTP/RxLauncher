@@ -1,13 +1,80 @@
 // Окно лаунчера, значок в трее на время игры, открытие ссылок и папок, буфер обмена
-use serde_json::Value;
-use tauri::menu::{Menu, MenuItem};
+use std::sync::Mutex;
+
+use serde_json::{json, Value};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_opener::OpenerExt;
 
 use crate::bridge::{ok, BridgeError, BridgeResult};
 
 const TRAY_ID: &str = "rx-game";
+const TRAY_LAUNCH: &str = "rx-launch-";
+
+// Что показать в меню значка в трее: подписи на языке интерфейса и версии для быстрого запуска (канал tray-menu)
+static TRAY_MENU: Mutex<Option<Value>> = Mutex::new(None);
+
+fn tray_payload() -> Value {
+    TRAY_MENU.lock().ok().and_then(|payload| payload.clone()).unwrap_or(Value::Null)
+}
+
+fn tray_versions(payload: &Value) -> Vec<(String, String)> {
+    payload.get("versions").and_then(Value::as_array).map(|list| {
+        list.iter().filter_map(|item| {
+            let id = item.get("id")?.as_str()?.to_string();
+            let title: String = item.get("title")?.as_str()?.chars().filter(|c| !c.is_control()).take(60).collect();
+            (!id.is_empty() && !title.is_empty()).then_some((id, title))
+        }).take(5).collect()
+    }).unwrap_or_default()
+}
+
+fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    let payload = tray_payload();
+    let label = |name: &str, fallback: &str| -> String {
+        payload.get("labels").and_then(|labels| labels.get(name)).and_then(Value::as_str).filter(|text| !text.is_empty())
+            .unwrap_or(fallback).chars().filter(|c| !c.is_control()).take(60).collect()
+    };
+    let menu = Menu::new(app)?;
+    menu.append(&MenuItem::with_id(app, "rx-open", label("open", "Открыть RxLauncher"), true, None::<&str>)?)?;
+    menu.append(&MenuItem::with_id(app, "rx-stop", label("stop", "Закрыть игру"), true, None::<&str>)?)?;
+    let versions = tray_versions(&payload);
+    if !versions.is_empty() {
+        menu.append(&PredefinedMenuItem::separator(app)?)?;
+        let launch = label("launch", "Запустить");
+        for (index, (_, title)) in versions.iter().enumerate() {
+            menu.append(&MenuItem::with_id(app, format!("{TRAY_LAUNCH}{index}"), format!("{launch}: {title}"), true, None::<&str>)?)?;
+        }
+    }
+    Ok(menu)
+}
+
+pub fn set_tray_menu(app: &AppHandle, payload: Value) {
+    if let Ok(mut current) = TRAY_MENU.lock() {
+        *current = Some(payload);
+    }
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        if let Ok(menu) = build_tray_menu(app) {
+            let _ = tray.set_menu(Some(menu));
+        }
+    }
+}
+
+// Выбор в меню трея: открыть лаунчер — сразу, остальное выполняет интерфейс (событие rx:tray-action)
+fn tray_menu_event(app: &AppHandle, id: &str) {
+    match id {
+        "rx-open" => show_launcher(app),
+        "rx-stop" => {
+            let _ = app.emit("rx:tray-action", json!({"action": "stop"}));
+        }
+        other => {
+            let Some(index) = other.strip_prefix(TRAY_LAUNCH).and_then(|index| index.parse::<usize>().ok()) else { return };
+            if let Some((version, _)) = tray_versions(&tray_payload()).into_iter().nth(index) {
+                let _ = app.emit("rx:tray-action", json!({"action": "launch", "id": version}));
+            }
+        }
+    }
+}
 
 pub fn main_window(app: &AppHandle) -> Option<tauri::WebviewWindow> {
     app.get_webview_window("main")
@@ -33,20 +100,18 @@ pub fn reveal(app: &AppHandle) {
     }
 }
 
-// Во время игры: окно скрыто, в трее значок «Открыть RxLauncher»
+// Во время игры: окно скрыто, в трее значок с меню (открыть лаунчер, закрыть игру, запустить ещё версию)
 pub fn hide_launcher(app: &AppHandle) {
     let Some(window) = main_window(app) else { return };
     if app.tray_by_id(TRAY_ID).is_none() {
         let built = (|| -> tauri::Result<()> {
-            let open = MenuItem::with_id(app, "rx-open", "Открыть RxLauncher", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open])?;
+            let menu = build_tray_menu(app)?;
             let mut builder = TrayIconBuilder::with_id(TRAY_ID)
                 .tooltip("RxLauncher — Minecraft запущен")
                 .menu(&menu)
                 .on_menu_event(|app, event| {
-                    if event.id() == "rx-open" {
-                        show_launcher(app);
-                    }
+                    let id: &str = event.id().as_ref();
+                    tray_menu_event(app, id);
                 })
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::DoubleClick { button: MouseButton::Left, .. } | TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {

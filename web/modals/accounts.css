@@ -305,6 +305,7 @@ body:has(#modal-accounts:not([style*="display: none"])) > .modal-overlay {
 }
 
 #modal-accounts .acc-elyby img { width: 16px; height: 16px; border-radius: 4px; }
+#modal-accounts .acc-elyby .material-symbols-outlined { font-size: 16px; }
 
 /* ===== Чип аккаунта в шапке ===== */
 #accountSelect .icon .avatar { width: 26px; height: 26px; object-fit: cover; }

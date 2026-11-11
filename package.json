@@ -1,18 +1,12 @@
 {
   "name": "rxclient",
-  "version": "4.4.0",
+  "version": "4.5.0",
+  "private": true,
   "description": "Minecraft-лаунчер. Быстрый. Индивидуальный. Твой",
   "scripts": {
-    "verify": "node ./verifyTranslations.js",
-    "verify-stats": "node ./tests/playStats.test.js",
-    "verify-forge-optifine": "node ./tests/forgeOptiFine.test.js",
-    "verify-installer": "node ./tests/installerAssets.test.js",
-    "render-installer-art": "electron ./resources/installer/art/render-art.cjs",
-    "verify-ui": "node ./tests/uiLocale.test.js",
-    "verify-mods": "node ./tests/modsManager.test.js && node ./tests/modMeta.test.js",
-    "verify-crash": "node ./tests/crashAnalyzer.test.js",
+    "build-ui": "node tauri/build-ui.cjs",
     "test": "node tests/run.cjs",
-    "verify-servers": "node ./tests/minecraftServers.test.js"
+    "verify": "node ./verifyTranslations.js"
   },
   "author": "MaxRx",
   "license": "GPL-3.0",
@@ -20,33 +14,15 @@
   "bugs": "https://github.com/ReflexerFTP/RxLauncher/issues",
   "repository": "https://github.com/ReflexerFTP/RxLauncher",
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "electron": "^44.9.3",
-    "electron-builder": "^26.18.0",
-    "electron-reloader": "^1.2.3"
-  },
-  "dependencies": {
-    "colors": "^1.4.0",
+    "@tauri-apps/cli": "^2.0.0",
+    "adm-zip": "^0.6.1",
     "compressing": "^2.1.3",
-    "console-stamp": "^3.1.2",
-    "discord-rpc": "^4.0.1",
-    "ejs-electron": "^3.0.0",
-    "electron-updater": "^6.3.9",
+    "ejs": "^3.1.10",
     "fs-extra": "^11.3.0",
-    "gamedig": "^5.2.0",
     "jimp": "^1.6.1",
     "jquery": "^3.7.1",
     "mcnbt": "^2.0.3",
-    "minecraft-launcher-core": "^3.18.2",
-    "tomate-loaders": "^2.0.2",
     "toml": "npm:@iarna/toml@^2.2.5",
-    "tree-kill": "^1.2.2",
     "yauzl": "^3.4.0"
-  },
-  "overrides": {
-    "request": "npm:@cypress/request@4.0.1",
-    "uuid": "^11.1.1",
-    "adm-zip": "^0.6.1",
-    "zod": "^4.6.6"
   }
 }

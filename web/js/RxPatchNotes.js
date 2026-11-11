@@ -1,10 +1,42 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.5.0-lighter",
+            version: "4.5.0",
+            date: "2026-11-11T18:00:00+03:00",
+            image: "assets/version-heroes/1.21.webp",
+            tag: {ru: "НОВОЕ", en: "NEW"},
+            title: {ru: "Лёгкий установщик, защита файлов и горячие клавиши", en: "A lighter installer, file protection and hotkeys"},
+            summary: {
+                ru: "Установщик и обновления стали намного меньше, большие папки модов и скриншотов открываются быстрее, интерфейс лаунчера видит только папки игры, а в трее появилось меню с быстрым запуском.",
+                en: "The installer and updates are much smaller, large mod and screenshot folders open faster, the launcher interface only sees game folders, and the tray icon got a quick-launch menu."
+            },
+            changes: {
+                ru: [
+                    "Установщик и обновления стали намного меньше: убран Rx Client с его модами, обложки версий и шрифт значков сжаты, удалены неиспользуемые файлы.",
+                    "Моды, скриншоты и копии миров открываются быстрее на больших папках: список файлов читается одним обращением к диску, окно не замирает.",
+                    "Защита файлов: интерфейс лаунчера работает только с папками лаунчера и игры и с тем, что вы сами выбрали или перетащили. Остальной диск для него закрыт.",
+                    "Значок в трее во время игры: можно закрыть игру или запустить ещё одну версию, не открывая лаунчер.",
+                    "Горячие клавиши: Ctrl+1…9 — разделы меню, Ctrl+, — настройки, Ctrl+F — поиск в открытом окне, Ctrl+Enter — «Играть».",
+                    "При первом запуске лаунчер показывает пользовательское соглашение и политику конфиденциальности.",
+                    "Описания версий в ленте патчей можно исправлять без обновления лаунчера."
+                ],
+                en: [
+                    "The installer and updates are much smaller: Rx Client and its mods are gone, version covers and the icon font are compressed, unused files were removed.",
+                    "Mods, screenshots and world backups open faster in large folders: the file list is read in a single disk request and the window no longer freezes.",
+                    "File protection: the launcher interface only works with launcher and game folders and with what you picked or dropped yourself. The rest of the disk is closed to it.",
+                    "Tray icon while playing: close the game or launch another version without opening the launcher.",
+                    "Hotkeys: Ctrl+1…9 — menu sections, Ctrl+, — settings, Ctrl+F — search in the open window, Ctrl+Enter — Play.",
+                    "On first launch the launcher shows the user agreement and the privacy policy.",
+                    "Version descriptions in the patch feed can be corrected without updating the launcher."
+                ]
+            }
+        },
+        {
             id: "4.4.0-profiles",
             version: "4.4.0",
             date: "2026-11-10T03:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "НОВОЕ", en: "NEW"},
             title: {ru: "Профили, остров Spotify и несколько клиентов", en: "Profiles, Spotify island and multiple clients"},
             summary: {
@@ -42,7 +74,7 @@ class RxPatchNotes {
             id: "4.3.0-capes",
             version: "4.3.0",
             date: "2026-11-08T19:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "НОВОЕ", en: "NEW"},
             title: {ru: "Свои плащи", en: "Custom capes"},
             summary: {
@@ -68,7 +100,7 @@ class RxPatchNotes {
             id: "4.2.3-assets",
             version: "4.2.3",
             date: "2026-11-08T17:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ИСПРАВЛЕНИЕ", en: "FIX"},
             title: {ru: "Вернулись языки, звуки и фон меню", en: "Languages, sounds and menu background are back"},
             summary: {
@@ -90,7 +122,7 @@ class RxPatchNotes {
             id: "4.2.2-java",
             version: "4.2.2",
             date: "2026-11-08T16:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ИСПРАВЛЕНИЕ", en: "FIX"},
             title: {ru: "Java больше не качается заново", en: "Java is no longer downloaded again"},
             summary: {
@@ -114,7 +146,7 @@ class RxPatchNotes {
             id: "4.2.1-security",
             version: "4.2.1",
             date: "2026-11-08T14:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
             title: {ru: "Исправления безопасности", en: "Security fixes"},
             summary: {
@@ -138,7 +170,7 @@ class RxPatchNotes {
             id: "4.2.0-updates-import",
             version: "4.2.0",
             date: "2026-11-08T12:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "УДОБСТВО", en: "CONVENIENCE"},
             title: {ru: "Обновления сами, импорт сборок и офлайн", en: "Self-updating, pack import and offline mode"},
             summary: {
@@ -172,7 +204,7 @@ class RxPatchNotes {
             id: "4.1.0-safer-mods",
             version: "4.1.0",
             date: "2026-11-06T22:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
             title: {ru: "Моды под защитой и приглашения друзей", en: "Safer mods and friend invites"},
             summary: {
@@ -204,7 +236,7 @@ class RxPatchNotes {
             id: "4.0.0-tauri",
             version: "4.0.0",
             date: "2026-11-06T15:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "НОВЫЙ ДВИЖОК", en: "NEW ENGINE"},
             title: {ru: "RxLauncher на Tauri и Rust", en: "RxLauncher on Tauri and Rust"},
             summary: {
@@ -232,7 +264,7 @@ class RxPatchNotes {
             id: "3.13.0-security",
             version: "3.13.0",
             date: "2026-11-06T12:00:00+03:00",
-            image: "assets/version-heroes/1.20.png",
+            image: "assets/version-heroes/1.20.webp",
             tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
             title: {ru: "Защита от стилеров и режим слабого ПК", en: "Stealer protection and low-end PC mode"},
             summary: {
@@ -264,7 +296,7 @@ class RxPatchNotes {
             id: "3.12.0-reliability",
             version: "3.12.0",
             date: "2026-10-29T22:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "НАДЁЖНОСТЬ", en: "RELIABILITY"},
             title: {ru: "Отключённые моды и безопасный откат", en: "Disabled mods and safe rollback"},
             summary: {
@@ -288,7 +320,7 @@ class RxPatchNotes {
             id: "3.11.0-security-audit",
             version: "3.11.0",
             date: "2026-10-29T18:00:00+03:00",
-            image: "assets/version-heroes/1.20.png",
+            image: "assets/version-heroes/1.20.webp",
             tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
             title: {ru: "Исправления по аудиту безопасности", en: "Security audit fixes"},
             summary: {
@@ -320,7 +352,7 @@ class RxPatchNotes {
             id: "3.10.0-announcements-recommended",
             version: "3.10.0",
             date: "2026-10-29T12:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "НОВОСТИ", en: "NEWS"},
             title: {ru: "Объявления и рекомендации", en: "Announcements and picks"},
             summary: {
@@ -350,7 +382,7 @@ class RxPatchNotes {
             id: "3.9.0-friends-tab-menu-login",
             version: "3.9.0",
             date: "2026-10-29T01:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ИНТЕРФЕЙС", en: "INTERFACE"},
             title: {ru: "Вкладка «Друзья», новое меню и вход", en: "Friends tab, new menu and login"},
             summary: {
@@ -380,7 +412,7 @@ class RxPatchNotes {
             id: "3.8.0-friends-copy-discord",
             version: "3.8.0",
             date: "2026-10-28T23:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ДРУЗЬЯ", en: "FRIENDS"},
             title: {ru: "Сборки друзей, Discord и новое меню", en: "Friends' setups, Discord and a new menu"},
             summary: {
@@ -410,7 +442,7 @@ class RxPatchNotes {
             id: "3.7.0-friends-accounts",
             version: "3.7.0",
             date: "2026-10-28T20:00:00+03:00",
-            image: "assets/version-heroes/1.20.png",
+            image: "assets/version-heroes/1.20.webp",
             tag: {ru: "ДРУЗЬЯ", en: "FRIENDS"},
             title: {ru: "Друзья и аккаунт RxLauncher", en: "Friends and RxLauncher account"},
             summary: {
@@ -442,7 +474,7 @@ class RxPatchNotes {
             id: "3.6.0-command-history-anti-theft",
             version: "3.6.0",
             date: "2026-10-28T00:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ЗАЩИТА", en: "PROTECTION"},
             title: {ru: "Анти-кража истории команд", en: "Command history anti-theft"},
             summary: {
@@ -470,7 +502,7 @@ class RxPatchNotes {
             id: "3.5.0-import-fast-downloads",
             version: "3.5.0",
             date: "2026-10-27T12:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ИМПОРТ", en: "IMPORT"},
             title: {ru: "Импорт из других лаунчеров", en: "Import from other launchers"},
             summary: {
@@ -500,7 +532,7 @@ class RxPatchNotes {
             id: "3.4.0-rpc-avatar",
             version: "3.4.0",
             date: "2026-10-26T19:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "DISCORD", en: "DISCORD"},
             title: {ru: "Новая аватарка в Discord", en: "A new Discord avatar"},
             summary: {
@@ -522,7 +554,7 @@ class RxPatchNotes {
             id: "3.3.0-hardening",
             version: "3.3.0",
             date: "2026-10-26T10:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "БЕЗОПАСНОСТЬ", en: "SECURITY"},
             title: {ru: "Безопасность и надёжность", en: "Security and reliability"},
             summary: {
@@ -554,7 +586,7 @@ class RxPatchNotes {
             id: "3.2.0-community",
             version: "3.2.0",
             date: "2026-10-26T01:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "СООБЩЕСТВО", en: "COMMUNITY"},
             title: {ru: "Новые Discord, Telegram и сайт", en: "New Discord, Telegram and website"},
             summary: {
@@ -584,7 +616,7 @@ class RxPatchNotes {
             id: "3.1.0-pale-garden",
             version: "3.1.0",
             date: "2026-10-26T00:45:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ДИЗАЙН", en: "DESIGN"},
             title: {ru: "Скрипун — новый фон по умолчанию", en: "The Creaking is the new default wallpaper"},
             summary: {
@@ -608,7 +640,7 @@ class RxPatchNotes {
             id: "3.0.0-catalog-together",
             version: "3.0.0",
             date: "2026-10-26T00:30:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "3.0", en: "3.0"},
             title: {ru: "Каталог, игра с друзьями и новая статистика", en: "Catalog, playing together and new statistics"},
             summary: {
@@ -644,7 +676,7 @@ class RxPatchNotes {
             id: "2.12.0-catalog-scroll",
             version: "2.12.0",
             date: "2026-10-26T21:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ФИКСЫ", en: "FIXES"},
             title: {ru: "Каталог Modrinth листается", en: "The Modrinth catalog scrolls"},
             summary: {
@@ -668,7 +700,7 @@ class RxPatchNotes {
             id: "2.11.0-uninstaller-tabs",
             version: "2.11.0",
             date: "2026-10-26T18:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "НОВОЕ", en: "NEW"},
             title: {ru: "Вкладки на выбор и красивое удаление", en: "Pick your tabs and a better uninstaller"},
             summary: {
@@ -696,7 +728,7 @@ class RxPatchNotes {
             id: "2.10.0-installer",
             version: "2.10.0",
             date: "2026-10-26T12:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "ДИЗАЙН", en: "DESIGN"},
             title: {ru: "Новый установщик", en: "A new installer"},
             summary: {
@@ -724,7 +756,7 @@ class RxPatchNotes {
             id: "2.9.0-instances-modrinth",
             version: "2.9.0",
             date: "2026-10-25T21:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "БОЛЬШОЕ ОБНОВЛЕНИЕ", en: "MAJOR UPDATE"},
             title: {ru: "Сборки, каталог Modrinth и скриншоты", en: "Instances, Modrinth catalog and screenshots"},
             summary: {
@@ -758,7 +790,7 @@ class RxPatchNotes {
             id: "2.8.0-versions-offline-custom",
             version: "2.8.0",
             date: "2026-10-25T18:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "НОВОЕ", en: "NEW"},
             title: {ru: "Новый выбор версий и свои версии", en: "New version picker and custom versions"},
             summary: {
@@ -788,7 +820,7 @@ class RxPatchNotes {
             id: "2.7.0-crash-analyzer-mods",
             version: "2.7.0",
             date: "2026-10-24T22:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "БОЛЬШОЕ ОБНОВЛЕНИЕ", en: "MAJOR UPDATE"},
             title: {ru: "Разбор вылетов и умный менеджер модов", en: "Crash analysis and a smarter mod manager"},
             summary: {
@@ -822,7 +854,7 @@ class RxPatchNotes {
             id: "2.6.0-lan-rooms-performance",
             version: "2.6.0",
             date: "2026-09-24T18:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "НОВОЕ", en: "NEW"},
             title: {
                 ru: "Комнаты друзей и ускорение лаунчера",
@@ -855,7 +887,7 @@ class RxPatchNotes {
             id: "2.5.0-interface-mods",
             version: "2.5.0",
             date: "2026-08-24T18:00:00+03:00",
-            image: "assets/version-heroes/1.21.png",
+            image: "assets/version-heroes/1.21.webp",
             tag: {ru: "БОЛЬШОЕ ОБНОВЛЕНИЕ", en: "MAJOR UPDATE"},
             title: {ru: "Новый интерфейс и менеджер модов", en: "New interface and mod manager"},
             summary: {
@@ -885,7 +917,7 @@ class RxPatchNotes {
             id: "2.4.0-skins-personalization",
             version: "2.4.0",
             date: "2026-08-20T21:00:00+03:00",
-            image: "assets/version-heroes/1.20.png",
+            image: "assets/version-heroes/1.20.webp",
             tag: {ru: "НОВОЕ", en: "NEW"},
             title: {ru: "3D-скины и новая персонализация", en: "3D skins and new personalization"},
             summary: {
@@ -1134,11 +1166,81 @@ class RxPatchNotes {
         return RxPatchNotes.language() === "ru" ? "ru-RU" : "en-US";
     };
 
-    static getAll = () => RxPatchNotes.ITEMS.map(item => ({
+    // ---------- заметки с сайта ----------
+    // rxlauncher.xyz/patchnotes.json: исправленный текст уже выпущенной версии доходит до игроков без нового релиза.
+    // Встроенный список остаётся основой и работает без сети; с сайта берутся только версии не новее установленной
+    static REMOTE_URL = "https://rxlauncher.xyz/patchnotes.json";
+    static remote = [];
+
+    static cacheFile = () => path.join(USERDATA_PATH, "cache", "patchnotes.json");
+
+    static versionParts = (value) => String(value || "").split(".").map(part => parseInt(part, 10) || 0);
+
+    static isNewer = (version, than) => {
+        const a = RxPatchNotes.versionParts(version), b = RxPatchNotes.versionParts(than);
+        for (let index = 0; index < 3; index++) {
+            if ((a[index] || 0) !== (b[index] || 0)) return (a[index] || 0) > (b[index] || 0);
+        }
+        return false;
+    };
+
+    static cleanText = (value, max) => typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, max) : "";
+
+    // Только ожидаемые поля и разумные размеры: файл приходит из сети
+    static normalizeRemote = (raw, currentVersion) => {
+        const text = (value, max) => ({ru: RxPatchNotes.cleanText(value?.ru, max), en: RxPatchNotes.cleanText(value?.en, max)});
+        const list = (value) => (Array.isArray(value) ? value : []).slice(0, 30).map(line => RxPatchNotes.cleanText(line, 600)).filter(Boolean);
+        return (Array.isArray(raw?.items) ? raw.items : []).slice(0, 200).map(item => {
+            const id = RxPatchNotes.cleanText(item?.id, 80), version = RxPatchNotes.cleanText(item?.version, 20), date = RxPatchNotes.cleanText(item?.date, 40);
+            if (!/^[A-Za-z0-9._-]+$/.test(id) || !/^\d+\.\d+\.\d+$/.test(version) || Number.isNaN(Date.parse(date))) return null;
+            if (RxPatchNotes.isNewer(version, currentVersion)) return null;
+            const title = text(item.title, 160);
+            if (!title.ru && !title.en) return null;
+            return {id, version, date, tag: text(item.tag, 24), title, summary: text(item.summary, 800), changes: {ru: list(item.changes?.ru), en: list(item.changes?.en)}};
+        }).filter(Boolean);
+    };
+
+    // Встроенные заметки с правками с сайта; заметки, которых в лаунчере нет, встают на своё место по версии
+    static merged = () => {
+        if (!RxPatchNotes.remote.length) return RxPatchNotes.ITEMS;
+        const byId = new Map(RxPatchNotes.remote.map(item => [item.id, item]));
+        const known = new Set(RxPatchNotes.ITEMS.map(item => item.id));
+        const items = RxPatchNotes.ITEMS.map(item => byId.has(item.id) ? {...item, ...byId.get(item.id)} : item);
+        const extra = RxPatchNotes.remote.filter(item => !known.has(item.id));
+        if (!extra.length) return items;
+        return [...items, ...extra].sort((a, b) => RxPatchNotes.isNewer(b.version, a.version) ? 1 : RxPatchNotes.isNewer(a.version, b.version) ? -1 : 0);
+    };
+
+    // Сохранённая копия — сразу при запуске, без ожидания сети
+    static initRemote = () => {
+        try {
+            RxPatchNotes.remote = RxPatchNotes.normalizeRemote(JSON.parse(fs.readFileSync(RxPatchNotes.cacheFile(), "utf8")), LAUNCHER_VERSION);
+        } catch (_) {
+            RxPatchNotes.remote = [];
+        }
+    };
+
+    // true — заметки изменились (лента на главной перерисовывается по событию rxPatchNotesChanged)
+    static refreshRemote = async () => {
+        try {
+            const items = RxPatchNotes.normalizeRemote(await RxHttp.json(RxPatchNotes.REMOTE_URL, {timeout: 10000, maxBytes: 512 * 1024}), LAUNCHER_VERSION);
+            if (JSON.stringify(items) === JSON.stringify(RxPatchNotes.remote)) return false;
+            RxPatchNotes.remote = items;
+            fs.mkdirSync(path.dirname(RxPatchNotes.cacheFile()), {recursive: true});
+            fs.writeFileSync(RxPatchNotes.cacheFile(), JSON.stringify({items}));
+            document.dispatchEvent(new CustomEvent("rxPatchNotesChanged"));
+            return true;
+        } catch (error) {
+            RxCollector.writeLog(`PatchNotes: Site notes not loaded [error=${error?.message || error}]`);
+            return false;
+        }
+    };
+
+    static getAll = () => RxPatchNotes.merged().map(item => ({
         id: item.id,
         version: item.version,
         date: item.date,
-        image: item.image || "assets/version-heroes/1.18.png",
+        image: item.image || "assets/version-heroes/1.18.webp",
         tag: RxPatchNotes.localized(item.tag),
         title: RxPatchNotes.localized(item.title),
         summary: RxPatchNotes.localized(item.summary),

@@ -62,6 +62,11 @@ const decodeRead = (payload, options) => {
 const mapReaddir = (list, options, parent) => options && options.withFileTypes
     ? list.map(item => new Dirent(item.name, item.kind, parent))
     : list.map(item => (encodingOf(options) === "buffer" ? Buffer.from(item.name) : item.name));
+// Список папки с размером и временем изменения за одно обращение к ядру (вместо readdir и stat на каждый файл).
+// depth — сколько уровней вложенности читать (имена вложенных — относительные пути), head — сколько первых байт файла вернуть
+const listArgs = (path, options = {}) => ({path: toPath(path), depth: options.depth || 1, head: options.head || 0, limit: options.limit || 20000});
+const mapList = list => list.map(item => ({name: item.name, kind: item.kind, size: item.size, mtimeMs: item.mtimeMs,
+    head: typeof item.head === "string" ? Buffer.from(item.head, "hex") : null}));
 const flagOf = (options, fallback) => (options && typeof options === "object" && options.flag) || fallback;
 
 // ---------- синхронные ----------
@@ -108,6 +113,9 @@ const fs = {
     readdirSync(path, options) {
         const target = toPath(path);
         return mapReaddir(sync("readdir", {path: target}).value, options, target);
+    },
+    rxListSync(path, options) {
+        return mapList(sync("list", listArgs(path, options)).value);
     },
     mkdirSync(path, options) {
         const recursive = typeof options === "object" && options !== null ? Boolean(options.recursive) : false;
@@ -221,6 +229,7 @@ const promises = {
         const target = toPath(path);
         return mapReaddir((await call("readdir", {path: target})).value, options, target);
     },
+    async rxList(path, options) { return mapList((await call("list", listArgs(path, options))).value); },
     async mkdir(path, options) {
         const recursive = typeof options === "object" && options !== null ? Boolean(options.recursive) : false;
         return (await call("mkdir", {path: toPath(path), recursive})).value ?? undefined;

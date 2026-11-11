@@ -25,6 +25,13 @@ const assertIco = (relativePath) => {
     assert.ok(buffer.readUInt16LE(4) >= 7, `ICO must contain at least seven resolutions: ${relativePath}`);
 };
 
+const assertWebp = (relativePath) => {
+    const buffer = fs.readFileSync(path.join(root, relativePath));
+    assert.ok(buffer.length > 1024, `WebP is unexpectedly small: ${relativePath}`);
+    assert.strictEqual(buffer.toString("latin1", 0, 4), "RIFF", `Invalid WebP signature: ${relativePath}`);
+    assert.strictEqual(buffer.toString("latin1", 8, 12), "WEBP", `Invalid WebP signature: ${relativePath}`);
+};
+
 const assertJpeg = (relativePath) => {
     const buffer = fs.readFileSync(path.join(root, relativePath));
     assert.ok(buffer.length > 1024, `JPEG is unexpectedly small: ${relativePath}`);
@@ -42,7 +49,7 @@ assert.deepStrictEqual(tauriConfig.bundle.targets, ["nsis"]);
 
 // Собственный установщик: исходник, манифест без прав администратора, арт и скрипт сборки
 const installerDir = path.join(root, "resources", "installer");
-for (const file of ["RxSetup.cs", "app.manifest", "art/render.js", "art/render-art.cjs"]) {
+for (const file of ["RxSetup.cs", "app.manifest", "art/render.js", "art/render.html"]) {
     assert.ok(fs.existsSync(path.join(installerDir, file)), `Custom installer file is missing: ${file}`);
 }
 assert.ok(fs.existsSync(path.join(root, "tauri", "build-setup.cjs")), "The Tauri installer build script is missing");
@@ -69,7 +76,7 @@ for (const wallpaperId of [6, 7, 8]) {
 }
 
 for (const version of ["1.18", "1.19", "1.20", "1.21"]) {
-    assertPng(`web/assets/version-heroes/${version}.png`);
+    assertWebp(`web/assets/version-heroes/${version}.webp`);
 }
 
 console.log("RxLauncher installer asset tests passed");

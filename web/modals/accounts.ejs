@@ -25,6 +25,10 @@
 
     <div class="acc-footer">
         <span class="accounts-hint">{{accounts.offlineHint}}</span>
+        <button class="transparent acc-elyby acc-microsoft" style="display: none" data-rx-onclick="RxModals.hideCurrentOverlay(); RxMicrosoft.login()">
+            <span class="material-symbols-outlined">window</span>
+            Microsoft
+        </button>
         <button class="transparent acc-elyby" data-rx-onclick="RxModals.hideCurrentOverlay(); RxModals.showModal('elybyLogin')">
             <img src="assets/elyby.webp" alt=""/>
             Ely.by

@@ -162,3 +162,62 @@ fn scan_files_before_install() {
     assert_eq!(again["files"][0]["verdict"], "danger");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[cfg(windows)]
+#[test]
+fn scope_paths_are_compared_without_tricks() {
+    use crate::scope::key;
+    assert_eq!(key(r"C:\Games\Minecraft").as_deref(), Some(r"c:\games\minecraft"));
+    assert_eq!(key("c:/games/./Minecraft/").as_deref(), Some(r"c:\games\minecraft"));
+    // «..» раскрывается до сравнения, выйти из папки через него нельзя
+    assert_eq!(key(r"C:\Games\Minecraft\..\..\Users\x").as_deref(), Some(r"c:\users\x"));
+    // Windows отбрасывает точки и пробелы в конце имён
+    assert_eq!(key(r"C:\Games\Minecraft. \mods").as_deref(), Some(r"c:\games\minecraft\mods"));
+    assert_eq!(key(r"\\?\C:\Games").as_deref(), Some(r"c:\games"));
+    assert_eq!(key(r"C:\").as_deref(), Some(r"c:\"));
+    assert_eq!(key(r"\\Server\Share\dir").as_deref(), Some(r"\\server\share\dir"));
+    // Относительные пути, потоки NTFS и устройства не принимаются
+    for bad in [r"mods\a.jar", "C:mods", r"C:\Games\file.txt:stream", r"\\.\PhysicalDrive0", ""] {
+        assert_eq!(key(bad), None, "{bad} must be rejected");
+    }
+}
+
+#[cfg(windows)]
+#[test]
+fn launcher_game_dir_is_read_from_properties() {
+    use crate::scope::property_game_dir;
+    let text = concat!("#comment\n", r"minecraft.gamedir.other=E\:\\no", "\n", r" minecraft.gamedir = D\:\\Games\\TL\u0020Game", "\nlocale=ru");
+    assert_eq!(property_game_dir(text), Some(std::path::PathBuf::from(r"D:\Games\TL Game")));
+    assert_eq!(property_game_dir(r"minecraft.gamedir=relative\\dir"), None);
+    assert_eq!(property_game_dir("locale=ru"), None);
+}
+
+#[test]
+fn folder_is_listed_in_one_call() {
+    let dir = std::env::temp_dir().join(format!("rx-list-{:016x}", rand::random::<u64>()));
+    std::fs::create_dir_all(dir.join("world").join("region")).unwrap();
+    std::fs::write(dir.join("mod.jar"), b"PK\x03\x04rest").unwrap();
+    std::fs::write(dir.join("world").join("level.dat"), b"12345").unwrap();
+    std::fs::write(dir.join("world").join("region").join("r.0.0.mca"), b"x").unwrap();
+
+    let flat = crate::fsops::list_dir(&dir, 1, 4, 100).unwrap();
+    assert_eq!(flat.len(), 2);
+    let jar = flat.iter().find(|item| item["name"] == "mod.jar").unwrap();
+    assert_eq!(jar["kind"], "file");
+    assert_eq!(jar["size"], 8);
+    assert_eq!(jar["head"], "504b0304");
+    assert!(jar["mtimeMs"].as_f64().unwrap() > 0.0);
+    assert_eq!(flat.iter().find(|item| item["name"] == "world").unwrap()["kind"], "dir");
+
+    // Два уровня: содержимое мира видно, папка регионов — нет
+    let deep = crate::fsops::list_dir(&dir, 2, 0, 100).unwrap();
+    let names: Vec<&str> = deep.iter().map(|item| item["name"].as_str().unwrap()).collect();
+    assert!(names.contains(&r"world\level.dat"), "{names:?}");
+    assert!(names.contains(&r"world\region"));
+    assert!(!names.iter().any(|name| name.ends_with(".mca")));
+    assert!(deep.iter().all(|item| item.get("head").is_none()));
+
+    assert_eq!(crate::fsops::list_dir(&dir, 8, 0, 2).unwrap().len(), 2);
+    assert!(crate::fsops::list_dir(&dir.join("missing"), 1, 0, 10).is_err());
+    let _ = std::fs::remove_dir_all(&dir);
+}

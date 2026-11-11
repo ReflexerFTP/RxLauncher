@@ -40,6 +40,7 @@
     <script type="application/x-rx-script" src="./js/RxCrashAnalyzer.js"></script>
     <script type="application/x-rx-script" src="./js/RxCrashUI.js"></script>
     <script type="application/x-rx-script" src="./js/RxElybyManager.js"></script>
+    <script type="application/x-rx-script" src="./js/RxMicrosoft.js"></script>
     <script type="application/x-rx-script" src="./js/RxFlyout.js"></script>
     <script type="application/x-rx-script" src="./js/RxJavaManager.js"></script>
     <script type="application/x-rx-script" src="./js/RxLaunchConfigurator.js"></script>
@@ -56,6 +57,7 @@
     <script type="application/x-rx-script" src="./js/RxRequests.js"></script>
     <script type="application/x-rx-script" src="./js/RxMinecraftServers.js"></script>
     <script type="application/x-rx-script" src="./js/RxStarter.js"></script>
+    <script type="application/x-rx-script" src="./js/RxTray.js"></script>
     <script type="application/x-rx-script" src="./js/RxTests.js"></script>
     <script type="application/x-rx-script" src="./js/RxThemes.js"></script>
     <script type="application/x-rx-script" src="./js/RxToasts.js"></script>
@@ -73,6 +75,8 @@
     <script type="application/x-rx-script" src="./js/RxVersionsUI.js"></script>
     <script type="application/x-rx-script" src="./js/RxWorldsManager.js"></script>
     <script type="application/x-rx-script" src="./js/RxDialog.js"></script>
+    <script type="application/x-rx-script" src="./js/RxEula.js"></script>
+    <script type="application/x-rx-script" src="./js/RxHotkeys.js"></script>
     <script type="application/x-rx-script" src="./js/RxImport.js"></script>
     <script type="application/x-rx-script" src="./js/RxImportUI.js"></script>
     <script type="application/x-rx-script" src="./js/RxCatalog.js"></script>
@@ -273,9 +277,15 @@
         RxAssetsParsers.clearAssetsCache();
 
         loadSettingsUI();
+        RxTray.init();
+        RxHotkeys.init();
+        RxMicrosoft.init();
 
-        // Первый запуск: предложить перенести всё из TLauncher / TL Legacy
-        if (!IS_APP_IN_TEST) setTimeout(() => RxImportUI.offerFirstRun().catch(error => RxCollector.writeLog(`Import: first-run offer failed [error=${error?.message || error}]`)), 1500);
+        // Первый запуск: соглашение, затем предложение перенести всё из TLauncher / TL Legacy
+        if (!IS_APP_IN_TEST) setTimeout(async () => {
+            if (!(await RxEula.ensure())) return;
+            RxImportUI.offerFirstRun().catch(error => RxCollector.writeLog(`Import: first-run offer failed [error=${error?.message || error}]`));
+        }, 1500);
 
         // Начинаем тестирование
         if (IS_APP_IN_TEST) {

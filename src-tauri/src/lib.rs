@@ -14,8 +14,8 @@ mod logs;
 mod loopback;
 mod media;
 mod modscan;
-mod net;
 mod paths;
+mod scope;
 mod secure;
 mod state;
 mod system;
@@ -42,6 +42,10 @@ pub fn run() {
         })
         .setup(|app| {
             app.manage(state::AppState::new(app.handle())?);
+            {
+                let state = app.state::<state::AppState>();
+                scope::init(app.handle(), &state.user_data, &state.web_root);
+            }
             // История команд, оставшаяся в папках игры (например, после сбоя), — в хранилище
             let user_data = app.state::<state::AppState>().user_data.clone();
             std::thread::spawn(move || {
@@ -66,6 +70,14 @@ pub fn run() {
                         window::reveal(&app);
                     }
                 });
+            }
+        })
+        .on_webview_event(|webview, event| {
+            // Перетащенные в лаунчер файлы и папки пользователь выбрал сам — интерфейс может с ними работать
+            if let tauri::WebviewEvent::DragDrop(tauri::DragDropEvent::Enter { paths, .. } | tauri::DragDropEvent::Drop { paths, .. }) = event {
+                for path in paths {
+                    scope::grant(webview.app_handle(), path);
+                }
             }
         })
         .on_window_event(|window, event| {

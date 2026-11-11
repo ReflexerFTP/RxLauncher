@@ -74,6 +74,15 @@ class RxScreenshotsUI {
         const sources = RxScreenshotsUI.getSources();
         const items = [];
         sources.forEach(source => {
+            // Ядро отдаёт имена, размер и время всех файлов одним обращением (сотни скриншотов — без stat на каждый)
+            if (typeof fs.rxListSync === "function") {
+                let listed = [];
+                try { listed = fs.rxListSync(source.dir); } catch (_) {}
+                listed.filter(entry => entry.kind !== "dir" && /\.(png|jpe?g)$/i.test(entry.name)).forEach(entry => {
+                    items.push({file: path.join(source.dir, entry.name), name: entry.name, dir: source.dir, label: source.label, time: entry.mtimeMs, size: entry.size});
+                });
+                return;
+            }
             let files = [];
             try { files = fs.readdirSync(source.dir); } catch (_) {}
             files.filter(name => /\.(png|jpe?g)$/i.test(name)).forEach(name => {

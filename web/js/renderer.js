@@ -56,6 +56,9 @@ global.SITE_URL = "https://rxlauncher.xyz";
 global.SKINS_API_URL = "";
 global.STATS_URL = "";
 global.REPO_NAME = "ReflexerFTP/RxLauncher";
+// Идентификатор приложения Azure для входа через Microsoft (Application (client) ID). Приложение должно быть
+// одобрено для сервисов Minecraft (aka.ms/mce-reviewappid). Пустая строка — вход через Microsoft выключен
+global.MICROSOFT_CLIENT_ID = "";
 
 // Ссылка на Java
 global.JAVA_LIST_URL = "https://api.adoptium.net/v3/info/available_releases";

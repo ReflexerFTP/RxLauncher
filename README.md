@@ -46,9 +46,9 @@ RxLauncher 4 написан на [Tauri 2](https://tauri.app): ядро на **R
 ```bash
 git clone -b tauri https://github.com/ReflexerFTP/RxLauncher.git
 cd RxLauncher
-npm install --prefix tauri/.deps ejs jquery mcnbt toml@npm:@iarna/toml @tauri-apps/cli@2
+npm ci
 node tauri/build-ui.cjs
-node tauri/.deps/node_modules/@tauri-apps/cli/tauri.js build
+node node_modules/@tauri-apps/cli/tauri.js build
 ```
 
 Проверки: `node tests/run.cjs` (интерфейс и модули) и `cargo test --manifest-path src-tauri/Cargo.toml` (ядро). Релизы собираются в GitHub Actions (`.github/workflows/tauri.yml`).
@@ -56,6 +56,7 @@ node tauri/.deps/node_modules/@tauri-apps/cli/tauri.js build
 ## Безопасность и приватность
 
 - Токены аккаунтов шифруются средствами Windows (DPAPI + AES-GCM), история команд с паролями между сессиями хранится в зашифрованном хранилище.
+- Интерфейс лаунчера видит только папки лаунчера и игры и то, что вы сами выбрали в окне Windows или перетащили; остальной диск для него закрыт.
 - Сеть для модов и сборок — только HTTPS, без обращений к локальной сети; архивы проверяются на опасные пути и ссылки; файлы сверяются по хешам.
 - Игровая статистика остаётся на вашем компьютере. Аккаунт RxLauncher (друзья) — по желанию.
 - Нашли уязвимость — напишите в [Issues](https://github.com/ReflexerFTP/RxLauncher/issues) или в Discord.

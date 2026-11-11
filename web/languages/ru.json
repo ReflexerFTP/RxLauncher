@@ -30,7 +30,6 @@
       "local": "Локальный аккаунт",
       "microsoft": "Аккаунт Microsoft",
       "elyby": "Аккаунт Ely.by",
-      "frog": "Акаунт RxClient",
       "unknown": "Неизвестный аккаунт",
       "addingMs": "Добавление аккаунта Microsoft",
       "alreadyExists": "Этот аккаунт уже добавлен",
@@ -627,10 +626,6 @@
         "rxPerformanceMode": {
           "title": "Режим оптимизации Rx",
           "description": "Добавляет оптимизированный JVM-профиль для снижения фризов и более стабильного FPS."
-        },
-        "rxClientLobbyMode": {
-          "title": "Rx Client Lobby (In-Game, 1.21.4)",
-          "description": "Adds the Rx Client menu inside Minecraft (SinglePlayer/MultiPlayer/ALT manager/Discord/Telegram). Works on 1.21.4."
         },
         "downloadSource": {
           "title": "Источник загрузки",
@@ -1628,6 +1623,38 @@
       "nowFriends": "Теперь вы друзья",
       "you": "Это вы",
       "nobody": "Никого не нашли"
+    },
+    "tray": {
+      "open": "Открыть RxLauncher",
+      "stop": "Закрыть игру",
+      "launch": "Запустить"
+    },
+    "eula": {
+      "title": "Пользовательское соглашение",
+      "text": "Чтобы пользоваться RxLauncher, примите пользовательское соглашение и политику конфиденциальности. Оба документа открываются кнопками ниже.",
+      "eula": "Соглашение",
+      "privacy": "Конфиденциальность",
+      "accept": "Принимаю",
+      "exit": "Выйти"
+    },
+    "microsoft": {
+      "title": "Аккаунт Microsoft",
+      "intro": "Откройте страницу входа Microsoft и введите код {0} — он уже скопирован. Пароль лаунчер не видит",
+      "waiting": "Ждём подтверждения. Введите на открывшейся странице код {0} и войдите в учётную запись Microsoft",
+      "open": "Открыть страницу входа",
+      "openAgain": "Открыть страницу ещё раз",
+      "checking": "Проверяем лицензию Minecraft…",
+      "notConfigured": "Вход через Microsoft пока не подключён",
+      "declined": "Вход отменён на странице Microsoft",
+      "expired": "Код входа устарел — начните заново",
+      "no_xbox": "У этой учётной записи Microsoft нет профиля Xbox. Создайте его на xbox.com и повторите вход",
+      "region": "Xbox Live недоступен в стране этой учётной записи",
+      "adult": "Учётной записи нужно подтверждение возраста на xbox.com",
+      "child": "Детскую учётную запись должен добавить в семью взрослый (account.microsoft.com/family)",
+      "no_game": "На этой учётной записи нет купленного Minecraft: Java Edition",
+      "app_not_approved": "Вход через Microsoft ещё не подтверждён для RxLauncher. Попробуйте позже",
+      "relogin": "Войдите в аккаунт Microsoft заново",
+      "unavailable": "Сервис входа недоступен. Проверьте интернет и попробуйте ещё раз"
     }
   }
 }

@@ -4,7 +4,11 @@ class RxPatchFeed {
 
     static init = () => {
         $("#news-open-history").on("click", () => RxChangelogUI.open());
+        // Правки заметок с сайта: сначала сохранённая копия, затем свежая — в фоне
+        RxPatchNotes.initRemote();
+        document.addEventListener("rxPatchNotesChanged", RxPatchFeed.render);
         RxPatchFeed.render();
+        if (!IS_APP_IN_TEST) RxPatchNotes.refreshRemote();
     };
 
     static render = () => {

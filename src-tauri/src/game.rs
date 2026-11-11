@@ -330,6 +330,8 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
     let source = gamefiles::download_source(&state.user_data);
     let root = PathBuf::from(str_of(&config, "root").ok_or("Launch config has no root")?);
     let java = PathBuf::from(str_of(&config, "javaPath").ok_or("Launch config has no Java path")?);
+    crate::scope::check(&root.to_string_lossy(), crate::scope::Access::Write, "launch")?;
+    crate::scope::check(&java.to_string_lossy(), crate::scope::Access::Read, "launch")?;
     if !java.is_file() {
         return Err(BridgeError::new(format!("Java not found: {}", java.display())));
     }
@@ -346,6 +348,7 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
     let version = resolve_version(&root, &version_id, &source, events).await?;
     let overrides = config.get("overrides").cloned().unwrap_or(Value::Null);
     let game_dir = str_of(&overrides, "gameDirectory").map(PathBuf::from).unwrap_or_else(|| root.clone());
+    crate::scope::check(&game_dir.to_string_lossy(), crate::scope::Access::Write, "launch")?;
     std::fs::create_dir_all(&game_dir).map_err(|e| crate::fsops::io_error(e, "mkdir", &game_dir.to_string_lossy(), None))?;
     let libraries_dir = root.join("libraries");
     let natives_dir = root.join("versions").join(&version_id).join("natives");

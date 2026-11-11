@@ -125,13 +125,6 @@ class RxFlyout {
             return false;
         }
 
-        if (RxConfig.read("rxClientLobbyMode", false) === true) {
-            const rxVersionResolved = await RxLaunchConfigurator.enforceRxClientCompatibleActiveVersion(true);
-            if (rxVersionResolved !== true) {
-                return false;
-            }
-        }
-
         let activeVersion = RxVersionsManager.getActiveVersion();
         if (activeVersion === "none") {
             RxToasts.create(MESSAGES.flyout.selectVersion, "deployed_code");

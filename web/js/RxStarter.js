@@ -331,6 +331,7 @@ class RxStarter {
                 RxGameLogs.setPid(this.logSession, this.gamePid);
                 if (RxStarter.running.size === 1) this.becomePrimary();
                 ipcRenderer.send("game-process-state", {active: true, pid: this.gamePid});
+                if (typeof RxTray !== "undefined") RxTray.sync();
                 if (RxConfig.read("hideLauncherOnStart", true) === true) {
                     RxUI.disappearMainWindow();
                 }

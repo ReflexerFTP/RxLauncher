@@ -6,6 +6,7 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::bridge::{blocking, ok, BridgeError, BridgeResult};
+use crate::scope::Access;
 use crate::state::AppState;
 
 fn arg(args: &[Value], index: usize) -> Value {
@@ -81,11 +82,15 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             let payload = arg(&args, 0);
             let dir = payload.get("dir").and_then(Value::as_str).unwrap_or("").to_string();
             let only_enabled = payload.get("onlyEnabled").and_then(Value::as_bool).unwrap_or(false);
+            crate::scope::check(&dir, Access::Read, "mod-scan")?;
             blocking(move || crate::modscan::scan_dir(&user_data, &dir, only_enabled)).await
         }
         "mod-scan-files" => {
             let files: Vec<String> = arg(&args, 0).get("files").and_then(Value::as_array)
                 .map(|items| items.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default();
+            for file in &files {
+                crate::scope::check(file, Access::Read, "mod-scan-files")?;
+            }
             blocking(move || crate::modscan::scan_files(&user_data, &files)).await
         }
         "discord-loopback" => {
@@ -114,7 +119,18 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             let active = state.game_active();
             blocking(move || ok(crate::vault::setting_changed(&user_data, active))).await
         }
-        "generate-mclc-config" => crate::loaders::generate_config(arg(&args, 0)).await,
+        "generate-mclc-config" => {
+            let input = arg(&args, 0);
+            if let Some(game_data) = input.get("gameData").and_then(Value::as_str).filter(|dir| !dir.is_empty()) {
+                crate::scope::check(game_data, Access::Write, "generate-mclc-config")?;
+            }
+            crate::loaders::generate_config(input).await
+        }
+        // Меню значка в трее на время игры: подписи и версии для быстрого запуска
+        "tray-menu" => {
+            crate::window::set_tray_menu(app, arg(&args, 0));
+            ok(Value::Null)
+        }
         "open-dialog" => open_dialog(app, arg(&args, 0)).await,
         "save-dialog" => save_dialog(app, arg(&args, 0)).await,
 
@@ -190,7 +206,13 @@ async fn open_dialog(app: &AppHandle, options: Value) -> BridgeResult {
             (false, false) => builder.blocking_pick_file().map(|p| to_strings(vec![p])),
         };
         match picked {
-            Some(paths) if !paths.is_empty() => ok(paths),
+            Some(paths) if !paths.is_empty() => {
+                // Выбранное в системном окне пользователь разрешил сам
+                for path in &paths {
+                    crate::scope::grant(&app, Path::new(path));
+                }
+                ok(paths)
+            }
             _ => ok(false),
         }
     })
@@ -202,7 +224,10 @@ async fn save_dialog(app: &AppHandle, options: Value) -> BridgeResult {
     blocking(move || {
         let picked = apply_common(app.dialog().file(), &options).blocking_save_file();
         match picked.and_then(|p| p.into_path().ok()) {
-            Some(path) => ok(path.to_string_lossy().to_string()),
+            Some(path) => {
+                crate::scope::grant(&app, &path);
+                ok(path.to_string_lossy().to_string())
+            }
             None => ok(false),
         }
     })

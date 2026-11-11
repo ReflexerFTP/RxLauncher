@@ -125,6 +125,9 @@ fn read_raw(user_data: &Path) -> Result<Map<String, Value>, String> {
     }
 }
 
+// Секреты аккаунта, которые на диске лежат только зашифрованными (refreshToken — у аккаунтов Microsoft)
+const SECRET_KEYS: [&str; 3] = ["accessToken", "clientToken", "refreshToken"];
+
 fn valid_nickname(value: &Value) -> bool {
     value.as_str().map(|s| (2..=16).contains(&s.len()) && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')).unwrap_or(false)
 }
@@ -135,15 +138,15 @@ pub fn write_accounts(user_data: &Path, accounts: &Value) -> Result<(), String> 
     for (id, source) in accounts {
         let Some(source) = source.as_object() else { continue };
         let kind = source.get("type").and_then(Value::as_str).unwrap_or("");
-        if !matches!(kind, "local" | "elyby") || !valid_nickname(source.get("nickname").unwrap_or(&Value::Null)) {
+        if !matches!(kind, "local" | "elyby" | "microsoft") || !valid_nickname(source.get("nickname").unwrap_or(&Value::Null)) {
             continue;
         }
         let mut account = source.clone();
         account.insert("uuid".into(), Value::String(id.clone()));
         account.remove("needsReauthentication");
-        for key in ["accessToken", "clientToken"] {
+        for key in SECRET_KEYS {
             let encrypted_key = format!("{key}Encrypted");
-            if kind == "elyby" {
+            if kind != "local" {
                 if let Some(secret) = account.get(key).and_then(Value::as_str).filter(|s| !s.is_empty()) {
                     let sealed = encrypt(user_data, secret)?;
                     account.insert(encrypted_key.clone(), Value::String(B64.encode(sealed)));
@@ -167,13 +170,13 @@ pub fn write_accounts(user_data: &Path, accounts: &Value) -> Result<(), String> 
 pub fn read_accounts(user_data: &Path) -> Result<Value, String> {
     let raw = read_raw(user_data)?;
     // Незашифрованные токены от старых версий — сразу зашифровать
-    if raw.values().any(|a| a.get("accessToken").is_some() || a.get("clientToken").is_some()) {
+    if raw.values().any(|a| SECRET_KEYS.iter().any(|key| a.get(*key).is_some())) {
         write_accounts(user_data, &Value::Object(raw.clone()))?;
     }
     let mut result = read_raw(user_data)?;
     for account in result.values_mut() {
         let Some(account) = account.as_object_mut() else { continue };
-        for key in ["accessToken", "clientToken"] {
+        for key in SECRET_KEYS {
             let Some(sealed) = account.get(&format!("{key}Encrypted")).and_then(Value::as_str).map(str::to_string) else { continue };
             match B64.decode(sealed).map_err(|e| e.to_string()).and_then(|b| decrypt(user_data, &b)) {
                 Ok(secret) => {

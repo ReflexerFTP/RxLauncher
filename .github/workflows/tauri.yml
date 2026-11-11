@@ -41,10 +41,9 @@ jobs:
           workspaces: src-tauri -> target
           shared-key: rxlauncher-tauri
 
-      - name: JS tools (ejs, jquery, toml, Tauri CLI)
+      - name: JS dependencies (package-lock.json)
         shell: bash
-        run: |
-          npm install --prefix tauri/.deps --no-audit --no-fund ejs@3.1.10 jquery@3.7.1 toml@npm:@iarna/toml@2.2.5 mcnbt@2.0.3 @tauri-apps/cli@2
+        run: npm ci --no-audit --no-fund
 
       - name: Runtime tests
         shell: bash
@@ -54,14 +53,12 @@ jobs:
 
       - name: Build UI
         shell: bash
-        env:
-          RX_NODE_MODULES: tauri/.deps/node_modules
         run: node tauri/build-ui.cjs
 
       - name: Build dev exe (UI from 127.0.0.1:1420)
         shell: bash
         run: |
-          node tauri/.deps/node_modules/@tauri-apps/cli/tauri.js build --no-bundle --features devui --config tauri/dev/tauri.dev.json
+          node node_modules/@tauri-apps/cli/tauri.js build --no-bundle --features devui --config tauri/dev/tauri.dev.json
           mkdir -p out
           cp "src-tauri/target/release/RxLauncher.exe" "out/RxLauncher-dev.exe"
 
@@ -69,7 +66,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.bundle }}
         shell: bash
         run: |
-          node tauri/.deps/node_modules/@tauri-apps/cli/tauri.js build
+          node node_modules/@tauri-apps/cli/tauri.js build
           cp src-tauri/target/release/bundle/nsis/*.exe out/
           # Красивый установщик (окно RxSetup) поверх NSIS — основной файл для скачивания
           node tauri/build-setup.cjs "$(ls src-tauri/target/release/bundle/nsis/*_x64-setup.exe)" out
@@ -133,6 +130,10 @@ jobs:
       - name: Core tests (Rust)
         shell: bash
         run: cargo test --release --features devui --manifest-path src-tauri/Cargo.toml
+
+      - name: UI tests (JS)
+        shell: bash
+        run: node tests/run.cjs
 
   # Релиз из уже собранных и проверенных установщиков (артефакт rxlauncher-tauri указанного запуска)
   release:

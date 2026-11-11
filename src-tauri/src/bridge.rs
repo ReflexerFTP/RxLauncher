@@ -163,6 +163,10 @@ where
 }
 
 async fn dispatch(app: &AppHandle, op: &str, args: Value, payload: Vec<u8>) -> BridgeResult {
+    // Пути в запросе — только из разрешённых папок (см. scope.rs)
+    if let Some(reply) = crate::scope::guard(op, &args)? {
+        return ok(reply);
+    }
     if let Some(fs_op) = op.strip_prefix("fs.") {
         let app = app.clone();
         let fs_op = fs_op.to_string();
@@ -178,7 +182,6 @@ async fn dispatch(app: &AppHandle, op: &str, args: Value, payload: Vec<u8>) -> B
     match op {
         "ipc" => crate::ipc::dispatch(app, args).await,
         "game.launch" => crate::game::launch(app, args).await,
-        "net.mcping" => crate::net::mcping(args).await,
         "discord.setActivity" => crate::discord::set_activity(args.get("activity").cloned().unwrap_or(Value::Null)).await,
         "discord.clear" => crate::discord::set_activity(Value::Null).await,
         "system.info" => ok(crate::system::info(app)),

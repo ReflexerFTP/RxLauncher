@@ -9,9 +9,9 @@ class RxAccountsManager {
         return this.filterSupportedAccounts(result.accounts);
     }
 
-    // Keep only local and Ely.by accounts.
+    // Keep only local, Ely.by and Microsoft accounts.
     static filterSupportedAccounts = (accounts) => {
-        const supportedTypes = new Set(["local", "elyby"]);
+        const supportedTypes = new Set(["local", "elyby", "microsoft"]);
         let filteredAccounts = {};
         let wasChanged = false;
 
@@ -132,6 +132,9 @@ class RxAccountsManager {
         }
         if (accountData.type === "elyby") {
             return RxElybyManager.getAccountForAuth(accountId);
+        }
+        if (accountData.type === "microsoft") {
+            return RxMicrosoft.getAccountForAuth(accountId);
         }
         return false;
     }

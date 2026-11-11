@@ -13,7 +13,7 @@ const ROOT = path.resolve(__dirname, "..");
 const OUT = path.resolve(process.argv[2] || path.join(ROOT, "dist-tauri"));
 const WEB = path.join(ROOT, "web");
 const RUNTIME = path.join(__dirname, "runtime");
-const NODE_MODULES = [process.env.RX_NODE_MODULES, path.join(ROOT, "node_modules"), path.join(ROOT, "..", "RxLaunch", "node_modules")]
+const NODE_MODULES = [process.env.RX_NODE_MODULES, path.join(ROOT, "node_modules")]
     .find(dir => dir && fs.existsSync(path.join(dir, "ejs")));
 const NODE_MODULES_ABS = NODE_MODULES && path.resolve(NODE_MODULES);
 if (!NODE_MODULES) throw new Error("node_modules with ejs not found (npm ci or set RX_NODE_MODULES)");
@@ -78,7 +78,7 @@ define("tauri/runtime/os.js", "module.exports = require('./system').os;");
 define("tauri/runtime/process.js", "module.exports = require('./system').process;");
 const builtins = {
     fs: "fs", "fs/promises": "fs-promises", path: "path", buffer: "buffer", events: "events", os: "os", process: "process", electron: "electron",
-    "minecraft-launcher-core": "mclc", "tomate-loaders": "loaders", compressing: "archive", jimp: "jimp", "jimp/fonts": "jimp"
+    "minecraft-launcher-core": "mclc", "tomate-loaders": "loaders", compressing: "archive", jimp: "jimp"
 };
 for (const [name, file] of Object.entries(builtins)) {
     if (fs.existsSync(path.join(RUNTIME, `${file}.js`)) || ["fs-promises", "os", "process"].includes(file)) parts.push(`__rxBuiltin(${JSON.stringify(name)}, "tauri/runtime/${file}.js");`);
@@ -141,7 +141,7 @@ fs.writeFileSync(path.join(OUT, "rx-runtime.js"), runtime);
 // Файлы, которые код интерфейса читает через fs (__dirname): ресурсы Tauri рядом с exe
 const RESOURCES = path.join(ROOT, "src-tauri", "resources", "web");
 fs.rmSync(RESOURCES, {recursive: true, force: true});
-for (const dir of ["languages", "assets/rxclient", "assets/data", "assets/agents"]) {
+for (const dir of ["languages", "assets/data", "assets/agents"]) {
     if (fs.existsSync(path.join(WEB, dir))) copyWeb(path.join(WEB, dir), path.join(RESOURCES, dir));
 }
 

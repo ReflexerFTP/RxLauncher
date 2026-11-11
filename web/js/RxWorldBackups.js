@@ -26,6 +26,14 @@ class RxWorldBackups {
             const current = stack.pop();
             let entries = [];
             try {
+                // Ядро отдаёт размеры вместе со списком: одно обращение на папку, а не на каждый файл
+                if (typeof fsPromises.rxList === "function") {
+                    (await fsPromises.rxList(current)).forEach(entry => {
+                        if (entry.kind === "dir") stack.push(path.join(current, entry.name));
+                        else if (entry.kind === "file") total += entry.size;
+                    });
+                    continue;
+                }
                 entries = await fsPromises.readdir(current, {withFileTypes: true});
             } catch (_) {
                 continue;
@@ -41,7 +49,15 @@ class RxWorldBackups {
 
     static list = (worldPath) => {
         const dir = RxWorldBackups.dirFor(worldPath);
+        const reasonOf = name => (name.match(/-(auto|manual|restore)\.zip$/i) || [])[1] || "manual";
         try {
+            // Размер и время всех копий — одним обращением к ядру
+            if (typeof fs.rxListSync === "function") {
+                return fs.rxListSync(dir)
+                    .filter(entry => entry.kind !== "dir" && /\.zip$/i.test(entry.name))
+                    .map(entry => ({file: path.join(dir, entry.name), name: entry.name, time: entry.mtimeMs, size: entry.size, reason: reasonOf(entry.name)}))
+                    .sort((a, b) => b.time - a.time);
+            }
             return fs.readdirSync(dir)
                 .filter(name => /\.zip$/i.test(name))
                 .map(name => {

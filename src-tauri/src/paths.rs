@@ -18,7 +18,7 @@ pub fn logs_dir() -> PathBuf {
     user_data_dir().join("logs")
 }
 
-// Папка с файлами интерфейса на диске (языки, шаблоны RxClient, данные OptiFine), которые код читает через fs
+// Папка с файлами интерфейса на диске (языки, данные OptiFine, агент плащей), которые код читает через fs
 pub fn web_root(app: &AppHandle) -> PathBuf {
     #[cfg(feature = "devui")]
     if let Some(dir) = std::env::var_os("RX_WEB_ROOT") {

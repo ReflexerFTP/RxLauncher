@@ -27,6 +27,9 @@ class RxModsManager {
 
     static isJarFileName = fileName => /\.jar(?:\.disabled)?$/i.test(String(fileName || ""));
 
+    static isJarSignature = signature => Boolean(signature) && signature.length >= 4
+        && signature[0] === 0x50 && signature[1] === 0x4b && [0x03, 0x05, 0x07].includes(signature[2]);
+
     static hasJarSignature = filePath => {
         try {
             if (!fs.statSync(filePath).isFile()) return false;
@@ -34,10 +37,27 @@ class RxModsManager {
             const signature = Buffer.alloc(4);
             fs.readSync(handle, signature, 0, 4, 0);
             fs.closeSync(handle);
-            return signature[0] === 0x50 && signature[1] === 0x4b && [0x03, 0x05, 0x07].includes(signature[2]);
+            return RxModsManager.isJarSignature(signature);
         } catch (_) {
             return false;
         }
+    };
+
+    // Файлы модов с размером, временем и подписью. Ядро лаунчера отдаёт всё одним обращением —
+    // иначе на каждый мод уходило по четыре (stat, open, read, close), и окно замирало на больших сборках
+    static listJars = (root) => {
+        if (typeof fs.rxListSync === "function") {
+            return fs.rxListSync(root, {head: 4})
+                .filter(entry => entry.kind === "file" && RxModsManager.isJarFileName(entry.name))
+                .map(entry => ({name: entry.name, bytes: entry.size, modified: entry.mtimeMs, valid: RxModsManager.isJarSignature(entry.head)}));
+        }
+        return fs.readdirSync(root, {withFileTypes: true})
+            .filter(entry => entry.isFile() && RxModsManager.isJarFileName(entry.name))
+            .map(entry => {
+                const fullPath = path.resolve(root, entry.name);
+                const stat = fs.statSync(fullPath);
+                return {name: entry.name, bytes: stat.size, modified: stat.mtimeMs, valid: RxModsManager.hasJarSignature(fullPath)};
+            });
     };
 
     static isValidJar = filePath => /\.jar$/i.test(filePath) && RxModsManager.hasJarSignature(filePath);
@@ -60,20 +80,18 @@ class RxModsManager {
         if (!context) return [];
         RxModsManager.ensureDirectory(context.modsPath);
         const resolvedRoot = path.resolve(context.modsPath);
-        return fs.readdirSync(resolvedRoot, {withFileTypes: true})
-            .filter(entry => entry.isFile() && RxModsManager.isJarFileName(entry.name))
+        return RxModsManager.listJars(resolvedRoot)
             .map(entry => {
                 const fullPath = path.resolve(resolvedRoot, entry.name);
                 if (path.dirname(fullPath) !== resolvedRoot) return false;
-                const stat = fs.statSync(fullPath);
                 return {
                     fileName: entry.name,
                     fullPath,
                     title: RxModsManager.displayName(entry.name),
                     enabled: /\.jar$/i.test(entry.name),
-                    valid: RxModsManager.hasJarSignature(fullPath),
-                    bytes: stat.size,
-                    modified: stat.mtimeMs,
+                    valid: entry.valid,
+                    bytes: entry.bytes,
+                    modified: entry.modified,
                     meta: null,
                     compat: null
                 };

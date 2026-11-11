@@ -1,5 +1,5 @@
 // Замена Jimp на OffscreenCanvas (WebView): то, что использует лаунчер — чтение PNG, crop, resize (в т. ч. «ближайший
-// сосед» для пикселей скина), composite, scan/setPixelColor, print, запись PNG
+// сосед» для пикселей скина), composite, scan/setPixelColor, запись PNG
 const fs = require("fs");
 const {Buffer} = require("buffer");
 
@@ -133,21 +133,6 @@ class Jimp {
         return this;
     }
 
-    // Текст (вместо растровых шрифтов Jimp — системный шрифт того же размера)
-    print({font, x = 0, y = 0, text, maxWidth}) {
-        const canvas = this._canvas();
-        const context = canvas.getContext("2d");
-        const value = typeof text === "object" ? String(text.text) : String(text);
-        const align = typeof text === "object" ? text.alignmentX : HorizontalAlign.LEFT;
-        context.font = `${font?.size || 16}px "Segoe UI", Arial, sans-serif`;
-        context.fillStyle = font?.color || "#ffffff";
-        context.textBaseline = "top";
-        context.textAlign = align === HorizontalAlign.CENTER ? "center" : align === HorizontalAlign.RIGHT ? "right" : "left";
-        const left = align === HorizontalAlign.CENTER ? x + (maxWidth || this.bitmap.width) / 2 : align === HorizontalAlign.RIGHT ? x + (maxWidth || this.bitmap.width) : x;
-        context.fillText(value, left, y, maxWidth || undefined);
-        return this._replace(canvas);
-    }
-
     async getBuffer(mime = "image/png") {
         const blob = await this._canvas().convertToBlob({type: mime});
         return Buffer.from(new Uint8Array(await blob.arrayBuffer()));
@@ -164,9 +149,4 @@ class Jimp {
     }
 }
 
-const loadFont = async name => ({size: /32/.test(String(name)) ? 32 : /64/.test(String(name)) ? 64 : /128/.test(String(name)) ? 128 : /8/.test(String(name)) && !/128/.test(String(name)) ? 8 : 16,
-    color: /BLACK/i.test(String(name)) ? "#000000" : "#ffffff"});
-const fonts = {SANS_8_BLACK: "SANS_8_BLACK", SANS_8_WHITE: "SANS_8_WHITE", SANS_16_BLACK: "SANS_16_BLACK", SANS_16_WHITE: "SANS_16_WHITE",
-    SANS_32_BLACK: "SANS_32_BLACK", SANS_32_WHITE: "SANS_32_WHITE", SANS_64_BLACK: "SANS_64_BLACK", SANS_64_WHITE: "SANS_64_WHITE"};
-
-module.exports = {Jimp, ResizeStrategy, HorizontalAlign, VerticalAlign, rgbaToInt, intToRGBA, loadFont, ...fonts};
+module.exports = {Jimp, ResizeStrategy, HorizontalAlign, VerticalAlign, rgbaToInt, intToRGBA};
