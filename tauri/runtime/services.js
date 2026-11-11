@@ -33,7 +33,10 @@ const networkCompatibilityCheck = async (timeoutMs = 3200) => {
 
 // ---------- Discord Rich Presence (транспорт — discord.rs в ядре) ----------
 const RPC = {
-    largeImage: "https://rxlauncher.xyz/assets/rpc/rxlauncher-rpc-3d-v3.gif",
+    largeImage: "https://rxlauncher.xyz/assets/rpc/rxlauncher-rpc-3d-v4.gif",
+    // Адрес картинки можно сменить на сайте, без выпуска лаунчера: {"largeImage": "https://rxlauncher.xyz/…"}
+    configUrl: "https://rxlauncher.xyz/rpc.json",
+    configRefresh: 6 * 60 * 60e3,
     telegram: "https://t.me/rxlauncher",
     discord: "https://discord.gg/eDF6cUmAfN",
     retryDelay: 15000,
@@ -59,6 +62,34 @@ const rpcServer = value => {
     return server && /^[a-z0-9._:\[\]-]+$/i.test(server) ? server : "";
 };
 const LOADER_NAMES = {forge: "Forge", forgeOptiFine: "Forge + OptiFine", neoforge: "NeoForge", fabric: "Fabric", quilt: "Quilt", custom: "Custom", vanilla: "Vanilla"};
+// Картинка статуса с сайта: только https и только rxlauncher.xyz; последняя удачная запоминается до следующего запуска
+const RPC_IMAGE_KEY = "rxRpcLargeImage";
+const rpcImageAllowed = value => {
+    try {
+        const url = new URL(String(value));
+        return url.protocol === "https:" && /(^|\.)rxlauncher\.xyz$/i.test(url.hostname) && !url.username && !url.password && url.href.length <= 512;
+    } catch (_) {
+        return false;
+    }
+};
+try {
+    const saved = localStorage.getItem(RPC_IMAGE_KEY);
+    if (saved && rpcImageAllowed(saved)) RPC.largeImage = saved;
+} catch (_) {}
+let rpcConfigTimer = null;
+const rpcLoadConfig = async () => {
+    clearTimeout(rpcConfigTimer);
+    rpcConfigTimer = setTimeout(rpcLoadConfig, RPC.configRefresh);
+    try {
+        const response = await request(RPC.configUrl, {timeout: 8000, maxBytes: 16 * 1024});
+        if (response.status !== 200) return;
+        const image = JSON.parse(response.body.toString("utf8"))?.largeImage;
+        if (!rpcImageAllowed(image) || image === RPC.largeImage) return;
+        RPC.largeImage = image;
+        try { localStorage.setItem(RPC_IMAGE_KEY, image); } catch (_) {}
+        rpcUpdate(true);
+    } catch (_) {}
+};
 const rpcActivity = () => {
     const version = typeof LAUNCHER_VERSION === "string" ? LAUNCHER_VERSION : "";
     const activity = {
@@ -123,6 +154,7 @@ const rpcUpdate = (force = false) => {
 const discordHandlers = {
     "launcher-ready": (settings = {}) => {
         discordHandlers["discord-rpc-settings"](settings);
+        rpcLoadConfig();
         bridge.value("ipc", {channel: "launcher-ready", args: []}).catch(() => {});
     },
     "discord-rpc-settings": (settings = {}) => {

@@ -1,0 +1,10 @@
+{
+  "frames": 150,
+  "fps": 25,
+  "gifSize": 360,
+  "bytes": 5084912,
+  "tolerance": 3,
+  "dither": 9,
+  "changedPixelsPerFrame": 42272,
+  "loopSeam": 0
+}
