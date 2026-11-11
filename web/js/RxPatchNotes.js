@@ -19,7 +19,9 @@ class RxPatchNotes {
                     "Значок в трее во время игры: можно закрыть игру или запустить ещё одну версию, не открывая лаунчер.",
                     "Горячие клавиши: Ctrl+1…9 — разделы меню, Ctrl+, — настройки, Ctrl+F — поиск в открытом окне, Ctrl+Enter — «Играть».",
                     "При первом запуске лаунчер показывает пользовательское соглашение и политику конфиденциальности.",
-                    "Описания версий в ленте патчей можно исправлять без обновления лаунчера."
+                    "Описания версий в ленте патчей можно исправлять без обновления лаунчера.",
+                    "Свои версии с пробелами в имени (как «Fabric 1.21.4» из TLauncher) снова запускаются. Сборки с закреплённым загрузчиком берут его с диска и не ждут сервер Fabric, а если запуск невозможен — лаунчер объясняет почему.",
+                    "Остров Spotify переключает треки сразу и больше не тормозит лаунчер при быстром листании."
                 ],
                 en: [
                     "The installer and updates are much smaller: Rx Client and its mods are gone, version covers and the icon font are compressed, unused files were removed.",
@@ -28,7 +30,9 @@ class RxPatchNotes {
                     "Tray icon while playing: close the game or launch another version without opening the launcher.",
                     "Hotkeys: Ctrl+1…9 — menu sections, Ctrl+, — settings, Ctrl+F — search in the open window, Ctrl+Enter — Play.",
                     "On first launch the launcher shows the user agreement and the privacy policy.",
-                    "Version descriptions in the patch feed can be corrected without updating the launcher."
+                    "Version descriptions in the patch feed can be corrected without updating the launcher.",
+                    "Custom versions with spaces in the name (like TLauncher's \"Fabric 1.21.4\") launch again. Packs with a pinned loader take it from disk instead of waiting for the Fabric server, and when a launch is impossible the launcher explains why.",
+                    "The Spotify island switches tracks instantly and no longer slows the launcher down when you skip quickly."
                 ]
             }
         },
