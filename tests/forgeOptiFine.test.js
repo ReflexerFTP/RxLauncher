@@ -53,7 +53,7 @@ const context = vm.createContext({
     console,
     Buffer,
     URL,
-    __dirname: projectRoot,
+    __dirname: path.join(projectRoot, "web"), // как в лаунчере: папка интерфейса
     fs,
     path,
     os,

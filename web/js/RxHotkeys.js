@@ -6,12 +6,34 @@ class RxHotkeys {
 
     static visible = (element) => Boolean(element) && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden";
 
-    // Пока открыт диалог или меню занято переключением раздела, клавиши не срабатывают
-    static blocked = () => Boolean(RxDialog.current) || $(".flymenu").css("pointer-events") === "none" || $(".loading-screen").is(":visible");
+    // Пока открыт диалог или идёт заставка, клавиши не срабатывают
+    static blocked = () => Boolean(RxDialog.current) || $(".loading-screen").is(":visible");
+
+    // Меню занято переключением раздела (анимация около секунды)
+    static switching = () => $(".flymenu").css("pointer-events") === "none";
+
+    // Раздел, нажатый во время переключения, открывается сразу после него (последнее нажатие важнее)
+    static pendingSection = null;
+    static pendingTimer = null;
 
     static openSection = (modalName) => {
         const item = [...document.querySelectorAll(`.flymenu .item[data-modal="${modalName}"]`)].find(RxHotkeys.visible);
         if (!item) return false;
+        if (RxHotkeys.switching()) {
+            RxHotkeys.pendingSection = modalName;
+            if (!RxHotkeys.pendingTimer) {
+                const started = Date.now();
+                RxHotkeys.pendingTimer = setInterval(() => {
+                    if (RxHotkeys.switching() && Date.now() - started < 3000) return;
+                    clearInterval(RxHotkeys.pendingTimer);
+                    RxHotkeys.pendingTimer = null;
+                    const next = RxHotkeys.pendingSection;
+                    RxHotkeys.pendingSection = null;
+                    if (next && !RxHotkeys.switching()) RxHotkeys.openSection(next);
+                }, 80);
+            }
+            return true;
+        }
         if (RxModals.shownOverlays().length) RxModals.hideCurrentOverlay();
         item.click();
         return true;

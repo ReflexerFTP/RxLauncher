@@ -86,28 +86,8 @@ class RxVersionsManager {
     }
 
     static getOptiFineFallbackPaths = () => {
-        const candidates = [];
-
-        try {
-            const appRoot = path.dirname(require.resolve("./../package.json"));
-            candidates.push(path.join(appRoot, "web", "assets", "data", "optifine-fallback.json"));
-        } catch (_) {}
-
-        if (typeof __dirname === "string") {
-            candidates.push(path.join(__dirname, "assets", "data", "optifine-fallback.json"));
-            candidates.push(path.join(__dirname, "web", "assets", "data", "optifine-fallback.json"));
-        }
-
-        if (typeof process !== "undefined" && process.resourcesPath) {
-            candidates.push(path.join(process.resourcesPath, "app.asar", "web", "assets", "data", "optifine-fallback.json"));
-            candidates.push(path.join(process.resourcesPath, "app", "web", "assets", "data", "optifine-fallback.json"));
-        }
-
-        if (typeof process !== "undefined" && typeof process.cwd === "function") {
-            candidates.push(path.join(process.cwd(), "web", "assets", "data", "optifine-fallback.json"));
-        }
-
-        return [...new Set(candidates)];
+        // Файлы интерфейса на диске (resources\web рядом с exe, см. tauri/build-ui.cjs)
+        return typeof __dirname === "string" ? [path.join(__dirname, "assets", "data", "optifine-fallback.json")] : [];
     }
 
     static normalizeOptiFineEntry = (version, entry) => {
