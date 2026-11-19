@@ -99,7 +99,7 @@ fn build_client(guarded: bool, decompress: bool) -> reqwest::Client {
         builder = builder.no_gzip().no_brotli().no_deflate();
     }
     if guarded {
-        builder = builder.dns_resolver(std::sync::Arc::new(SafeResolver)).https_only(true);
+        builder = builder.no_proxy().dns_resolver(std::sync::Arc::new(SafeResolver)).https_only(true);
     }
     builder.build().expect("HTTP client")
 }
@@ -228,7 +228,7 @@ async fn request(app: &AppHandle, args: Value, payload: Vec<u8>) -> BridgeResult
     let id = arg_u64(&args, "id").unwrap_or(0);
     let mut abort = register_abort(app, id);
     let result = async {
-        let max = arg_u64(&args, "maxBytes").unwrap_or(16 * 1024 * 1024);
+        let max = arg_u64(&args, "maxBytes").unwrap_or(16 * 1024 * 1024).min(64 * 1024 * 1024);
         let decompress = args.get("compress").and_then(Value::as_bool).unwrap_or(true);
         let response = send(&args, if payload.is_empty() { None } else { Some(payload) }, decompress, &mut abort).await?;
         let status = response.status().as_u16();
@@ -295,7 +295,6 @@ async fn download(app: &AppHandle, args: Value) -> BridgeResult {
     let id = arg_u64(&args, "id").unwrap_or(0);
     let target = arg_str(&args, "path")?.to_string();
     let mut abort = register_abort(app, id);
-    let temp = format!("{target}.{:016x}.rxdownload", rand::random::<u64>());
     let result = async {
         let max = arg_u64(&args, "maxBytes").unwrap_or(4 * 1024 * 1024 * 1024);
         let expected_size = arg_u64(&args, "expectedSize");
@@ -319,7 +318,10 @@ async fn download(app: &AppHandle, args: Value) -> BridgeResult {
             Some((algorithm, _)) => Some(Hasher::new(algorithm).ok_or_else(|| BridgeError::new(format!("Digest method not supported: {algorithm}")))?),
             None => None,
         };
-        let mut file = std::io::BufWriter::with_capacity(256 * 1024, std::fs::File::create(&temp).map_err(|e| crate::fsops::io_error(e, "open", &temp, None))?);
+        let parent = Path::new(&target).parent().ok_or("Missing download folder")?;
+        let mut temp = tempfile::Builder::new().suffix(".rxdownload").tempfile_in(parent)
+            .map_err(|e| crate::fsops::io_error(e, "open", &target, None))?;
+        let mut file = std::io::BufWriter::with_capacity(256 * 1024, temp.as_file_mut());
         let idle = Duration::from_millis(arg_u64(&args, "timeout").unwrap_or(30_000).clamp(1_000, 600_000));
         let mut stream = response.bytes_stream();
         let mut received: u64 = 0;
@@ -332,13 +334,13 @@ async fn download(app: &AppHandle, args: Value) -> BridgeResult {
             if let Some(h) = hasher.as_mut() {
                 h.update(&chunk);
             }
-            file.write_all(&chunk).map_err(|e| crate::fsops::io_error(e, "write", &temp, None))?;
+            file.write_all(&chunk).map_err(|e| crate::fsops::io_error(e, "write", &target, None))?;
             if progress && last_emit.elapsed() >= Duration::from_millis(100) {
                 last_emit = Instant::now();
                 let _ = app.emit("rx:http-progress", json!({"id": id, "received": received, "total": total}));
             }
         }
-        file.flush().map_err(|e| crate::fsops::io_error(e, "write", &temp, None))?;
+        file.flush().map_err(|e| crate::fsops::io_error(e, "write", &target, None))?;
         drop(file);
         let name = Path::new(&target).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
         if total > 0 && received != total {
@@ -357,14 +359,11 @@ async fn download(app: &AppHandle, args: Value) -> BridgeResult {
         if progress {
             let _ = app.emit("rx:http-progress", json!({"id": id, "received": received, "total": total.max(received)}));
         }
-        std::fs::rename(&temp, &target).map_err(|e| crate::fsops::io_error(e, "rename", &temp, Some(&target)))?;
+        temp.persist(&target).map_err(|e| crate::fsops::io_error(e.error, "rename", &target, None))?;
         ok(json!({"bytes": received}))
     }
     .await;
     unregister_abort(app, id);
-    if result.is_err() {
-        let _ = std::fs::remove_file(&temp);
-    }
     result
 }
 

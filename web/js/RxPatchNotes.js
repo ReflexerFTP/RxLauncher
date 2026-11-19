@@ -1,6 +1,40 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.6.0-fixes",
+            version: "4.6.0",
+            date: "2026-11-19T18:00:00+03:00",
+            image: "assets/version-heroes/1.21.webp",
+            tag: {ru: "ИСПРАВЛЕНИЯ", en: "FIXES"},
+            title: {ru: "Исправлены баги, оптимизация лучше", en: "Bug fixes and better performance"},
+            summary: {
+                ru: "Лаунчер стал стабильнее и быстрее: исправлены ошибки с модами и сборками, закрытием окна, обновлениями и островом Spotify, а работа с файлами стала надёжнее.",
+                en: "The launcher is more stable and faster: fixes for mods and packs, closing the window, updates and the Spotify island, and safer file handling."
+            },
+            changes: {
+                ru: [
+                    "Удаление модов в сборках: мод убирается и из папки, и из списка сборки, поэтому при запуске он больше не скачивается заново. Отключённые моды (.disabled и .dis) видны везде.",
+                    "Проверка модов на стилеры: если мод не удалось проверить, лаунчер предупредит, а не пропустит его молча.",
+                    "Крестик закрывает лаунчер сразу, даже во время загрузок. Во время игры он, как и раньше, прячет лаунчер в трей, а после игры окно возвращается само.",
+                    "Обновления лаунчера: скачанный установщик проверяется ещё раз прямо перед запуском.",
+                    "Распаковка архивов, Java и библиотек: файл появляется только после полной проверки, оборванная загрузка больше не оставляет битых файлов.",
+                    "Остров Spotify работает в отдельном потоке и не подвешивает лаунчер, если служба мультимедиа Windows зависла.",
+                    "Вход через Discord не теряется, если браузер вернул ответ раньше времени.",
+                    "Ядро собрано на новых версиях библиотек: распаковка быстрее, установщик модов-загрузчиков закрывается вместе с лаунчером."
+                ],
+                en: [
+                    "Deleting mods in packs: the mod is removed from both the folder and the pack list, so it is no longer downloaded again on launch. Disabled mods (.disabled and .dis) show up everywhere.",
+                    "Stealer scan: if a mod could not be checked, the launcher warns you instead of silently letting it through.",
+                    "The close button closes the launcher right away, even during downloads. While playing it still hides the launcher to the tray, and the window comes back by itself after the game.",
+                    "Launcher updates: the downloaded installer is verified again right before it runs.",
+                    "Unpacking archives, Java and libraries: a file appears only after a full check, and an interrupted download no longer leaves broken files.",
+                    "The Spotify island runs on its own thread and no longer freezes the launcher when the Windows media service hangs.",
+                    "Discord sign-in is no longer lost when the browser answers too early.",
+                    "The core is built on newer libraries: faster unpacking, and the mod loader installer closes together with the launcher."
+                ]
+            }
+        },
+        {
             id: "4.5.0-lighter",
             version: "4.5.0",
             date: "2026-11-11T18:00:00+03:00",

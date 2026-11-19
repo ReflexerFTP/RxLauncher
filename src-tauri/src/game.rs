@@ -512,6 +512,7 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
     command.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
     let mut child = command.spawn().map_err(|e| BridgeError::new(format!("Cannot start Java: {e}")))?;
     let pid = child.id().unwrap_or(0);
+    state.add_game(pid);
     for stream in [child.stdout.take().map(|s| Box::new(s) as Box<dyn tokio::io::AsyncRead + Unpin + Send>), child.stderr.take().map(|s| Box::new(s) as Box<dyn tokio::io::AsyncRead + Unpin + Send>)].into_iter().flatten() {
         let sink = events_sink(events);
         tauri::async_runtime::spawn(async move {
@@ -525,11 +526,30 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
         });
     }
     let sink = events_sink(events);
+    let app = app.clone();
     tauri::async_runtime::spawn(async move {
         let code = match child.wait().await {
             Ok(status) => status.code().unwrap_or(-1),
             Err(_) => -1,
         };
+        let state = app.state::<AppState>();
+        let none_left = state.remove_game(pid);
+        let user_data = state.user_data.clone();
+        tauri::async_runtime::spawn_blocking(move || {
+            let dir = crate::vault::accepted_dir(&user_data, &game_dir.to_string_lossy());
+            crate::vault::finish(&user_data, dir.as_deref(), none_left);
+        });
+        if none_left {
+            crate::updater::game_closed(&app);
+            let handle = app.clone();
+            let _ = app.run_on_main_thread(move || {
+                let state = handle.state::<AppState>();
+                if !state.force_close() && !state.game_active()
+                    && crate::window::main_window(&handle).is_some_and(|w| w.is_visible().ok() == Some(false)) {
+                    crate::window::show_launcher(&handle);
+                }
+            });
+        }
         // Дать дочитать последние строки вывода
         tokio::time::sleep(Duration::from_millis(300)).await;
         sink("close", json!(code));

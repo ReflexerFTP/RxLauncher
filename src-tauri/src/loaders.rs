@@ -355,10 +355,12 @@ pub async fn generate_config(input: Value) -> BridgeResult {
 
 // ---------- установка Forge/NeoForge перед запуском: возвращает id установленной версии ----------
 fn read_entry(archive: &mut zip::ZipArchive<std::fs::File>, name: &str) -> Option<Vec<u8>> {
-    let mut entry = archive.by_name(name).ok()?;
+    let entry = archive.by_name(name).ok()?;
+    const MAX_PROFILE: u64 = 16 * 1024 * 1024;
+    if entry.size() > MAX_PROFILE { return None; }
     let mut data = Vec::new();
-    entry.read_to_end(&mut data).ok()?;
-    Some(data)
+    entry.take(MAX_PROFILE + 1).read_to_end(&mut data).ok()?;
+    (data.len() as u64 <= MAX_PROFILE).then_some(data)
 }
 
 pub async fn install_forge(_app: &AppHandle, sink: Sink, root: &Path, installer: &Path, java: &Path, mc_version: &str) -> Result<String, BridgeError> {
@@ -370,7 +372,7 @@ pub async fn install_forge(_app: &AppHandle, sink: Sink, root: &Path, installer:
 
     // Старый формат (1.12.2 и раньше): versionInfo + универсальный jar внутри установщика
     if let Some(info) = profile.get("versionInfo") {
-        let id = info.get("id").and_then(Value::as_str).filter(|id| !id.contains(['/', '\\', ':'])).ok_or("Bad legacy Forge profile")?.to_string();
+        let id = info.get("id").and_then(Value::as_str).filter(|id| valid_folder_name(id)).ok_or("Bad legacy Forge profile")?.to_string();
         let mut info = info.clone();
         if info.get("inheritsFrom").is_none() {
             info["inheritsFrom"] = Value::String(mc_version.to_string());
@@ -380,9 +382,13 @@ pub async fn install_forge(_app: &AppHandle, sink: Sink, root: &Path, installer:
         }
         let install = profile.get("install").cloned().unwrap_or(Value::Null);
         if let (Some(entry), Some(coords)) = (install.get("filePath").and_then(Value::as_str), install.get("path").and_then(Value::as_str)) {
-            if let (Some(relative), Some(data)) = (crate::gamefiles::maven_path(coords), read_entry(&mut archive, entry)) {
-                atomic_write(&root.join("libraries").join(relative), &data)?;
-            }
+            let relative = crate::gamefiles::maven_path(coords).ok_or("Invalid Forge library path")?;
+            let data = archive.by_name(entry).map_err(|e| BridgeError::new(e.to_string()))?;
+            let size = data.size();
+            if size > 256 * 1024 * 1024 { return Err("Forge library is too large".into()); }
+            let target = root.join("libraries").join(relative);
+            crate::archive::no_links(root, &target)?;
+            crate::archive::write_entry(data, &target, size)?;
         }
         atomic_write(&root.join("versions").join(&id).join(format!("{id}.json")), &serde_json::to_vec_pretty(&info).unwrap_or_default())?;
         return Ok(id);
@@ -392,7 +398,7 @@ pub async fn install_forge(_app: &AppHandle, sink: Sink, root: &Path, installer:
     let version: Value = read_entry(&mut archive, "version.json").and_then(|b| serde_json::from_slice(&b).ok())
         .ok_or_else(|| BridgeError::new("Loader installer has no version.json"))?;
     drop(archive);
-    let id = version.get("id").and_then(Value::as_str).filter(|id| !id.contains(['/', '\\', ':']) && !id.is_empty()).ok_or("Bad loader version id")?.to_string();
+    let id = version.get("id").and_then(Value::as_str).filter(|id| valid_folder_name(id)).ok_or("Bad loader version id")?.to_string();
     let version_dir = root.join("versions").join(&id);
     let marker = version_dir.join(".rx-installed");
     if version_dir.join(format!("{id}.json")).is_file() && std::fs::read_to_string(&marker).map(|m| m.trim() == installer_sha1).unwrap_or(false) {
@@ -405,7 +411,7 @@ pub async fn install_forge(_app: &AppHandle, sink: Sink, root: &Path, installer:
     }
     sink("debug", Value::String(format!("[RxCore]: Installing {id} (this can take a few minutes on the first launch)")));
     let mut command = tokio::process::Command::new(java);
-    command.arg("-jar").arg(installer).arg("--installClient").arg(root).current_dir(root).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    command.kill_on_drop(true).arg("-jar").arg(installer).arg("--installClient").arg(root).current_dir(root).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(windows)]
     command.creation_flags(0x0800_0000);
     let mut child = command.spawn().map_err(|e| BridgeError::new(format!("Cannot start the loader installer: {e}")))?;

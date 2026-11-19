@@ -20,7 +20,7 @@ class RxModScan {
     static flagged = (files, verified) => {
         const trusted = RxModScan.trusted();
         return files.filter(file => !trusted.has(file.sha1)
-            && (file.verdict === "danger" || (file.verdict === "warning" && !verified.has(file.sha1))));
+            && (file.verdict === "danger" || file.verdict === "unknown" || file.error || (file.verdict === "warning" && !verified.has(file.sha1))));
     };
 
     static items = (files) => {
@@ -33,14 +33,19 @@ class RxModScan {
     // Перед установкой (файл ещё не в папке модов): какие из файлов можно ставить
     static checkBeforeInstall = async (paths) => {
         if (!RxModScan.isEnabled() || !paths.length) return paths;
-        let report;
+        const files = [];
         try {
-            report = await ipcRenderer.invoke("mod-scan-files", {files: paths});
+            for (let start = 0; start < paths.length; start += 200) {
+                const batch = paths.slice(start, start + 200);
+                const report = await ipcRenderer.invoke("mod-scan-files", {files: batch});
+                if (report.files?.length !== batch.length || batch.some((p, i) => p !== report.files[i]?.path)) throw Error("Incomplete scan response");
+                files.push(...report.files);
+            }
         } catch (error) {
-            RxCollector.writeLog(`ModScan: Pre-install check skipped [error=${error?.message || error}]`);
-            return paths;
+            RxCollector.writeLog(`ModScan: Pre-install check failed [error=${error?.message || error}]`);
+            RxToasts.create(RxModScan.t("failed"), "error");
+            return [];
         }
-        const files = report.files || [];
         const flagged = RxModScan.flagged(files, await RxModScan.verified(files));
         flagged.forEach(file => RxCollector.writeLog(`ModScan: Pre-install ${file.verdict} ${file.name} [${file.findings.map(item => item.id).join(",")}]`));
         if (!flagged.length) return paths;
@@ -48,7 +53,7 @@ class RxModScan {
         const answer = await RxDialog.confirm({
             icon: danger ? "gpp_bad" : "gpp_maybe",
             title: RxModScan.t(danger ? "installTitle" : "suspectTitle"),
-            text: RxModScan.t(danger ? "installText" : "suspectInstallText").replace("{0}", flagged.length),
+            text: RxModScan.t(danger ? "installText" : flagged.some(f => f.verdict === "unknown" || f.error) ? "incomplete" : "suspectInstallText").replace("{0}", flagged.length),
             items: RxModScan.items(flagged),
             cancelText: paths.length > flagged.length ? RxModScan.t("installNone") : MESSAGES.dialog.cancel,
             extraButton: {text: RxModScan.t("installAnyway"), icon: "warning"},
@@ -74,6 +79,7 @@ class RxModScan {
     };
 
     static summary = (file, max = 2) => {
+        if (file.verdict === "unknown") return RxModScan.t("incomplete");
         const shown = file.findings.filter(item => item.severity === file.verdict).slice(0, max).map(RxModScan.reasonText);
         const rest = file.findings.filter(item => item.severity !== "info").length - shown.length;
         return shown.join(" · ") + (rest > 0 ? ` · ${RxModScan.t("more").replace("{0}", rest)}` : "");
@@ -117,8 +123,9 @@ class RxModScan {
         try {
             report = await RxModScan.scan(modsDir);
         } catch (error) {
-            RxCollector.writeLog(`ModScan: Pack review skipped [error=${error?.message || error}]`);
-            return true;
+            RxCollector.writeLog(`ModScan: Pack review failed [error=${error?.message || error}]`);
+            RxToasts.create(RxModScan.t("failed"), "error");
+            return false;
         }
         RxModScan.logReport(report);
         const flagged = RxModScan.flagged(report.files.filter(file => file.enabled), await RxModScan.verified(report.files));
@@ -134,8 +141,7 @@ class RxModScan {
             danger: true
         });
         if (answer !== true) return false;
-        RxToasts.create(RxModScan.t("disabled"), "gpp_good", String(RxModScan.disable(flagged)));
-        return true;
+        return RxModScan.disableChecked(flagged);
     };
 
     // Перед запуском: true — можно играть (опасные моды отключены или им доверяют)
@@ -146,8 +152,9 @@ class RxModScan {
             RxFlyout.setText(RxModScan.t("checking"), "");
             report = await RxModScan.scan(modsDir, true);
         } catch (error) {
-            RxCollector.writeLog(`ModScan: Skipped [error=${error?.message || error}]`);
-            return true;
+            RxCollector.writeLog(`ModScan: Prelaunch check failed [error=${error?.message || error}]`);
+            RxToasts.create(RxModScan.t("failed"), "error");
+            return false;
         }
         RxModScan.logReport(report);
         // Подозрительные моды не с Modrinth тоже показываем (проверка строже для файлов неизвестного происхождения)
@@ -157,7 +164,7 @@ class RxModScan {
         const answer = await RxDialog.confirm({
             icon: danger ? "gpp_bad" : "gpp_maybe",
             title: RxModScan.t(danger ? "title" : "suspectTitle"),
-            text: RxModScan.t(danger ? "text" : "suspectText").replace("{0}", dangerous.length),
+            text: RxModScan.t(danger ? "text" : dangerous.some(f => f.verdict === "unknown" || f.error) ? "incomplete" : "suspectText").replace("{0}", dangerous.length),
             items: RxModScan.items(dangerous),
             cancelText: MESSAGES.dialog.cancel,
             extraButton: {text: RxModScan.t("trustAndPlay"), icon: "warning"},
@@ -168,7 +175,15 @@ class RxModScan {
             return true;
         }
         if (answer !== true) return false;
-        const disabled = RxModScan.disable(dangerous);
+        return RxModScan.disableChecked(dangerous);
+    };
+
+    static disableChecked = files => {
+        const disabled = RxModScan.disable(files);
+        if (disabled !== files.length) {
+            RxToasts.create(RxModScan.t("disableFailed"), "error");
+            return false;
+        }
         RxToasts.create(RxModScan.t("disabled"), "gpp_good", String(disabled));
         return true;
     };
@@ -195,7 +210,7 @@ class RxModScan {
         }
         const trusted = RxModScan.trusted();
         const order = {danger: 0, warning: 1, unknown: 2};
-        const flagged = report.files.filter(file => file.verdict === "danger" || file.verdict === "warning")
+        const flagged = report.files.filter(file => file.verdict in order)
             .sort((a, b) => order[a.verdict] - order[b.verdict]);
         if (!flagged.length) {
             await RxDialog.open({icon: "verified_user", title: RxModScan.t("cleanTitle"), text: RxModScan.t("cleanText").replace("{0}", report.files.length),

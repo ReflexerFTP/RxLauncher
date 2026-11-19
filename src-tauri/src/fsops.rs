@@ -120,8 +120,19 @@ fn open_with_flags(path: &str, flags: &str) -> Result<File, BridgeError> {
     options.open(path).map_err(|e| io_error(e, "open", path, None))
 }
 
+pub(crate) fn is_link(meta: &fs::Metadata) -> bool {
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        meta.file_attributes() & windows_sys::Win32::Storage::FileSystem::FILE_ATTRIBUTE_REPARSE_POINT != 0
+    }
+    #[cfg(not(windows))]
+    { meta.file_type().is_symlink() }
+}
+
 fn clear_readonly(path: &Path) {
-    if let Ok(meta) = fs::metadata(path) {
+    if let Ok(meta) = fs::symlink_metadata(path) {
+        if is_link(&meta) || !crate::scope::permits(&path.to_string_lossy(), crate::scope::Access::Write) { return; }
         let mut permissions = meta.permissions();
         if permissions.readonly() {
             #[allow(clippy::permissions_set_readonly_false)]
@@ -152,7 +163,7 @@ fn walk(root: &Path) -> Vec<PathBuf> {
         if let Ok(entries) = fs::read_dir(&dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                if fs::symlink_metadata(&path).is_ok_and(|m| m.is_dir() && !is_link(&m)) {
                     stack.push(path.clone());
                 }
                 out.push(path);
@@ -163,7 +174,12 @@ fn walk(root: &Path) -> Vec<PathBuf> {
 }
 
 fn copy_recursive(from: &Path, to: &Path, force: bool, error_on_exist: bool) -> Result<(), BridgeError> {
+    crate::scope::check(&from.to_string_lossy(), crate::scope::Access::Read, "cp")?;
+    crate::scope::check(&to.to_string_lossy(), crate::scope::Access::Write, "cp")?;
     let meta = fs::symlink_metadata(from).map_err(|e| io_error(e, "lstat", &from.to_string_lossy(), None))?;
+    if is_link(&meta) {
+        return Err(BridgeError::new("Cannot recursively copy a linked entry"));
+    }
     if meta.is_dir() {
         fs::create_dir_all(to).map_err(|e| io_error(e, "mkdir", &to.to_string_lossy(), None))?;
         for entry in fs::read_dir(from).map_err(|e| io_error(e, "scandir", &from.to_string_lossy(), None))? {
@@ -442,6 +458,13 @@ pub fn run(app: &AppHandle, op: &str, args: &Value, payload: Vec<u8>) -> BridgeR
         }
         "cp" => {
             let (from, to) = (arg_str(args, "from")?, arg_str(args, "to")?);
+            if Path::new(from).is_dir() {
+                let source = crate::scope::resolved_path(Path::new(from)).ok_or("Invalid copy source")?;
+                let dest = crate::scope::resolved_path(Path::new(to)).ok_or("Invalid copy destination")?;
+                if crate::scope::is_same_or_child(&dest, &source) {
+                    return Err(BridgeError::new("Cannot copy a directory into itself"));
+                }
+            }
             if Path::new(from).is_dir() && !arg_bool(args, "recursive") {
                 return Err(io_error_custom("ERR_FS_EISDIR", -4068, &format!("Recursive option is required to copy a directory: cp returned EISDIR ({from} is a directory (not copied))"), "cp", from));
             }

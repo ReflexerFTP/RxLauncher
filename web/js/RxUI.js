@@ -25,8 +25,6 @@ class RxUI {
 
     // Закрыть главное окно -> закрыть лаунчер
     static closeMainWindow = () => {
-        RxCollector.writeLog(`IPC: Close`);
-        RxCollector.writeLog(`Bye bye!`);
         ipcRenderer.send("close-main-window");
     };
 

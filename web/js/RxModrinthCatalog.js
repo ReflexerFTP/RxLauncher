@@ -40,7 +40,7 @@ class RxModrinthCatalog {
 
     static jarFiles = (modsPath) => {
         try {
-            return fs.readdirSync(modsPath).filter(name => /\.jar(\.disabled)?$/i.test(name)).map(name => path.join(modsPath, name));
+            return fs.readdirSync(modsPath).filter(RxModsManager.isJarFileName).map(name => path.join(modsPath, name));
         } catch (_) {
             return [];
         }
@@ -379,13 +379,15 @@ class RxModrinthCatalog {
         let deps = 0;
         for (const item of RxModrinthCatalog.updates) {
             try {
-                const fileName = await RxModrinthCatalog.download(item.file, context.modsPath);
                 const oldFile = item.current.file;
+                if (!fs.existsSync(oldFile)) continue;
+                const fileName = await RxModrinthCatalog.download(item.file, context.modsPath);
                 if (path.basename(oldFile) !== fileName && fs.existsSync(oldFile)) {
                     fs.mkdirSync(backupDir, {recursive: true});
                     fs.renameSync(oldFile, path.join(backupDir, path.basename(oldFile)));
                     // Отключённый мод остаётся отключённым
-                    if (/\.disabled$/i.test(oldFile)) fs.renameSync(path.join(context.modsPath, fileName), path.join(context.modsPath, `${fileName}.disabled`));
+                    const suffix = /\.(?:disabled|dis)$/i.exec(oldFile);
+                    if (suffix) fs.renameSync(path.join(context.modsPath, fileName), path.join(context.modsPath, fileName + suffix[0]));
                 }
                 done++;
                 // Новой версии могли понадобиться новые обязательные зависимости — ставим их тоже

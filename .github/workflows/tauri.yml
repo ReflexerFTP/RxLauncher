@@ -148,8 +148,14 @@ jobs:
       - name: Download installers
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_RUN: ${{ inputs.release_run }}
         run: |
-          gh run download "${{ inputs.release_run }}" -R "${{ github.repository }}" -n rxlauncher-tauri -D out
+          [[ "$RELEASE_RUN" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RELEASE_RUN" | jq -e '
+            .conclusion == "success" and .event == "workflow_dispatch" and
+            .path == ".github/workflows/tauri.yml" and .head_branch == "tauri" and
+            .head_repository.full_name == env.GITHUB_REPOSITORY and .head_sha == env.GITHUB_SHA' > /dev/null
+          gh run download "$RELEASE_RUN" -R "$GITHUB_REPOSITORY" -n rxlauncher-tauri -D out
           ls -la out
 
       - name: Sign update manifest

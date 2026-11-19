@@ -76,6 +76,63 @@ class RxPacks {
         return fs.existsSync(path.join(GAME_DATA, "modpacks", modpackId, "manifest.json"));
     }
 
+    static fileOperations = new Map();
+
+    // Проверка при запуске и удаление не должны одновременно менять файлы одной сборки.
+    static withPackFiles = async (id, action) => {
+        const key = id.toLowerCase();
+        const previous = RxPacks.fileOperations.get(key) || Promise.resolve();
+        const current = previous.catch(() => {}).then(action);
+        RxPacks.fileOperations.set(key, current);
+        try { return await current; }
+        finally { if (RxPacks.fileOperations.get(key) === current) RxPacks.fileOperations.delete(key); }
+    };
+
+    static modKey = relative => String(relative).replaceAll("\\", "/").toLowerCase().replace(/(\.jar)\.(?:disabled|dis)$/, "$1");
+
+    static deletePackMods = async (id, names) => {
+        if (!RxPacks.isSafePackId(id) || !names.length || names.some(name =>
+            typeof name !== "string" || !/\.jar(?:\.disabled|\.dis)?$/i.test(name) || name !== path.basename(name))) return false;
+        return RxPacks.withPackFiles(id, async () => {
+            const root = path.resolve(GAME_DATA, "modpacks", id);
+            const stash = path.join(root, "rx-mod-backups", `removed-${crypto.randomUUID()}`);
+            const moved = [];
+            try {
+                RxPacks.assertSafePackTarget(root, stash);
+                for (const name of new Set(names)) {
+                    const relative = RxPacks.safety().safePackPath(`mods/${name}`);
+                    const file = path.join(root, relative);
+                    RxPacks.assertSafePackTarget(root, file);
+                    if (!fs.existsSync(file)) continue;
+                    if (!fs.lstatSync(file).isFile()) throw new Error("Expected a mod file");
+                    if (!moved.length) fs.mkdirSync(stash, {recursive: true});
+                    await fs.promises.rename(file, path.join(stash, name));
+                    moved.push(name);
+                }
+                const manifest = RxPacks.getModpackManifest(id);
+                if (!manifest || !Array.isArray(manifest.files)) throw new Error("Invalid modpack manifest");
+                const keys = new Set(names.map(name => RxPacks.modKey(`mods/${name}`)));
+                const files = manifest.files.filter(item => !keys.has(RxPacks.modKey(item.path || item.name)));
+                if (files.length !== manifest.files.length) RxPacks.writeModpackManifest(id, {...manifest, files});
+            } catch (error) {
+                for (const name of moved.reverse()) {
+                    try {
+                        const original = path.join(root, "mods", name);
+                        if (!fs.existsSync(original)) fs.renameSync(path.join(stash, name), original);
+                    } catch (restoreError) { RxCollector.writeLog(`Mods: Could not restore ${name} from ${stash}: ${restoreError.message}`); }
+                }
+                try { if (fs.existsSync(stash) && !fs.readdirSync(stash).length) fs.rmdirSync(stash); } catch (_) {}
+                RxCollector.writeLog(`Mods: Could not delete from ${id}: ${error.message}`);
+                return false;
+            }
+            if (moved.length) {
+                try { await require("electron").shell.trashItem(stash); }
+                catch (error) { RxCollector.writeLog(`Mods: Removed files saved in ${stash}: ${error.message}`); }
+            }
+            return true;
+        });
+    };
+
     // Удалить файл из модпака
     static deleteFileFromModpack = async (filePath, fromModpack = false, modpackId = null) => {
         if (fromModpack === true && !RxPacks.isModpackExists(modpackId)) {
@@ -98,29 +155,27 @@ class RxPacks {
                     || !fs.realpathSync(resolved).startsWith(fs.realpathSync(root) + path.sep)) return false;
             }
         } catch (_) { return false; }
+        if (fromModpack && path.dirname(relative).toLowerCase() === "mods" && /\.jar(?:\.disabled|\.dis)?$/i.test(relative)) {
+            return RxPacks.deletePackMods(modpackId, [path.basename(relative)]);
+        }
         // Files and folder-based resource packs go to the recycle bin.
         try { if (fs.existsSync(resolved)) await require("electron").shell.trashItem(resolved); }
         catch (error) { RxCollector.writeLog(`Packs: Could not trash file [error=${error.message}]`); return false; }
 
         // Если это модпак - удаляем из конфига. Если нет - возвращаем true
-        if (fromModpack === false) {
-            // Перезагружаем список
-            RxPacksUI.loadInstalledList();
-            return true;
-        }
+        if (fromModpack === false) return true;
 
         // Получаем манифест нужного пака
-        let modpackFiles = modpackData.files;
+        const latest = RxPacks.getModpackManifest(modpackId);
+        if (!latest || !Array.isArray(latest.files)) return false;
+        let modpackFiles = latest.files;
         const remaining = modpackFiles.filter(item => {
             const itemPath = path.normalize(item.path || item.name || "");
             return itemPath !== relative && !itemPath.startsWith(relative + path.sep);
         });
         if (remaining.length !== modpackFiles.length) {
-            modpackData.files = remaining;
-            RxPacks.writeModpackManifest(modpackId, modpackData);
+            RxPacks.writeModpackManifest(modpackId, {...latest, files: remaining});
         }
-        // Перезагружаем список
-        RxPacksUI.loadInstalledList();
         return true;
     }
 
@@ -135,12 +190,15 @@ class RxPacks {
     // Проверить и докачать недостающие файлы сборки (параллельно, с проверкой хешей).
     // false — что-то не скачалось: запуск с неполной сборкой всё равно бы упал
     static verifyAndInstall = async (modpackId) => {
+        if (!RxPacks.isSafePackId(modpackId)) return false;
         try {
-            const missing = await RxPacks.verifyFiles(modpackId);
-            if (missing.length === 0) return true;
-            RxCollector.writeLog(`Packs: Downloading ${missing.length} file(s) [pack=${modpackId}]`);
-            await RxDownloader.downloadMany(missing, RxPacks.getModpackManifest(modpackId)?.displayName || modpackId);
-            return true;
+            return await RxPacks.withPackFiles(modpackId, async () => {
+                const missing = await RxPacks.verifyFiles(modpackId);
+                if (missing.length === 0) return true;
+                RxCollector.writeLog(`Packs: Downloading ${missing.length} file(s) [pack=${modpackId}]`);
+                await RxDownloader.downloadMany(missing, RxPacks.getModpackManifest(modpackId)?.displayName || modpackId);
+                return true;
+            });
         } catch (error) {
             RxCollector.writeLog(`Packs: Download failed [pack=${modpackId}] [file=${error.file}] [error=${error.message}]`);
             if (!/aborted|cancelled/i.test(error.message || "")) RxToasts.create(MESSAGES.packs.filesFailed, "error", error.file || error.message, "error");
@@ -433,6 +491,11 @@ class RxPacks {
     // Обновить сборку из нового .mrpack: файлы, которых больше нет в сборке, уходят в rx-mod-backups,
     // моды, добавленные вручную, и миры не трогаются. Название меняется, только если пользователь его не переименовывал
     static updateModrinthPack = async (modpackId, archivePath, source = {}) => {
+        if (!RxPacks.isSafePackId(modpackId)) return false;
+        return RxPacks.withPackFiles(modpackId, () => RxPacks.applyPackArchive(modpackId, archivePath, source));
+    };
+
+    static applyPackArchive = async (modpackId, archivePath, source) => {
         const manifest = RxPacks.getModpackManifest(modpackId);
         if (!manifest) return false;
         const modpackPath = path.resolve(GAME_DATA, "modpacks", modpackId);

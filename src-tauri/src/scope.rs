@@ -3,7 +3,7 @@
 //   — в папке данных лаунчера, папке игры (.minecraft и та, что выбрана в настройках) и во временной папке;
 //   — там, что пользователь сам выбрал в системном окне или перетащил в лаунчер (до закрытия лаунчера).
 // Файлы интерфейса и папки других лаунчеров (для переноса) доступны только на чтение.
-// Пути сравниваются без обращения к диску: «.» и «..» раскрываются, регистр не важен
+// Проверяются и переданный путь, и фактический путь с учётом ссылок Windows.
 use std::path::{Component, Path, PathBuf, Prefix};
 use std::sync::{Mutex, OnceLock};
 
@@ -78,7 +78,17 @@ fn inside(key: &str, root: &str) -> bool {
 
 impl Root {
     fn matches(&self, key: &str) -> bool {
-        inside(key, &self.key) || (self.file && key.starts_with(&self.key) && key.as_bytes().get(self.key.len()) == Some(&b'.'))
+        if self.file {
+            return key == self.key || key.strip_prefix(&self.key).is_some_and(|s| s.starts_with('.') && !s.contains('\\'));
+        }
+        inside(key, &self.key)
+    }
+}
+
+pub(crate) fn is_same_or_child(path: &Path, root: &Path) -> bool {
+    match (key(&path.to_string_lossy()), key(&root.to_string_lossy())) {
+        (Some(path), Some(root)) => inside(&path, &root),
+        _ => path.starts_with(root),
     }
 }
 
@@ -222,12 +232,33 @@ pub fn grant(app: &AppHandle, path: &Path) {
     }
 }
 
+// Для нового файла проверяем реальную папку ближайшего существующего предка.
+pub(crate) fn resolved_path(path: &Path) -> Option<PathBuf> {
+    for ancestor in path.ancestors() {
+        match dunce::canonicalize(ancestor) {
+            Ok(real) => {
+                let suffix = path.strip_prefix(ancestor).ok()?;
+                if !suffix.components().all(|c| matches!(c, Component::Normal(_))) { return None; }
+                return Some(if suffix.as_os_str().is_empty() { real } else { real.join(suffix) });
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                // Существующая ссылка с недоступной целью не является новым файлом.
+                match std::fs::symlink_metadata(ancestor) {
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                    _ => return None,
+                }
+            }
+            Err(_) => return None,
+        }
+    }
+    None
+}
+
 pub fn permits(path: &str, access: Access) -> bool {
-    // До запуска приложения (проверки ядра) границ нет
-    let Some(scope) = SCOPE.get() else { return true };
-    let Some(key) = key(path) else { return false };
-    let Ok(scope) = scope.lock() else { return false };
-    scope.roots.iter().any(|root| (root.write || access == Access::Read) && root.matches(&key))
+    let Some(scope) = SCOPE.get() else { return cfg!(test) };
+    let allowed = |key: &str| scope.lock().is_ok_and(|s| s.roots.iter().any(|r| (r.write || access == Access::Read) && r.matches(key)));
+    key(path).is_some_and(|k| allowed(&k)) && resolved_path(Path::new(path))
+        .and_then(|p| key(&p.to_string_lossy())).is_some_and(|k| allowed(&k))
 }
 
 fn note_denied(op: &str, path: &str) {

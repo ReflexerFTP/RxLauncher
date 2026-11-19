@@ -233,6 +233,8 @@ const screenshotHandlers = {
 };
 
 module.exports = {
+    // Крестик не должен ждать свободного соединения с rxsync во время загрузок.
+    "close-main-window": () => window.__TAURI_INTERNALS__.invoke("plugin:window|close", {label: "main"}),
     ...screenshotHandlers,
     ...discordHandlers,
     "network-compatibility-check": networkCompatibilityCheck

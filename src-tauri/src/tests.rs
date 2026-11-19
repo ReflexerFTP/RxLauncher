@@ -33,6 +33,69 @@ fn ids(result: &serde_json::Value) -> Vec<String> {
 }
 
 #[test]
+fn archive_replaces_only_complete_files() {
+    let dir = tempfile::tempdir().unwrap();
+    let target = dir.path().join("saved.txt");
+    std::fs::write(&target, b"previous").unwrap();
+    assert!(crate::archive::write_entry(&b"short"[..], &target, 8).is_err());
+    assert_eq!(std::fs::read(&target).unwrap(), b"previous");
+    crate::archive::write_entry(&b"complete"[..], &target, 8).unwrap();
+    assert_eq!(std::fs::read(&target).unwrap(), b"complete");
+    assert_eq!(dir.path().read_dir().unwrap().count(), 1);
+}
+
+#[test]
+fn concurrent_scans_of_full_pack_agree() {
+    let data = tempfile::tempdir().unwrap();
+    let mods = data.path().join("mods");
+    std::fs::create_dir(&mods).unwrap();
+    for i in 0..320 {
+        let name = format!("example-{i:03}.jar");
+        std::fs::write(mods.join(name), jar(&[("version.txt", i.to_string().as_bytes())])).unwrap();
+    }
+    let scan = || crate::modscan::scan_dir(data.path(), mods.to_str().unwrap(), true).unwrap().0;
+    let first = scan();
+    assert_eq!(first["scanned"], 320);
+    assert!(first["files"].as_array().unwrap().iter().all(|f| f["verdict"] == "clean"));
+    std::thread::scope(|s| {
+        let a = s.spawn(scan);
+        let b = s.spawn(scan);
+        for report in [a.join().unwrap(), b.join().unwrap()] {
+            assert_eq!(report["cached"], 320);
+            assert_eq!(report["timedOut"], false);
+        }
+    });
+    assert_eq!(scan()["cached"], 320);
+}
+
+#[test]
+fn resolved_scope_includes_new_children() {
+    let dir = tempfile::tempdir().unwrap();
+    let parent = dunce::canonicalize(dir.path()).unwrap();
+    let resolved = crate::scope::resolved_path(&dir.path().join("mods/new.jar")).unwrap();
+    assert_eq!(resolved, parent.join("mods/new.jar"));
+    assert!(crate::scope::is_same_or_child(&resolved, &parent));
+    assert!(!crate::scope::is_same_or_child(&parent, &resolved));
+}
+
+#[test]
+fn mod_scan_reuses_only_identical_content() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("sample.jar");
+    let scan = || crate::modscan::scan_dir(dir.path(), dir.path().to_str().unwrap(), true).unwrap().0;
+    std::fs::write(&path, jar(&[("version.txt", b"1")])).unwrap();
+    let first = scan();
+    assert_eq!(first["scanned"], 1);
+    assert_eq!(scan()["cached"], 1);
+    std::fs::write(&path, jar(&[("version.txt", b"2")])).unwrap();
+    let next = scan();
+    assert_eq!(next["scanned"], 1);
+    assert_ne!(next["files"][0]["sha1"], first["files"][0]["sha1"]);
+    std::fs::write(&path, jar(&[("pending.jar", b"unfinished")])).unwrap();
+    assert_eq!(scan()["files"][0]["verdict"], "unknown");
+}
+
+#[test]
 fn local_addresses_are_blocked() {
     for ip in ["127.0.0.1", "10.1.2.3", "192.168.0.1", "172.16.5.4", "169.254.1.1", "100.64.0.1", "0.0.0.0", "::1", "fe80::1", "fc00::1", "::ffff:127.0.0.1"] {
         assert!(crate::http::is_local_ip(ip.parse::<IpAddr>().unwrap()), "{ip} must be local");

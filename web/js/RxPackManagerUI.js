@@ -134,20 +134,28 @@ class RxPackManagerUI {
 
     // Загрузить список модов в UI
     static loadModsList = () => {
+        const generation = RxPackManagerUI.modsGeneration = (RxPackManagerUI.modsGeneration || 0) + 1;
         let $modsList = $("#modal-packManager .layout-tab .mods-list");
         let modsPath = path.join(GAME_DATA, "modpacks", packman__currentModpack.id);
         if (!fs.existsSync(modsPath)) {
             return false;
         }
-        let modList = (packman__currentModpack.files || []).filter(file => file.path?.startsWith("mods/"));
         let modsPathFull = path.join(GAME_DATA, "modpacks", packman__currentModpack.id, "mods");
         if (!fs.existsSync(modsPathFull)) {
             return false;
         }
-        let modList2 = fs.readdirSync(modsPathFull);
-        modList2.forEach((item) => {
-            if (!modList.some(file => file.path === "mods/" + item)) modList.push({path: "mods/" + item});
-        })
+        const modList = fs.readdirSync(modsPathFull).filter(RxModsManager.isJarFileName).map(name => ({path: "mods/" + name}));
+        const present = new Set(modList.map(file => RxPacks.modKey(file.path)));
+        for (const entry of RxPacks.getModpackManifest(packman__currentModpack.id)?.files || []) {
+            let relative;
+            try { relative = RxPacks.safety().safePackPath(entry.path || entry.name, {allowBackslashes: true}).replaceAll("\\", "/"); }
+            catch (_) { continue; }
+            const key = RxPacks.modKey(relative);
+            if (key.startsWith("mods/") && RxModsManager.isJarFileName(relative) && !present.has(key)) {
+                modList.push({path: relative});
+                present.add(key);
+            }
+        }
         let currentMod = -1;
 
         $modsList.html("");
@@ -163,11 +171,13 @@ class RxPackManagerUI {
                     <div class="title flex flex-gap-4 flex-align-center">
                         <span>${packManagerEscape(path.basename(modList[currentMod].path))}</span>
                     </div>
+                    <button class="square small button" data-pack-remove><span class="material-symbols-outlined">delete</span></button>
                     </div>`);
                     return loadNextMod();
                 }
-                if (fs.existsSync(modFullPath) && (path.parse(modFullPath).ext === ".jar" || path.parse(modFullPath).ext === ".dis")) {
+                if (fs.existsSync(modFullPath) && RxModsManager.isJarFileName(modFullPath)) {
                     RxAssetsParsers.readModInfo(modFullPath).then(result => {
+                        if (generation !== RxPackManagerUI.modsGeneration) return;
                         let icon = "assets/modIcon.webp";
                         let description = "";
                         let title = path.parse(modList[currentMod].path).base;
@@ -176,7 +186,7 @@ class RxPackManagerUI {
         <input type="checkbox" checked data-pack-toggle>
         <span class="inner"></span>
     </label>`;
-                        if (path.parse(modFullPath).ext === ".dis") {
+                        if (!/\.jar$/i.test(modFullPath)) {
                             $switch = $switch.replace(" checked", "");
                         }
                         if (result !== false) {
@@ -341,8 +351,18 @@ class RxPackManagerUI {
     }
 
     // Удалить файл по кнопке
-    static removeFile = (elem) => {
+    static removeFile = async (elem) => {
         const filename = String($(elem).parent().data("filename") || "");
+        if (packman__currentMode === "mods") {
+            const packId = packman__currentModpack.id;
+            const root = path.resolve(GAME_DATA, "modpacks", packId);
+            const modPath = path.resolve(root, filename);
+            if (!modPath.startsWith(path.join(root, "mods") + path.sep)) return false;
+            const ok = await RxPacks.deleteFileFromModpack(modPath, true, packId);
+            if (!ok) RxToasts.create(MESSAGES.mods.deleteFailed, "error", path.basename(modPath), "error");
+            if (packman__currentModpack.id === packId) RxPackManagerUI.loadModsList();
+            return ok;
+        }
         const directory = path.resolve(GAME_DATA, "modpacks", packman__currentModpack.id, packman__currentMode === "worlds" ? "saves" : packman__currentMode);
         const fullPath = path.resolve(directory, packman__currentMode === "worlds" ? filename : path.basename(filename));
         if (!fullPath.startsWith(directory + path.sep)) return false;
@@ -364,8 +384,8 @@ class RxPackManagerUI {
     static toggleMod = (elem) => {
         let filename = $(elem).parent().parent().data("filename");
 
-        let fullPath = path.join(GAME_DATA, "modpacks", packman__currentModpack.id, packman__currentMode, path.basename(filename).replace(/\.dis$/, ""));
-        let fullPathDis = fullPath + ".dis";
+        let fullPath = path.join(GAME_DATA, "modpacks", packman__currentModpack.id, packman__currentMode, path.basename(filename).replace(/\.(?:dis|disabled)$/i, ""));
+        let fullPathDis = /\.disabled$/i.test(filename) ? fullPath + ".disabled" : fullPath + ".dis";
         if ($(elem).is(":checked") && fs.existsSync(fullPathDis)) {
             fs.renameSync(fullPathDis, fullPath);
         }

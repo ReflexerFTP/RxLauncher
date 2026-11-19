@@ -150,14 +150,16 @@ class RxPacksUI {
 
         // Если это модпак, то ищем DisplayName для каждого
         if (isModpack) {
+            const installedByPath = new Map(Object.keys(listResult).map(key => [RxPacks.modKey(key), listResult[key]]));
             let modpackFiles = RxPacks.getModpackManifest(modpackId)?.files || [];
             modpackFiles.forEach((file) => {
                 let relative;
                 try { relative = RxPacks.safety().safePackPath(file.path || file.name, {allowBackslashes: true}); }
                 catch (_) { return; }
-                if (typeof listResult[relative] !== "undefined") {
-                    listResult[relative].displayName = file.displayName;
-                    listResult[relative].inConfigOf = modpackId;
+                const installed = listResult[relative] || installedByPath.get(RxPacks.modKey(relative));
+                if (installed) {
+                    installed.displayName = file.displayName;
+                    installed.inConfigOf = modpackId;
                 } else {
                     listResult[relative] = {
                         file: file.name,
@@ -192,8 +194,9 @@ class RxPacksUI {
             $("<span>").addClass("name").text(mod.displayName).appendTo($row);
             $("<button>").append($("<span>").addClass("material-symbols-outlined").text("delete"))
                 .on("click", async () => {
-                    const ok = await RxPacks.deleteFileFromModpack(mod.path, mod.inConfigOf !== false, mod.inConfigOf);
+                    const ok = await RxPacks.deleteFileFromModpack(mod.path, isModpack, modpackId);
                     if (!ok) RxToasts.create(MESSAGES.packs.filesFailed, "error", mod.displayName, "error");
+                    RxPacksUI.loadInstalledList();
                 }).appendTo($row);
             $installedList.append($row);
         })

@@ -57,8 +57,7 @@ pub fn run() {
             });
             logs::write("info", &format!("RxLauncher {} started (Tauri {})", app.package_info().version, tauri::VERSION));
             updater::start(app.handle());
-            // Смена трека в Spotify — событием, остров над лаунчером обновляется сразу
-            media::watch(app.handle());
+            app.manage(media::Reader::new(app.handle()));
             Ok(())
         })
         .on_page_load(|webview, payload| {
@@ -86,12 +85,26 @@ pub fn run() {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 // Пока идёт игра, крестик (и Alt+F4) прячет лаунчер в трей, а не закрывает
                 let state = window.state::<state::AppState>();
+                api.prevent_close();
                 if state.game_active() && !state.force_close() {
-                    api.prevent_close();
-                    window::hide_launcher(window.app_handle());
+                    // Операции с треем могут вызвать вложенное оконное событие.
+                    // Сначала возвращаем управление из обработчика CloseRequested.
+                    let app = window.app_handle().clone();
+                    tauri::async_runtime::spawn(async move {
+                        let handle = app.clone();
+                        let _ = app.run_on_main_thread(move || window::hide_launcher(&handle));
+                    });
+                } else if !state.force_close() {
+                    state.set_force_close(true);
+                    window.app_handle().exit(0);
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running RxLauncher");
+        .build(tauri::generate_context!())
+        .expect("error while building RxLauncher")
+        .run(|app, event| {
+            if matches!(event, tauri::RunEvent::Exit) {
+                if let Some(reader) = app.try_state::<media::Reader>() { reader.stop(); }
+            }
+        });
 }

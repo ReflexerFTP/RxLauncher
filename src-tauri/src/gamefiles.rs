@@ -180,11 +180,14 @@ pub fn maven_path(name: &str) -> Option<String> {
 pub fn extract_natives(jar: &Path, target: &Path, exclude: &[String]) -> Result<usize, BridgeError> {
     let file = std::fs::File::open(jar).map_err(|e| crate::fsops::io_error(e, "open", &jar.to_string_lossy(), None))?;
     let mut archive = zip::ZipArchive::new(file).map_err(|e| BridgeError::new(format!("Broken natives jar {}: {e}", jar.display())))?;
+    if archive.len() > 100_000 { return Err("Native archive has too many entries".into()); }
+    crate::scope::check(&target.to_string_lossy(), crate::scope::Access::Write, "natives")?;
     std::fs::create_dir_all(target).map_err(|e| crate::fsops::io_error(e, "mkdir", &target.to_string_lossy(), None))?;
     let mut count = 0;
+    let mut total = 0u64;
     for index in 0..archive.len() {
         let mut entry = archive.by_index(index).map_err(|e| BridgeError::new(e.to_string()))?;
-        let name = entry.name().to_string();
+        let name = entry.name().map_err(|e| BridgeError::new(e.to_string()))?;
         if entry.is_dir() || name.starts_with("META-INF/") || exclude.iter().any(|ex| name.starts_with(ex.as_str())) {
             continue;
         }
@@ -193,14 +196,17 @@ pub fn extract_natives(jar: &Path, target: &Path, exclude: &[String]) -> Result<
             continue;
         }
         // Только имя файла: архив не может писать за пределы папки natives
-        let Some(file_name) = Path::new(&name).file_name() else { continue };
+        let relative = crate::archive::safe_relative(&name).ok_or("Invalid native library name")?;
+        let Some(file_name) = relative.file_name() else { continue };
         let out = target.join(file_name);
+        let size = entry.size();
+        total = total.saturating_add(size);
+        if size > 256 * 1024 * 1024 || total > 1024 * 1024 * 1024 { return Err("Native archive is too large".into()); }
+        crate::archive::no_links(target, &out)?;
         if out.exists() && std::fs::metadata(&out).map(|m| m.len() == entry.size()).unwrap_or(false) {
             continue;
         }
-        let mut data = Vec::with_capacity(entry.size() as usize);
-        entry.read_to_end(&mut data).map_err(|e| BridgeError::new(e.to_string()))?;
-        std::fs::write(&out, data).map_err(|e| crate::fsops::io_error(e, "write", &out.to_string_lossy(), None))?;
+        crate::archive::write_entry(&mut entry, &out, size)?;
         count += 1;
     }
     Ok(count)

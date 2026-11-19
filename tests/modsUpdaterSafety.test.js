@@ -24,6 +24,7 @@ const context = vm.createContext({
     fs, path, crypto, URL, GAME_DATA: fixture, $: () => chain,
     MESSAGES: {packs: {updatePackM: {checking: 'Checking', installing: 'Installing'}, filesFailed: 'Failed'}},
     RxPacks: {
+        withPackFiles: (_id, action) => action(),
         safety: () => safety, isSafePackId: id => id === 'example',
         getModpackManifest: () => JSON.parse(fs.readFileSync(manifestPath, 'utf8')),
         writeModpackManifest: (_id, manifest) => fs.writeFileSync(manifestPath, JSON.stringify(manifest))

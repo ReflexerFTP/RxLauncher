@@ -73,8 +73,10 @@ assert.strictEqual(manager.toggle(path.basename(validJar)), true, "enabled JAR m
 assert.ok(fs.existsSync(`${validJar}.disabled`));
 assert.strictEqual(manager.toggle(`${path.basename(validJar)}.disabled`), true, "disabled JAR must be enabled again");
 assert.ok(fs.existsSync(validJar));
-assert.strictEqual(manager.remove(path.basename(validJar)), true, "managed JAR must be removable");
-assert.strictEqual(fs.existsSync(validJar), false);
-
-fs.rmSync(tempRoot, {recursive: true, force: true});
-console.log("Mods manager tests passed");
+async function checkDeletion() {
+    assert.strictEqual(await manager.remove(path.basename(validJar)), true, "managed JAR must be removable");
+    assert.strictEqual(fs.existsSync(validJar), false);
+}
+checkDeletion().then(() => console.log("Mods manager tests passed"))
+    .finally(() => fs.rmSync(tempRoot, {recursive: true, force: true}))
+    .catch(error => { console.error(error); process.exitCode = 1; });

@@ -2,18 +2,18 @@
 // паролей, сессии и кошельков, автозапуска и скрытых команд. Строки ищутся как есть, задом наперёд, в hex и base64
 // и в массивах байтов/символов из байткода. Результаты кешируются по SHA-1 (mod-scan-cache.json)
 use std::collections::{HashMap, HashSet};
-use std::io::Read;
+use std::io::{Read, Seek};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 
 use aho_corasick::AhoCorasick;
 use base64::Engine;
-use serde_json::{json, Map, Value};
+use serde_json::{json, Value};
 
 use crate::bridge::{ok, BridgeError, BridgeResult};
 
-const VERSION: u64 = 2;
+const VERSION: u64 = 3;
 
 struct Signature {
     id: &'static str,
@@ -201,6 +201,8 @@ struct Finding {
 
 #[derive(Default)]
 struct Report {
+    incomplete: bool,
+    expanded: u64,
     findings: Vec<(String, Finding)>,
     probes: HashMap<String, HashSet<&'static str>>,
     ip_entries: HashSet<String>,
@@ -295,16 +297,16 @@ fn scan_archive<R: Read + std::io::Seek>(reader: R, report: &mut Report, depth: 
     if archive.len() > 60_000 {
         return Err("tooManyEntries".into());
     }
-    let (mut classes, mut obfuscated, mut optifine, mut total) = (0usize, 0usize, false, 0u64);
+    let (mut classes, mut obfuscated, mut optifine) = (0usize, 0usize, false);
     for index in 0..archive.len() {
         if started.elapsed() > Duration::from_secs(30) {
             return Err("timeout".into());
         }
         let mut entry = match archive.by_index(index) {
             Ok(entry) => entry,
-            Err(_) => continue,
+            Err(_) => { report.incomplete = true; continue; }
         };
-        let name = entry.name().to_string();
+        let Ok(name) = entry.name().map(|n| n.into_owned()) else { report.incomplete = true; continue };
         if entry.is_dir() {
             continue;
         }
@@ -327,21 +329,26 @@ fn scan_archive<R: Read + std::io::Seek>(reader: R, report: &mut Report, depth: 
                 obfuscated += 1;
             }
         }
-        if MEDIA.contains(&ext.as_str()) || entry.size() > ENTRY_LIMIT || entry.encrypted() {
+        if MEDIA.contains(&ext.as_str()) { continue; }
+        if entry.size() > ENTRY_LIMIT || entry.encrypted() {
+            report.incomplete = true;
             continue;
         }
-        total += entry.size();
-        if total > TOTAL_LIMIT {
+        if entry.size() > TOTAL_LIMIT.saturating_sub(report.expanded) {
             return Err("tooLarge".into());
         }
         let mut data = Vec::with_capacity(entry.size() as usize);
-        if (&mut entry).take(ENTRY_LIMIT + 1).read_to_end(&mut data).is_err() {
+        let expected = entry.size();
+        let read = (&mut entry).take(expected + 1).read_to_end(&mut data);
+        report.expanded += data.len() as u64;
+        if read.is_err() || data.len() as u64 != expected {
+            report.incomplete = true;
             continue;
         }
         drop(entry);
         if ext == "jar" {
-            if depth < 2 {
-                let _ = scan_archive(std::io::Cursor::new(data), report, depth + 1, &format!("{full}!/"), started);
+            if depth >= 2 || scan_archive(std::io::Cursor::new(data), report, depth + 1, &format!("{full}!/"), started).is_err() {
+                report.incomplete = true;
             }
             continue;
         }
@@ -396,13 +403,11 @@ fn verdict(report: Report) -> Value {
     json!({"verdict": verdict, "findings": findings})
 }
 
-pub fn scan_file(path: &Path) -> Value {
+fn scan_open_file(file: std::fs::File) -> Value {
     let started = Instant::now();
     let mut report = Report::default();
-    let error = match std::fs::File::open(path) {
-        Ok(file) => scan_archive(std::io::BufReader::new(file), &mut report, 0, "", started).err(),
-        Err(error) => Some(error.to_string()),
-    };
+    let error = scan_archive(std::io::BufReader::new(file), &mut report, 0, "", started).err()
+        .or_else(|| report.incomplete.then(|| "incompleteScan".into()));
     let mut result = verdict(report);
     if let Some(error) = error {
         result["error"] = Value::String(error);
@@ -413,54 +418,71 @@ pub fn scan_file(path: &Path) -> Value {
     result
 }
 
+#[cfg(test)]
+pub fn scan_file(path: &Path) -> Value {
+    scan_open_file(std::fs::File::open(path).unwrap())
+}
+
+fn cached_scan(path: &Path, cache: &Value) -> (String, Value, bool) {
+    use sha1::Digest;
+    let read = || -> std::io::Result<_> {
+        let mut options = std::fs::File::options();
+        options.read(true);
+        #[cfg(windows)]
+        {
+            use std::os::windows::fs::OpenOptionsExt;
+            options.share_mode(windows_sys::Win32::Storage::FileSystem::FILE_SHARE_READ);
+        }
+        let mut file = options.open(path)?;
+        let mut digest = sha1::Sha1::new();
+        std::io::copy(&mut file, &mut digest)?;
+        let hash = hex::encode(digest.finalize());
+        if let Some(known) = cache.get(&hash) { return Ok((hash, known.clone(), true)); }
+        file.rewind()?;
+        Ok((hash, scan_open_file(file), false))
+    };
+    read().unwrap_or_else(|e| (String::new(), json!({"verdict":"unknown", "findings":[], "error":e.to_string()}), false))
+}
+
 // ---------- папка модов с кешем ----------
 fn load_cache(file: &Path) -> Value {
     std::fs::read(file).ok().and_then(|b| serde_json::from_slice::<Value>(&b).ok())
-        .filter(|c| c.get("version").and_then(Value::as_u64) == Some(VERSION) && c.get("bySha1").is_some() && c.get("byStat").is_some())
-        .unwrap_or_else(|| json!({"version": VERSION, "bySha1": {}, "byStat": {}}))
+        .filter(|c| c.get("version").and_then(Value::as_u64) == Some(VERSION) && c["bySha1"].is_object())
+        .unwrap_or_else(|| json!({"version": VERSION, "bySha1": {}}))
 }
 
 fn save_cache(file: &Path, cache: &mut Value) {
     let mut by_sha1: Vec<(String, Value)> = cache["bySha1"].as_object().cloned().unwrap_or_default().into_iter().collect();
     by_sha1.sort_by_key(|(_, v)| std::cmp::Reverse(v.get("at").and_then(Value::as_u64).unwrap_or(0)));
     by_sha1.truncate(4000);
-    let known: HashSet<String> = by_sha1.iter().map(|(k, _)| k.clone()).collect();
-    let by_stat: Map<String, Value> = cache["byStat"].as_object().cloned().unwrap_or_default().into_iter()
-        .filter(|(_, v)| v.as_str().map(|s| known.contains(s)).unwrap_or(false)).collect();
     cache["bySha1"] = Value::Object(by_sha1.into_iter().collect());
-    cache["byStat"] = Value::Object(by_stat);
-    let temp = file.with_extension("json.tmp");
-    if std::fs::write(&temp, serde_json::to_vec(cache).unwrap_or_default()).is_ok() {
-        let _ = std::fs::rename(&temp, file);
+    if let Some(parent) = file.parent() {
+        if let Ok(mut temp) = tempfile::NamedTempFile::new_in(parent) {
+            if serde_json::to_writer(temp.as_file_mut(), cache).is_ok() { let _ = temp.persist(file); }
+        }
     }
 }
 
 // Файлы перед установкой (скачанные во временную папку или выбранные вручную): тот же разбор и кеш по SHA-1
 pub fn scan_files(user_data: &Path, files: &[String]) -> BridgeResult {
+    if files.len() > 200 { return Err("Too many files in one scan request".into()); }
     let cache_file = user_data.join("mod-scan-cache.json");
     let mut cache = load_cache(&cache_file);
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0);
     let mut list = Vec::new();
-    for file in files.iter().take(200) {
+    for file in files {
         let path = Path::new(file);
         let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
         if !path.is_absolute() || !path.is_file() {
             list.push(json!({"name": name, "path": file, "sha1": "", "verdict": "unknown", "findings": [], "error": "notFound"}));
             continue;
         }
-        let sha1 = crate::gamefiles::sha1_file(path).unwrap_or_default();
-        let mut result = match cache["bySha1"].get(&sha1).filter(|_| !sha1.is_empty()) {
-            Some(known) => known.clone(),
-            None => {
-                let scanned = scan_file(path);
-                if !sha1.is_empty() && scanned["verdict"] != "unknown" {
-                    let mut stored = scanned.clone();
-                    stored["at"] = json!(now);
-                    cache["bySha1"][&sha1] = stored;
-                }
-                scanned
-            }
-        };
+        let (sha1, mut result, cached) = cached_scan(path, &cache["bySha1"]);
+        if !cached && result.get("error").is_none() {
+            let mut stored = result.clone();
+            stored["at"] = json!(now);
+            cache["bySha1"][&sha1] = stored;
+        }
         if let Some(map) = result.as_object_mut() {
             map.remove("at");
             map.insert("name".into(), json!(name));
@@ -485,47 +507,42 @@ pub fn scan_dir(user_data: &Path, dir: &str, only_enabled: bool) -> BridgeResult
     if !real.is_dir() {
         return Err(BridgeError::new("Invalid mods directory"));
     }
-    let mut files: Vec<(PathBuf, String, u64, bool, String)> = Vec::new();
-    for entry in std::fs::read_dir(&real).map_err(|e| crate::fsops::io_error(e, "scandir", dir, None))?.flatten().take(2000) {
+    let mut files: Vec<(PathBuf, String, u64, bool)> = Vec::new();
+    for entry in std::fs::read_dir(&real).map_err(|e| crate::fsops::io_error(e, "scandir", dir, None))? {
+        let entry = entry.map_err(|e| crate::fsops::io_error(e, "scandir", dir, None))?;
         let name = entry.file_name().to_string_lossy().to_string();
         let lower = name.to_lowercase();
-        if !(lower.ends_with(".jar") || lower.ends_with(".jar.disabled")) || !entry.file_type().map(|t| t.is_file()).unwrap_or(false) {
+        if !(lower.ends_with(".jar") || lower.ends_with(".jar.disabled") || lower.ends_with(".jar.dis")) {
             continue;
         }
-        let enabled = !lower.ends_with(".disabled");
+        let enabled = lower.ends_with(".jar");
         if only_enabled && !enabled {
             continue;
         }
         let meta = entry.metadata().map_err(|e| BridgeError::new(e.to_string()))?;
-        let mtime = meta.modified().ok().and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok()).map(|d| d.as_millis()).unwrap_or(0);
-        let path = entry.path();
-        let stat_key = format!("{}:{}:{}", meta.len(), mtime, path.to_string_lossy());
-        files.push((path, name, meta.len(), enabled, stat_key));
+        if crate::fsops::is_link(&meta) { return Err(BridgeError::new("Cannot verify linked mod file")); }
+        if !meta.is_file() { continue; }
+        if files.len() >= 2000 { return Err(BridgeError::new("Too many mods to verify")); }
+        files.push((entry.path(), name, meta.len(), enabled));
     }
     let cache_file = user_data.join("mod-scan-cache.json");
     let mut cache = load_cache(&cache_file);
     let started = Instant::now();
     let (mut scanned, mut cached, mut timed_out) = (0, 0, false);
     // Хеши и проверка — в нескольких потоках
-    let work: Vec<(usize, PathBuf, Option<String>)> = files.iter().enumerate()
-        .map(|(i, f)| (i, f.0.clone(), cache["byStat"].get(&f.4).and_then(Value::as_str).map(str::to_string))).collect();
-    let by_sha1 = cache["bySha1"].clone();
+    let by_sha1 = &cache["bySha1"];
     let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(2).clamp(1, 4);
-    let chunks: Vec<Vec<(usize, PathBuf, Option<String>)>> = (0..threads).map(|t| work.iter().filter(|w| w.0 % threads == t).cloned().collect()).collect();
     let outputs: Vec<(usize, String, Value, bool)> = std::thread::scope(|scope| {
-        let handles: Vec<_> = chunks.into_iter().map(|chunk| {
-            let by_sha1 = &by_sha1;
+        let handles: Vec<_> = (0..threads).map(|thread| {
+            let files = &files;
             scope.spawn(move || {
                 let mut out = Vec::new();
-                for (index, path, known_sha1) in chunk {
+                for (index, (path, _, _, _)) in files.iter().enumerate().skip(thread).step_by(threads) {
                     if started.elapsed() > Duration::from_secs(600) {
                         break;
                     }
-                    let sha1 = known_sha1.or_else(|| crate::gamefiles::sha1_file(&path)).unwrap_or_default();
-                    match by_sha1.get(&sha1).filter(|_| !sha1.is_empty()) {
-                        Some(result) => out.push((index, sha1, result.clone(), true)),
-                        None => out.push((index, sha1.clone(), scan_file(&path), false)),
-                    }
+                    let (sha1, result, cached) = cached_scan(path, by_sha1);
+                    out.push((index, sha1, result, cached));
                 }
                 out
             })
@@ -535,8 +552,7 @@ pub fn scan_dir(user_data: &Path, dir: &str, only_enabled: bool) -> BridgeResult
     let mut results: HashMap<usize, Value> = HashMap::new();
     for (index, sha1, result, from_cache) in outputs {
         if from_cache { cached += 1 } else { scanned += 1 }
-        if !sha1.is_empty() && result["verdict"] != "unknown" {
-            cache["byStat"][&files[index].4] = Value::String(sha1.clone());
+        if !from_cache && result.get("error").is_none() {
             let mut stored = result.clone();
             stored["at"] = json!(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0));
             cache["bySha1"][&sha1] = stored;
@@ -549,7 +565,7 @@ pub fn scan_dir(user_data: &Path, dir: &str, only_enabled: bool) -> BridgeResult
         timed_out = true;
     }
     save_cache(&cache_file, &mut cache);
-    let list: Vec<Value> = files.iter().enumerate().map(|(index, (path, name, size, enabled, _))| {
+    let list: Vec<Value> = files.iter().enumerate().map(|(index, (path, name, size, enabled))| {
         let mut item = results.remove(&index).unwrap_or_else(|| json!({"verdict": "unknown", "findings": [], "error": "notScanned"}));
         if let Some(map) = item.as_object_mut() {
             map.remove("at");

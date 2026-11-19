@@ -6,7 +6,6 @@
 // Скачивание с докачкой в %APPDATA%\rxclient\updates (временную папку Windows чистит). Когда GitHub не отвечает
 // (у части игроков он почти не грузится), манифест и установщик берутся с зеркала rxlauncher.xyz/update/:
 // подпись и SHA-256 проверяются те же, поэтому зеркалу доверять не нужно
-use std::io::Read;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
@@ -33,10 +32,11 @@ struct Update {
     sha256: String,
     title: String,
     summary: String,
+    ready: Option<PathBuf>,
 }
 
 static AVAILABLE: Mutex<Option<Update>> = Mutex::new(None);
-static READY: Mutex<Option<PathBuf>> = Mutex::new(None);
+static INSTALLING: AtomicBool = AtomicBool::new(false);
 static DOWNLOADING: AtomicBool = AtomicBool::new(false);
 static RECEIVED: AtomicU64 = AtomicU64::new(0);
 static DEFERRED: AtomicBool = AtomicBool::new(false);
@@ -68,14 +68,14 @@ fn text_field(manifest: &Value, name: &str, max: usize) -> String {
 }
 
 fn is_ready() -> bool {
-    READY.lock().ok().map(|r| r.is_some()).unwrap_or(false)
+    AVAILABLE.lock().ok().is_some_and(|u| u.as_ref().is_some_and(|u| u.ready.is_some()))
 }
 
 // Что видит интерфейс: none | available | downloading | ready
 pub fn status() -> Value {
     let update = AVAILABLE.lock().ok().and_then(|u| u.clone());
     let Some(update) = update else { return json!({"state": "none"}) };
-    let state = if is_ready() { "ready" } else if DOWNLOADING.load(Ordering::SeqCst) { "downloading" } else { "available" };
+    let state = if update.ready.is_some() { "ready" } else if DOWNLOADING.load(Ordering::SeqCst) { "downloading" } else { "available" };
     json!({
         "state": state, "version": update.version, "size": update.size, "received": RECEIVED.load(Ordering::SeqCst),
         "title": update.title, "summary": update.summary
@@ -120,11 +120,8 @@ async fn check(app: &AppHandle) -> Result<(), String> {
         if let Ok(mut available) = AVAILABLE.lock() {
             *available = Some(Update {
                 version: version.clone(), file, url, size, sha256,
-                title: text_field(&manifest, "title", 120), summary: text_field(&manifest, "summary", 600),
+                title: text_field(&manifest, "title", 120), summary: text_field(&manifest, "summary", 600), ready: None,
             });
-        }
-        if let Ok(mut ready) = READY.lock() {
-            *ready = None;
         }
         RECEIVED.store(0, Ordering::SeqCst);
         crate::logs::write("info", &format!("Update {version} found"));
@@ -217,28 +214,15 @@ async fn download(app: &AppHandle) -> Result<(), String> {
         }
     }
     // Файл целиком сверяется с подписанным манифестом
-    let digest = {
-        let mut file = std::fs::File::open(&part).map_err(|e| e.to_string())?;
-        let mut hasher = sha2::Sha256::new();
-        let mut buffer = vec![0u8; 256 * 1024];
-        loop {
-            let count = file.read(&mut buffer).map_err(|e| e.to_string())?;
-            if count == 0 {
-                break;
-            }
-            hasher.update(&buffer[..count]);
-        }
-        hex::encode(hasher.finalize())
-    };
-    if digest != update.sha256 {
+    if let Err(error) = verified_installer(&part, update.size, &update.sha256) {
         let _ = std::fs::remove_file(&part);
-        return Err("Downloaded update does not match the signed manifest".into());
+        return Err(error);
     }
-    let _ = std::fs::remove_file(&target);
+    let mut available = AVAILABLE.lock().map_err(|_| "Cannot access update state")?;
+    let current = available.as_mut().filter(|u| u.version == update.version && u.sha256 == update.sha256)
+        .ok_or("A different update is now available")?;
     std::fs::rename(&part, &target).map_err(|e| e.to_string())?;
-    if let Ok(mut ready) = READY.lock() {
-        *ready = Some(target);
-    }
+    current.ready = Some(target);
     crate::logs::write("info", &format!("Update {} downloaded and verified", update.version));
     Ok(())
 }
@@ -269,9 +253,30 @@ pub fn start(app: &AppHandle) {
     });
 }
 
-// Установить скачанное обновление (во время игры — после её закрытия)
+// На Windows файл нельзя изменить или переименовать, пока открыт проверенный дескриптор.
+fn verified_installer(path: &std::path::Path, size: u64, sha256: &str) -> Result<std::fs::File, String> {
+    let mut options = std::fs::File::options();
+    options.read(true);
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        options.share_mode(windows_sys::Win32::Storage::FileSystem::FILE_SHARE_READ);
+    }
+    let mut file = options.open(path).map_err(|e| e.to_string())?;
+    if file.metadata().map_err(|e| e.to_string())?.len() != size {
+        return Err("Installer size does not match the signed manifest".into());
+    }
+    let mut hasher = sha2::Sha256::new();
+    std::io::copy(&mut file, &mut hasher).map_err(|e| e.to_string())?;
+    if hex::encode(hasher.finalize()) != sha256 {
+        return Err("Installer hash does not match the signed manifest".into());
+    }
+    Ok(file)
+}
+
 pub fn install(app: &AppHandle) {
-    let Some(path) = READY.lock().ok().and_then(|r| r.clone()) else {
+    let update = AVAILABLE.lock().ok().and_then(|u| u.clone());
+    let Some((update, path)) = update.and_then(|u| u.ready.clone().map(|p| (u, p))) else {
         crate::logs::write("warn", "Blocked update installation: no verified update is ready");
         return;
     };
@@ -281,17 +286,59 @@ pub fn install(app: &AppHandle) {
         let _ = app.emit("rx:update-install-deferred", Value::Null);
         return;
     }
-    match std::process::Command::new(&path).arg("/P").spawn() {
-        Ok(_) => {
-            state.set_force_close(true);
+    if INSTALLING.swap(true, Ordering::SeqCst) { return; }
+    let app = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let result = verified_installer(&path, update.size, &update.sha256);
+        let Ok(mut available) = AVAILABLE.lock() else { INSTALLING.store(false, Ordering::SeqCst); return };
+        let current = available.as_mut().filter(|u| u.version == update.version && u.sha256 == update.sha256 && u.ready.as_ref() == Some(&path));
+        let Some(current) = current else { INSTALLING.store(false, Ordering::SeqCst); return };
+        let result = match result {
+            Ok(_locked) if app.state::<crate::state::AppState>().game_active() => {
+                DEFERRED.store(true, Ordering::SeqCst);
+                let _ = app.emit("rx:update-install-deferred", Value::Null);
+                Ok(false)
+            }
+            Ok(_locked) => std::process::Command::new(&path).arg("/P").spawn().map(|_| true).map_err(|e| e.to_string()),
+            Err(error) => { current.ready = None; Err(error) }
+        };
+        drop(available);
+        if matches!(result, Ok(true)) {
+            app.state::<crate::state::AppState>().set_force_close(true);
             app.exit(0);
+            return;
         }
-        Err(error) => crate::logs::write("warn", &format!("Update installer failed to start: {error}")),
-    }
+        INSTALLING.store(false, Ordering::SeqCst);
+        if let Err(error) = result {
+            crate::logs::write("warn", &format!("Update installation blocked: {error}"));
+            let _ = app.emit("rx:update-error", json!({"message": error, "status": status()}));
+        }
+    });
 }
 
 pub fn game_closed(app: &AppHandle) {
     if DEFERRED.swap(false, Ordering::SeqCst) {
         install(app);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verified_file_matches_signed_content_and_stays_locked() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("sample.bin");
+        let data = b"sample update data";
+        std::fs::write(&path, data).unwrap();
+        let hash = hex::encode(sha2::Sha256::digest(data));
+        let locked = verified_installer(&path, data.len() as u64, &hash).unwrap();
+        #[cfg(windows)]
+        assert!(std::fs::File::options().write(true).open(&path).is_err());
+        drop(locked);
+        assert!(verified_installer(&path, 1, &hash).is_err());
+        std::fs::write(&path, vec![0; data.len()]).unwrap();
+        assert!(verified_installer(&path, data.len() as u64, &hash).is_err());
     }
 }

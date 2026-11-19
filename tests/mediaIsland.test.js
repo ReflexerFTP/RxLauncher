@@ -9,7 +9,8 @@ const timers = [];
 const fakeTimers = {
     setTimeout: (fn, ms) => { const id = timers.length + 1; timers.push({id, fn, ms, done: false}); return id; },
     clearTimeout: id => { const timer = timers.find(t => t.id === id); if (timer) timer.done = true; },
-    setInterval: () => 0
+    setInterval: () => 0,
+    clearInterval() {}
 };
 const runTimers = async () => {
     for (const timer of timers.filter(t => !t.done)) { timer.done = true; await timer.fn(); }
@@ -83,9 +84,17 @@ const Island = context.Island;
     Island.update(track(20, {positionMs: 150000, updatedAt: now - 60000}), now);
     assert.equal(Island.track.positionMs, 0);
     assert.equal(Island.position(now + 2000), 2000);
+    for (let i = 1; i <= 100; i++) {
+        Island.update(track(20, {positionMs: 150000, updatedAt: now - 60000}), now + i * 10);
+        assert.equal(Island.position(now + i * 10), i * 10, "a repeated old timestamp cannot restore the previous track position");
+    }
     // Тот же трек, свежие данные Windows — им верим
     Island.update(track(20, {positionMs: 30000, updatedAt: now + 5000}), now + 5000);
     assert.equal(Island.position(now + 6000), 31000);
+    Island.update(track(20, {playing: false, positionMs: 30000, updatedAt: now + 5000}), now + 6000);
+    assert.equal(Island.position(now + 9000), 31000, "paused progress stays still");
+    Island.update(track(20, {positionMs: 30000, updatedAt: now + 5000}), now + 9000);
+    assert.equal(Island.position(now + 10000), 32000, "resuming does not count time spent paused");
     // Первый трек после запуска лаунчера (с середины песни) — позиция от Windows, не ноль
     Island.update(null);
     Island.update(track(21, {positionMs: 90000, updatedAt: now - 30000}), now);
@@ -111,6 +120,38 @@ const Island = context.Island;
     Island.render();
     Island.render();
     assert.deepEqual(writes, [], "repeated renders with the same state write nothing");
+
+    let mediaReads = 0, finishRead;
+    context.ipcRenderer.invoke = () => {
+        mediaReads++;
+        return new Promise(resolve => { finishRead = resolve; });
+    };
+    const pending = Island.poll();
+    for (let i = 0; i < 10000; i++) {
+        Island.onMediaEvent();
+        Island.poll();
+    }
+    assert.equal(mediaReads, 1);
+    assert.equal(timers.filter(t => !t.done && t.ms === Island.EVENT_DELAY_MS).length, 1);
+    context.document.hidden = true;
+    Island.syncActivity();
+    finishRead(track(22));
+    await pending;
+    assert.equal(Island.track, null, "an old answer cannot bring back a hidden island");
+    for (let i = 0; i < 10000; i++) Island.onMediaEvent();
+    assert.equal(timers.filter(t => !t.done && [Island.EVENT_DELAY_MS, Island.POLL_MS, Island.IDLE_POLL_MS].includes(t.ms)).length, 0);
+    context.document.hidden = false;
+    Island.syncActivity();
+    assert.equal(mediaReads, 2);
+    finishRead(track(23));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(Island.track.title, "Song 23");
+    context.ipcRenderer.invoke = async () => ({unavailable: true});
+    await Island.poll();
+    assert.equal(Island.track.title, "Song 23", "brief service failures keep the last known track");
+    Island.lastRead -= 9000;
+    await Island.poll();
+    assert.equal(Island.track, null);
 
     console.log("Media island tests passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });

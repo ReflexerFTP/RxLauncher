@@ -43,33 +43,14 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
             crate::logs::write("info", "Launcher UI ready");
             ok(Value::Null)
         }
-        "game-process-state" => {
-            let payload = arg(&args, 0);
-            let pid = payload.get("pid").and_then(Value::as_u64).unwrap_or(0) as u32;
-            if payload.get("active").and_then(Value::as_bool) == Some(true) && pid > 0 {
-                state.add_game(pid);
-                return ok(Value::Null);
-            }
-            if payload.get("active").and_then(Value::as_bool) != Some(false) {
-                return ok(Value::Null);
-            }
-            // Закрылся один из клиентов: история команд прячется для его папки; остальное — когда закрыты все
-            let none_left = state.remove_game(pid);
-            let supplied = payload.get("gameDirectory").and_then(Value::as_str).unwrap_or("").to_string();
-            let vault_data = user_data.clone();
-            std::thread::spawn(move || {
-                let dir = if supplied.is_empty() { None } else { crate::vault::accepted_dir(&vault_data, &supplied) };
-                crate::vault::finish(&vault_data, dir.as_deref(), none_left);
-            });
-            if !none_left {
-                return ok(Value::Null);
-            }
-            crate::updater::game_closed(app);
-            let visible = crate::window::main_window(app).and_then(|w| w.is_visible().ok()).unwrap_or(true);
-            if !visible {
-                crate::window::show_launcher(app);
-            }
-            ok(Value::Null)
+        "command-history-launch-failed" => {
+            let supplied = arg(&args, 0).as_str().unwrap_or("").to_owned();
+            let none_left = !state.game_active();
+            blocking(move || {
+                let dir = crate::vault::accepted_dir(&user_data, &supplied);
+                crate::vault::finish(&user_data, dir.as_deref(), none_left);
+                ok(Value::Null)
+            }).await
         }
 
         "safe-create-staging" => {
@@ -143,7 +124,7 @@ pub async fn dispatch(app: &AppHandle, input: Value) -> BridgeResult {
         "clear-curseforge-api-key" => crate::curseforge::clear_key(&user_data),
         "curseforge-request" => crate::curseforge::api_request(&user_data, &arg(&args, 0)).await,
         "update-status" => ok(crate::updater::status()),
-        "media-now-playing" => blocking(|| ok(crate::media::now_playing())).await,
+        "media-now-playing" => ok(app.state::<crate::media::Reader>().now_playing().await),
         "update-download" => {
             crate::updater::begin_download(app);
             ok(crate::updater::status())

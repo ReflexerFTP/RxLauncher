@@ -76,11 +76,15 @@ pub async fn start() -> BridgeResult {
                 }
             }
         };
+        drop(listener);
+        let completed = code.is_some();
         let _ = result_tx.send(Some(code));
+        if completed {
+            // До исходного таймаута, отмены или получения одноразового результата.
+            tokio::select! { _ = &mut deadline => {}, _ = stop_rx.changed() => {} }
+        }
         if let Ok(mut active) = ACTIVE.lock() {
-            if active.as_ref().map(|a| a.id) == Some(id) {
-                *active = None;
-            }
+            if active.as_ref().map(|a| a.id) == Some(id) { *active = None; }
         }
     });
     ok(json!({"id": id, "port": port}))
@@ -90,12 +94,32 @@ pub async fn start() -> BridgeResult {
 pub async fn wait(id: u64) -> BridgeResult {
     let receiver = ACTIVE.lock().ok().and_then(|a| a.as_ref().filter(|a| a.id == id).map(|a| a.result.clone()));
     let Some(mut receiver) = receiver else { return ok(Value::Null) };
-    loop {
+    let result = loop {
         if let Some(result) = receiver.borrow().clone() {
-            return ok(result);
+            break result;
         }
         if receiver.changed().await.is_err() {
-            return ok(receiver.borrow().clone().flatten());
+            break receiver.borrow().clone().flatten();
         }
+    };
+    // Браузер может успеть вернуть код до вызова wait. Забираем результат один раз.
+    let mut active = ACTIVE.lock().map_err(|_| BridgeError::new("Login state unavailable"))?;
+    if active.as_ref().map(|a| a.id) != Some(id) { return ok(Value::Null); }
+    *active = None;
+    ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn completed_sign_in_is_available_to_one_late_waiter() {
+        let (stop, _) = watch::channel(false);
+        let (sender, result) = watch::channel(Some(Some("test-result".to_string())));
+        *ACTIVE.lock().unwrap() = Some(Active {id: 41, stop, result});
+        drop(sender);
+        assert_eq!(wait(41).await.unwrap().0, json!("test-result"));
+        assert!(wait(41).await.unwrap().0.is_null());
     }
 }

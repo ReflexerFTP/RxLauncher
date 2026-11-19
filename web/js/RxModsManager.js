@@ -11,12 +11,14 @@ class RxModsManager {
         const versionId = RxVersionsManager.getActiveVersion();
         if (!versionId || versionId === "none" || !versionId.includes("-")) return false;
         const gameRoot = path.resolve(RxUtils.getGameRoot(versionId));
+        const version = RxVersionsManager.parseVersionID(versionId);
         return {
             versionId,
             displayName: RxVersionsManager.versionToDisplayName(versionId),
             gameRoot,
             modsPath: path.join(gameRoot, "mods"),
-            loader: RxVersionsManager.parseVersionID(versionId).type
+            loader: version.type,
+            packId: version.type === "pack" ? version.name : null
         };
     };
 
@@ -25,7 +27,7 @@ class RxModsManager {
         return modsPath;
     };
 
-    static isJarFileName = fileName => /\.jar(?:\.disabled)?$/i.test(String(fileName || ""));
+    static isJarFileName = fileName => /\.jar(?:\.disabled|\.dis)?$/i.test(String(fileName || ""));
 
     static isJarSignature = signature => Boolean(signature) && signature.length >= 4
         && signature[0] === 0x50 && signature[1] === 0x4b && [0x03, 0x05, 0x07].includes(signature[2]);
@@ -55,9 +57,9 @@ class RxModsManager {
             .filter(entry => entry.isFile() && RxModsManager.isJarFileName(entry.name))
             .map(entry => {
                 const fullPath = path.resolve(root, entry.name);
-                const stat = fs.statSync(fullPath);
-                return {name: entry.name, bytes: stat.size, modified: stat.mtimeMs, valid: RxModsManager.hasJarSignature(fullPath)};
-            });
+                const stat = fs.statSync(fullPath, {throwIfNoEntry: false});
+                return stat && {name: entry.name, bytes: stat.size, modified: stat.mtimeMs, valid: RxModsManager.hasJarSignature(fullPath)};
+            }).filter(Boolean);
     };
 
     static isValidJar = filePath => /\.jar$/i.test(filePath) && RxModsManager.hasJarSignature(filePath);
@@ -69,7 +71,7 @@ class RxModsManager {
     };
 
     static displayName = fileName => String(fileName || "")
-        .replace(/\.jar(?:\.disabled)?$/i, "")
+        .replace(/\.jar(?:\.disabled|\.dis)?$/i, "")
         .replace(/[-_](?:fabric|forge|neoforge|quilt)?[-_]?\d+(?:\.\d+){1,3}.*$/i, "")
         .replace(/[-_]+/g, " ")
         .replace(/\b\w/g, character => character.toUpperCase())
@@ -314,8 +316,7 @@ class RxModsManager {
         return true;
     };
 
-    static resolveManagedPath = fileName => {
-        const context = RxModsManager.getContext();
+    static resolveManagedPath = (fileName, context = RxModsManager.getContext()) => {
         if (!context || path.basename(fileName) !== fileName || !RxModsManager.isJarFileName(fileName)) return false;
         const root = path.resolve(context.modsPath);
         const target = path.resolve(root, fileName);
@@ -338,7 +339,7 @@ class RxModsManager {
         for (const source of jars) {
             if (!allowed.has(source)) continue;
             const destination = path.join(context.modsPath, path.basename(source));
-            if (path.resolve(source) === path.resolve(destination) || fs.existsSync(destination) || fs.existsSync(`${destination}.disabled`)) {
+            if (path.resolve(source) === path.resolve(destination) || fs.existsSync(destination) || fs.existsSync(`${destination}.disabled`) || fs.existsSync(`${destination}.dis`)) {
                 skipped++;
                 continue;
             }
@@ -378,7 +379,7 @@ class RxModsManager {
             return false;
         }
         const enabled = /\.jar$/i.test(fileName);
-        const target = enabled ? `${source}.disabled` : source.replace(/\.disabled$/i, "");
+        const target = enabled ? `${source}.disabled` : source.replace(/\.(?:disabled|dis)$/i, "");
         if (fs.existsSync(target)) {
             RxToasts.create(RxModsManager.message("duplicate", "Файл с таким именем уже существует"), "warning");
             return false;
@@ -390,32 +391,50 @@ class RxModsManager {
         return true;
     };
 
-    static remove = fileName => {
-        const target = RxModsManager.resolveManagedPath(fileName);
-        if (!target || !fs.existsSync(target)) return false;
-        fs.unlinkSync(target);
-        RxModsManager.expanded.delete(fileName);
-        RxCollector.writeLog(`Mods: Deleted ${fileName}`);
-        RxToasts.create(RxModsManager.message("deleted", "Мод удалён"), "delete", fileName);
-        RxModsManager.refresh();
-        return true;
-    };
+    static remove = fileName => RxModsManager.removeFiles([fileName], false);
 
     static removeAll = () => {
-        if (RxModsManager.files.length === 0) return false;
-        if (!window.confirm(RxModsManager.message("confirmDeleteAll", "Удалить все моды выбранной версии?"))) return false;
-        let removed = 0;
-        for (const file of RxModsManager.files) {
-            const target = RxModsManager.resolveManagedPath(file.fileName);
-            if (target && fs.existsSync(target)) {
-                fs.unlinkSync(target);
-                removed++;
+        const context = RxModsManager.getContext();
+        if (!context) return false;
+        const names = RxModsManager.scan().map(file => file.fileName);
+        if (context.packId) {
+            const keys = new Set(names.map(name => RxPacks.modKey("mods/" + name)));
+            for (const item of RxPacks.getModpackManifest(context.packId)?.files || []) {
+                const relative = String(item.path || item.name || "").replaceAll("\\", "/");
+                const match = /^mods\/([^/]+\.jar(?:\.disabled|\.dis)?)$/i.exec(relative);
+                const key = RxPacks.modKey(relative);
+                if (match && !keys.has(key)) { names.push(match[1]); keys.add(key); }
             }
         }
-        RxCollector.writeLog(`Mods: Deleted all [count=${removed}]`);
-        RxToasts.create(RxModsManager.message("allDeleted", "Все моды удалены"), "delete_sweep", String(removed));
-        RxModsManager.refresh();
-        return true;
+        if (!names.length) return false;
+        if (!window.confirm(RxModsManager.message("confirmDeleteAll", "Удалить все моды выбранной версии?"))) return false;
+        return RxModsManager.removeFiles(names, true);
+    };
+
+    static removeFiles = async (names, all) => {
+        const context = RxModsManager.getContext();
+        if (!context || !names.length) return false;
+        try {
+            if (context.packId !== null) {
+                if (!await RxPacks.deletePackMods(context.packId, names)) throw new Error(context.displayName);
+            } else {
+                for (const name of names) {
+                    const file = RxModsManager.resolveManagedPath(name, context);
+                    if (!file || !fs.existsSync(file)) return false;
+                    fs.unlinkSync(file);
+                }
+            }
+            names.forEach(name => RxModsManager.expanded.delete(name));
+            RxCollector.writeLog(`Mods: Deleted ${names.length} [version=${context.versionId}]`);
+            if (all) RxToasts.create(RxModsManager.message("allDeleted", "Все моды удалены"), "delete_sweep", String(names.length));
+            else RxToasts.create(RxModsManager.message("deleted", "Мод удалён"), "delete", names[0]);
+            return true;
+        } catch (error) {
+            RxToasts.create(MESSAGES.mods.deleteFailed, "error", error.message, "error");
+            return false;
+        } finally {
+            RxModsManager.refresh();
+        }
     };
 
     static backup = async () => {

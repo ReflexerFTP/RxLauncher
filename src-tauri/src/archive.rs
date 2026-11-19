@@ -57,7 +57,7 @@ fn list(args: &Value, payload: Vec<u8>) -> BridgeResult {
     for index in 0..archive.len().min(50_000) {
         let entry = archive.by_index_raw(index).map_err(|e| BridgeError::new(e.to_string()))?;
         entries.push(json!({
-            "name": entry.name(),
+            "name": entry.name().map_err(|e| BridgeError::new(e.to_string()))?,
             "size": entry.size(),
             "dir": entry.is_dir(),
             "encrypted": entry.encrypted(),
@@ -69,7 +69,7 @@ fn list(args: &Value, payload: Vec<u8>) -> BridgeResult {
 
 fn read(args: &Value, payload: Vec<u8>) -> BridgeResult {
     let names: Vec<String> = args.get("names").and_then(Value::as_array).map(|l| l.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default();
-    let max = arg_u64(args, "maxBytes").unwrap_or(2 * 1024 * 1024);
+    let max = arg_u64(args, "maxBytes").unwrap_or(2 * 1024 * 1024).min(16 * 1024 * 1024);
     let mut archive = open_zip_source(args, payload)?;
     let mut index = Vec::new();
     let mut data = Vec::new();
@@ -96,17 +96,28 @@ fn create_parent(path: &Path) -> Result<(), BridgeError> {
 }
 
 // Папка назначения не должна идти через ссылки (junction/symlink)
-fn no_links(root: &Path, target: &Path) -> Result<(), BridgeError> {
+pub(crate) fn no_links(root: &Path, target: &Path) -> Result<(), BridgeError> {
     let relative = target.strip_prefix(root).map_err(|_| BridgeError::new("Archive entry escapes destination"))?;
     let mut current = root.to_path_buf();
     for part in relative.components() {
         current.push(part);
         if let Ok(meta) = std::fs::symlink_metadata(&current) {
-            if meta.file_type().is_symlink() {
+            if crate::fsops::is_link(&meta) {
                 return Err(BridgeError::new("Linked archive destination is forbidden"));
             }
         }
     }
+    Ok(())
+}
+
+// Публикуем файл только после проверки длины и успешного чтения до конца (в т. ч. CRC).
+pub(crate) fn write_entry(reader: impl Read, target: &Path, size: u64) -> Result<(), BridgeError> {
+    let parent = target.parent().ok_or("Missing archive destination")?;
+    create_parent(target)?;
+    let mut temp = tempfile::NamedTempFile::new_in(parent).map_err(|e| crate::fsops::io_error(e, "open", &target.to_string_lossy(), None))?;
+    let copied = std::io::copy(&mut reader.take(size.saturating_add(1)), temp.as_file_mut()).map_err(|e| BridgeError::new(e.to_string()))?;
+    if copied != size { return Err(BridgeError::new("Archive entry size mismatch")); }
+    temp.persist(target).map_err(|e| crate::fsops::io_error(e.error, "rename", &target.to_string_lossy(), None))?;
     Ok(())
 }
 
@@ -120,10 +131,11 @@ fn unpack_zip(archive_path: &str, destination: &Path) -> Result<usize, BridgeErr
     let mut total: u64 = 0;
     for index in 0..archive.len() {
         let entry = archive.by_index_raw(index).map_err(|e| BridgeError::new(e.to_string()))?;
-        if entry.encrypted() || is_symlink(entry.unix_mode()) || safe_relative(entry.name()).is_none() {
-            return Err(BridgeError::new(format!("Unsafe archive entry: {}", entry.name())));
+        let name = entry.name().map_err(|e| BridgeError::new(e.to_string()))?;
+        if entry.encrypted() || is_symlink(entry.unix_mode()) || safe_relative(&name).is_none() {
+            return Err(BridgeError::new(format!("Unsafe archive entry: {name}")));
         }
-        total += entry.size();
+        total = total.saturating_add(entry.size());
         if total > MAX_TOTAL {
             return Err(BridgeError::new("Archive is too large"));
         }
@@ -131,20 +143,15 @@ fn unpack_zip(archive_path: &str, destination: &Path) -> Result<usize, BridgeErr
     let mut count = 0;
     for index in 0..archive.len() {
         let mut entry = archive.by_index(index).map_err(|e| BridgeError::new(e.to_string()))?;
-        let relative = safe_relative(entry.name()).ok_or("Unsafe archive entry")?;
+        let relative = safe_relative(&entry.name().map_err(|e| BridgeError::new(e.to_string()))?).ok_or("Unsafe archive entry")?;
         let target = destination.join(relative);
         no_links(destination, &target)?;
         if entry.is_dir() {
             std::fs::create_dir_all(&target).map_err(|e| crate::fsops::io_error(e, "mkdir", &target.to_string_lossy(), None))?;
             continue;
         }
-        create_parent(&target)?;
-        let mut out = File::create(&target).map_err(|e| crate::fsops::io_error(e, "open", &target.to_string_lossy(), None))?;
         let size = entry.size();
-        let copied = std::io::copy(&mut (&mut entry).take(size + 1), &mut out).map_err(|e| BridgeError::new(e.to_string()))?;
-        if copied > size {
-            return Err(BridgeError::new("Archive entry size mismatch"));
-        }
+        write_entry(&mut entry, &target, size)?;
         count += 1;
     }
     Ok(count)
@@ -170,13 +177,12 @@ fn unpack_tar(archive_path: &str, destination: &Path, gzip: bool) -> Result<usiz
         if kind.is_dir() {
             std::fs::create_dir_all(&target).map_err(|e| crate::fsops::io_error(e, "mkdir", &target.to_string_lossy(), None))?;
         } else if kind.is_file() {
-            total += entry.size();
+            total = total.saturating_add(entry.size());
             if total > MAX_TOTAL {
                 return Err(BridgeError::new("Archive is too large"));
             }
-            create_parent(&target)?;
-            let mut out = File::create(&target).map_err(|e| crate::fsops::io_error(e, "open", &target.to_string_lossy(), None))?;
-            std::io::copy(&mut entry, &mut out).map_err(|e| BridgeError::new(e.to_string()))?;
+            let size = entry.size();
+            write_entry(&mut entry, &target, size)?;
         } else if !matches!(kind, tar::EntryType::XGlobalHeader | tar::EntryType::XHeader | tar::EntryType::GNULongName) {
             return Err(BridgeError::new(format!("Unsupported archive entry type: {name}")));
         }
@@ -217,13 +223,13 @@ fn add_dir(writer: &mut zip::ZipWriter<File>, prefix: &str, dir: &Path) -> Resul
         let mut entries: Vec<_> = std::fs::read_dir(&current).map_err(|e| crate::fsops::io_error(e, "scandir", &current.to_string_lossy(), None))?.flatten().collect();
         entries.sort_by_key(|e| e.file_name());
         for entry in entries {
-            let file_type = entry.file_type().map_err(|e| BridgeError::new(e.to_string()))?;
+            let metadata = std::fs::symlink_metadata(entry.path()).map_err(|e| BridgeError::new(e.to_string()))?;
             let name = entry.file_name().to_string_lossy().to_string();
             let path_in_zip = if base.is_empty() { name.clone() } else { format!("{base}/{name}") };
-            if file_type.is_symlink() {
+            if crate::fsops::is_link(&metadata) {
                 continue;
             }
-            if file_type.is_dir() {
+            if metadata.is_dir() {
                 stack.push((entry.path(), path_in_zip));
             } else {
                 // Файл блокировки мира открыт игрой — без него копия не хуже
@@ -238,9 +244,19 @@ fn add_dir(writer: &mut zip::ZipWriter<File>, prefix: &str, dir: &Path) -> Resul
     Ok(count)
 }
 
+fn check_output(source: &Path, target: &Path) -> Result<(), BridgeError> {
+    let source = crate::scope::resolved_path(source).ok_or("Invalid archive source")?;
+    let target = crate::scope::resolved_path(target).ok_or("Invalid archive destination")?;
+    if crate::scope::is_same_or_child(&target, &source) {
+        return Err("Cannot write an archive inside its own source".into());
+    }
+    Ok(())
+}
+
 fn zip_dir(args: &Value) -> BridgeResult {
     let source = PathBuf::from(arg_str(args, "source")?);
     let target = arg_str(args, "target")?;
+    check_output(&source, Path::new(target))?;
     let base = if args.get("ignoreBase").and_then(Value::as_bool) == Some(true) {
         String::new()
     } else {
@@ -256,6 +272,11 @@ fn zip_dir(args: &Value) -> BridgeResult {
 // Набор записей: {data: [offset, length] из payload | file | dir, relativePath, ignoreBase}
 fn zip_entries(args: &Value, payload: Vec<u8>) -> BridgeResult {
     let target = arg_str(args, "target")?;
+    for entry in args.get("entries").and_then(Value::as_array).into_iter().flatten() {
+        if let Some(source) = entry.get("file").or_else(|| entry.get("dir")).and_then(Value::as_str) {
+            check_output(Path::new(source), Path::new(target))?;
+        }
+    }
     let file = File::create(target).map_err(|e| crate::fsops::io_error(e, "open", target, None))?;
     let mut writer = zip::ZipWriter::new(file);
     let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated).large_file(true);
@@ -269,7 +290,7 @@ fn zip_entries(args: &Value, payload: Vec<u8>) -> BridgeResult {
         if let Some(range) = entry.get("data").and_then(Value::as_array) {
             let offset = range.first().and_then(Value::as_u64).unwrap_or(0) as usize;
             let length = range.get(1).and_then(Value::as_u64).unwrap_or(0) as usize;
-            let bytes = payload.get(offset..offset + length).ok_or("Bad archive entry data")?;
+            let bytes = payload.get(offset..).and_then(|rest| rest.get(..length)).ok_or("Bad archive entry data")?;
             writer.start_file(name.as_str(), options).map_err(|e| BridgeError::new(e.to_string()))?;
             writer.write_all(bytes).map_err(|e| BridgeError::new(e.to_string()))?;
             count += 1;

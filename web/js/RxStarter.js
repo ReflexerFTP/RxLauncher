@@ -330,7 +330,6 @@ class RxStarter {
                 RxStarter.running.set(this.gamePid, this);
                 RxGameLogs.setPid(this.logSession, this.gamePid);
                 if (RxStarter.running.size === 1) this.becomePrimary();
-                ipcRenderer.send("game-process-state", {active: true, pid: this.gamePid});
                 if (typeof RxTray !== "undefined") RxTray.sync();
                 if (RxConfig.read("hideLauncherOnStart", true) === true) {
                     RxUI.disappearMainWindow();
@@ -381,7 +380,6 @@ class RxStarter {
                 RxPlayStats.onGameClose({exitCode, reason: this.killedManually ? "stopped" : "closed", pid: closedPid});
                 this.statsSessionStarted = false;
             }
-            ipcRenderer.send("game-process-state", {active: false, pid: closedPid, gameDirectory});
             // Главный клиент закрылся — статус берёт следующий из запущенных
             const next = RxStarter.primary();
             if (wasPrimary && next) next.becomePrimary();
@@ -478,6 +476,7 @@ class RxStarter {
         const errorText = error instanceof Error ? error.stack || error.message : String(error);
         $("#cancelLaunchButton").hide();
         if (starter?.logSession) RxGameLogs.end(starter.logSession, -1);
+        if (!starter?.gamePid && starter?.gameDirectory) ipcRenderer.send("command-history-launch-failed", starter.gameDirectory);
         // Ошибка — следствие отмены (прерванная загрузка): интерфейс уже сброшен, тост не нужен
         if (RxStarter.cancelRequested) {
             RxCollector.writeLog(`Starter: Cancelled launch stopped [error=${errorText}]`);
@@ -489,7 +488,6 @@ class RxStarter {
         assetsVerifyOffset = 0;
         startAssetsInterval = 0;
         if (starter?.gamePid) RxStarter.running.delete(starter.gamePid);
-        ipcRenderer.send("game-process-state", {active: false, pid: starter?.gamePid || 0, gameDirectory: starter?.gameDirectory || ""});
         if (!RxStarter.isRunning()) {
             RxDiscordRpc.stopGame();
             RxFriends.gameStopped();

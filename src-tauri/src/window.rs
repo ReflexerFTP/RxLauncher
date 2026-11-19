@@ -102,6 +102,8 @@ pub fn reveal(app: &AppHandle) {
 
 // Во время игры: окно скрыто, в трее значок с меню (открыть лаунчер, закрыть игру, запустить ещё версию)
 pub fn hide_launcher(app: &AppHandle) {
+    let state = app.state::<crate::state::AppState>();
+    if !state.game_active() || state.force_close() { return; }
     let Some(window) = main_window(app) else { return };
     if app.tray_by_id(TRAY_ID).is_none() {
         let built = (|| -> tauri::Result<()> {
@@ -126,9 +128,10 @@ pub fn hide_launcher(app: &AppHandle) {
         })();
         if let Err(error) = built {
             crate::logs::write("warn", &format!("Could not create game tray icon: {error}"));
+            return;
         }
     }
-    let _ = window.set_skip_taskbar(app.tray_by_id(TRAY_ID).is_some());
+    let _ = window.set_skip_taskbar(true);
     let _ = window.hide();
 }
 
@@ -151,7 +154,10 @@ pub fn window_command(app: &AppHandle, channel: &str) -> BridgeResult {
         "reload-main-window" => {
             let _ = window.eval("location.reload()");
         }
-        "disappear-main-window" => hide_launcher(app),
+        "disappear-main-window" => {
+            let handle = app.clone();
+            let _ = app.run_on_main_thread(move || hide_launcher(&handle));
+        }
         "appear-main-window" => show_launcher(app),
         "focus-fix" => {
             let _ = window.set_focus();

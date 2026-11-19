@@ -50,12 +50,18 @@ class RxModsUpdater {
     }
 
     static updateAllFromList = async () => {
+        const packId = mods__currentModpackId;
+        if (!RxPacks.isSafePackId(packId)) return false;
+        const items = [...mods__resultList];
+        return RxPacks.withPackFiles(packId, () => RxModsUpdater.applyUpdates(packId, items));
+    };
+
+    static applyUpdates = async (packId, items) => {
         const $tab = $("#modal-packManager .updateTab");
         $tab.find(".foundUpdateMode").hide();
         $tab.find(".updateMode .mod").text("");
         $tab.find(".updateMode .text").text(MESSAGES.packs.updatePackM.installing);
         $tab.find(".updateMode").show();
-        const packId = mods__currentModpackId;
         const manifest = RxPacks.getModpackManifest(packId);
         const stageRoot = path.join(GAME_DATA, "cache", "mod-updates", crypto.randomUUID());
         const oldFiles = [];
@@ -70,7 +76,7 @@ class RxModsUpdater {
                 throw new Error("Pack directory is linked outside the game data");
             }
             const safe = RxPacks.safety();
-            const updates = mods__resultList.map((item, index) => {
+            const updates = items.map((item, index) => {
                 const relativeOld = safe.safePackPath(item.currentPath, {allowBackslashes: true});
                 const relativeNew = safe.safePackPath(`mods/${item.latest.file.filename}`);
                 const oldPath = path.resolve(packRoot, relativeOld);

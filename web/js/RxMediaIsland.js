@@ -23,6 +23,8 @@ class RxMediaIsland {
     static eventTimer = 0;
     static polling = false;
     static repoll = false;
+    static generation = 0;
+    static lastRead = 0;
     static tickTimer = 0;
     static swapTimer = 0;
     static shown = {visible: null, paused: null, pinned: null, title: null, artist: null, progress: -1, text: ""};
@@ -35,42 +37,41 @@ class RxMediaIsland {
     // ---------- что играет ----------
     // Один запрос за раз: событие во время опроса — ещё один опрос сразу после него
     static poll = async () => {
+        if (document.hidden || !RxMediaIsland.enabled()) return;
         if (RxMediaIsland.polling) {
             RxMediaIsland.repoll = true;
             return;
         }
         RxMediaIsland.polling = true;
+        const generation = RxMediaIsland.generation;
         clearTimeout(RxMediaIsland.pollTimer);
         let next = RxMediaIsland.POLL_MS;
         try {
-            if (!RxMediaIsland.enabled() || document.hidden) {
-                RxMediaIsland.update(null);
-                next = RxMediaIsland.IDLE_POLL_MS;
-            } else {
-                try {
-                    const data = await ipcRenderer.invoke("media-now-playing");
+            const data = await ipcRenderer.invoke("media-now-playing").catch(() => ({unavailable: true}));
+            if (generation === RxMediaIsland.generation && !document.hidden && RxMediaIsland.enabled()) {
+                if (data?.unavailable) {
+                    if (Date.now() - RxMediaIsland.lastRead > 8000) RxMediaIsland.update(null);
+                } else {
+                    RxMediaIsland.lastRead = Date.now();
                     RxMediaIsland.update(data);
                     if (!data?.found) next = RxMediaIsland.IDLE_POLL_MS;
-                } catch (_) {
-                    RxMediaIsland.update(null);
-                    next = RxMediaIsland.IDLE_POLL_MS;
                 }
+                RxMediaIsland.render();
             }
-            RxMediaIsland.render();
         } finally {
             RxMediaIsland.polling = false;
-        }
-        if (RxMediaIsland.repoll) {
+            if (RxMediaIsland.repoll) next = RxMediaIsland.EVENT_DELAY_MS;
             RxMediaIsland.repoll = false;
-            return RxMediaIsland.poll();
+            if (!document.hidden && RxMediaIsland.enabled()) RxMediaIsland.pollTimer = setTimeout(RxMediaIsland.poll, next);
         }
-        RxMediaIsland.pollTimer = setTimeout(RxMediaIsland.poll, next);
     };
 
     static onMediaEvent = () => {
-        if (document.hidden) return;
-        clearTimeout(RxMediaIsland.eventTimer);
-        RxMediaIsland.eventTimer = setTimeout(RxMediaIsland.poll, RxMediaIsland.EVENT_DELAY_MS);
+        if (document.hidden || !RxMediaIsland.enabled() || RxMediaIsland.eventTimer) return;
+        RxMediaIsland.eventTimer = setTimeout(() => {
+            RxMediaIsland.eventTimer = 0;
+            RxMediaIsland.poll();
+        }, RxMediaIsland.EVENT_DELAY_MS);
     };
 
     static update = (data, now = Date.now()) => {
@@ -81,16 +82,26 @@ class RxMediaIsland {
             return;
         }
         const key = `${data.artist}\u0000${data.title}`.toLowerCase();
-        let positionMs = Number(data.positionMs) || 0;
-        let updatedAt = Number(data.updatedAt) || now;
+        const samplePosition = Math.max(0, Number(data.positionMs) || 0);
+        const sampleTime = Math.max(0, Math.min(now, Number(data.updatedAt) || 0));
+        let positionMs = samplePosition;
+        let updatedAt = sampleTime || now;
+        const sameTrack = previous?.key === key;
+        let ignoreThrough = sameTrack ? previous.ignoreThrough : 0;
         // Трек только что сменился, а Windows ещё отдаёт время прошлого — считаем, что новый начался сейчас
-        if (previous && previous.key !== key && now - updatedAt > 1500) {
+        if (previous && !sameTrack && sampleTime && now - sampleTime > 1500) {
             positionMs = 0;
             updatedAt = now;
+            ignoreThrough = sampleTime;
+        } else if (sameTrack && ((ignoreThrough && sampleTime <= ignoreThrough)
+            || (previous.sampleTime === sampleTime && previous.samplePosition === samplePosition))) {
+            positionMs = previous.playing === (data.playing === true) ? previous.positionMs : RxMediaIsland.position(now);
+            updatedAt = previous.playing === (data.playing === true) ? previous.updatedAt : now;
         }
         RxMediaIsland.track = {
             key, title: String(data.title), artist: String(data.artist || ""), album: String(data.album || ""),
-            durationMs: Number(data.durationMs) || 0, playing: data.playing === true, positionMs, updatedAt
+            durationMs: Math.max(0, Number(data.durationMs) || 0), playing: data.playing === true,
+            positionMs, updatedAt, sampleTime, samplePosition, ignoreThrough
         };
         if (previous?.key !== key) RxMediaIsland.scheduleLyrics(RxMediaIsland.track);
     };
@@ -159,9 +170,16 @@ class RxMediaIsland {
             // Трек переключили — запрос отменён, ничего не запоминаем: вернутся к треку — поищем снова
             if (abort.signal.aborted) return;
             RxCollector.writeLog(`MediaIsland: Lyrics failed [error=${error?.message || error}]`);
+            if (RxMediaIsland.track?.key === key) {
+                RxMediaIsland.lyricsTimer = setTimeout(() => {
+                    if (RxMediaIsland.track?.key === key) RxMediaIsland.loadLyrics(track);
+                }, 30000);
+            }
+            return;
         } finally {
             if (RxMediaIsland.lyricsAbort === abort) RxMediaIsland.lyricsAbort = null;
         }
+        if (abort.signal.aborted) return;
         RxMediaIsland.lyrics.set(key, {lines});
         if (RxMediaIsland.lyrics.size > RxMediaIsland.MAX_CACHE) RxMediaIsland.lyrics.delete(RxMediaIsland.lyrics.keys().next().value);
         if (RxMediaIsland.track?.key === key) RxMediaIsland.render();
@@ -227,6 +245,22 @@ class RxMediaIsland {
         if (RxMediaIsland.track && !document.hidden) RxMediaIsland.render();
     };
 
+    static syncActivity = () => {
+        RxMediaIsland.generation++;
+        clearTimeout(RxMediaIsland.pollTimer);
+        clearTimeout(RxMediaIsland.eventTimer);
+        clearInterval(RxMediaIsland.tickTimer);
+        RxMediaIsland.eventTimer = 0;
+        RxMediaIsland.repoll = false;
+        if (document.hidden || !RxMediaIsland.enabled()) {
+            RxMediaIsland.update(null);
+            RxMediaIsland.render();
+            return;
+        }
+        RxMediaIsland.tickTimer = setInterval(RxMediaIsland.tick, RxMediaIsland.TICK_MS);
+        RxMediaIsland.poll();
+    };
+
     static init = () => {
         const $island = RxMediaIsland.$island();
         if (!$island.length) return;
@@ -235,11 +269,10 @@ class RxMediaIsland {
             RxMediaIsland.render();
         });
         // Тикер — только для строки и полосы
-        RxMediaIsland.tickTimer = setInterval(RxMediaIsland.tick, RxMediaIsland.TICK_MS);
         ipcRenderer.on("media-changed", RxMediaIsland.onMediaEvent);
-        document.addEventListener("visibilitychange", () => { if (!document.hidden) RxMediaIsland.poll(); });
-        $(document).on("change", '[data-setting="mediaIsland"] input', () => RxMediaIsland.poll());
-        RxMediaIsland.poll();
+        document.addEventListener("visibilitychange", RxMediaIsland.syncActivity);
+        $(document).on("change", '[data-setting="mediaIsland"] input', RxMediaIsland.syncActivity);
+        RxMediaIsland.syncActivity();
     };
 }
 

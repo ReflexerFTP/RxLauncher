@@ -74,16 +74,16 @@ const plain = value => JSON.parse(JSON.stringify(value));
     const events = [];
     const remoteFile = {items: []};
     const notes = load("RxPatchNotes", {
-        USERDATA_PATH: userData, LAUNCHER_VERSION: "4.5.0", RxCollector: {writeLog() {}}, RxTranslator: {getCurrentLanguage: () => "ru"},
+        USERDATA_PATH: userData, LAUNCHER_VERSION: "4.6.0", RxCollector: {writeLog() {}}, RxTranslator: {getCurrentLanguage: () => "ru"},
         RxHttp: {json: async () => remoteFile}, CustomEvent: class { constructor(type) { this.type = type; } }, document: {dispatchEvent: event => events.push(event.type)}
     });
     const bundled = notes.ITEMS.length, latest = notes.ITEMS[0];
-    assert.equal(latest.version, "4.5.0");
+    assert.equal(latest.version, "4.6.0");
     assert.equal(notes.isNewer("4.10.0", "4.9.9"), true);
     assert.equal(notes.isNewer("4.5.0", "4.5.0"), false);
     remoteFile.items = [
         {id: latest.id, version: latest.version, date: latest.date, title: {ru: "Исправленный заголовок", en: "Fixed title"}, changes: {ru: ["одна строка"], en: ["one line"]}},
-        {id: "4.6.0-future", version: "4.6.0", date: "2027-01-01T00:00:00Z", title: {ru: "Ещё не вышло", en: "Not out yet"}},
+        {id: "4.7.0-future", version: "4.7.0", date: "2027-01-01T00:00:00Z", title: {ru: "Ещё не вышло", en: "Not out yet"}},
         {id: "4.4.5-hotfix", version: "4.4.5", date: "2026-11-10T12:00:00Z", title: {ru: "Исправление", en: "Hotfix"}, tag: {ru: "x".repeat(100)}},
         {id: "bad id!", version: "4.4.0", date: "2026-11-10T12:00:00Z", title: {ru: "плохой id"}},
         {id: "no-title", version: "4.4.0", date: "2026-11-10T12:00:00Z"},
@@ -97,8 +97,8 @@ const plain = value => JSON.parse(JSON.stringify(value));
     assert.equal(all[0].title, "Исправленный заголовок");
     assert.deepEqual(plain(all[0].changes), ["одна строка"]);
     assert.equal(all[0].image, latest.image, "the bundled picture stays");
-    assert.equal(all[1].id, "4.4.5-hotfix", "an extra note takes its place by version");
-    assert.equal(all[1].tag.length, 24);
+    assert.equal(all[2].id, "4.4.5-hotfix", "an extra note takes its place by version");
+    assert.equal(all[2].tag.length, 24);
     assert.equal(await notes.refreshRemote(), false, "unchanged notes do not redraw the feed");
     // Сохранённая копия читается при следующем запуске без сети
     notes.remote = [];
@@ -109,7 +109,7 @@ const plain = value => JSON.parse(JSON.stringify(value));
     require("node:child_process").execFileSync(process.execPath, [path.join(root, "tauri", "export-patchnotes.cjs"), exported]);
     const site = JSON.parse(fs.readFileSync(exported, "utf8"));
     assert.equal(site.items.length, bundled);
-    assert.equal(notes.normalizeRemote(site, "4.5.0").length, bundled, "every bundled note passes the launcher's own checks");
+    assert.equal(notes.normalizeRemote(site, "4.6.0").length, bundled, "every bundled note passes the launcher's own checks");
 
     // ---------- вход через Microsoft ----------
     const calls = [];

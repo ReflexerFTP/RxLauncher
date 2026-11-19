@@ -1,11 +1,11 @@
 [package]
 name = "rxlauncher"
-version = "4.5.0"
+version = "4.6.0"
 description = "RxLauncher — Minecraft launcher"
 authors = ["RxLauncher"]
 license = "GPL-3.0-only"
 edition = "2021"
-rust-version = "1.80"
+rust-version = "1.88"
 
 [lib]
 name = "rxlauncher_lib"
@@ -36,9 +36,10 @@ hex = "0.4"
 base64 = "0.22"
 flate2 = "1"
 tar = "0.4"
+tempfile = "3"
 aho-corasick = "1"
 ed25519-dalek = "2"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "9.7", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 dunce = "1"
 rand = "0.8"
 aes-gcm = "0.10"
@@ -57,7 +58,7 @@ windows-sys = { version = "0.59", features = [
     "Win32_Storage_FileSystem",
 ] }
 # Что играет в Spotify (системные элементы управления мультимедиа, WinRT)
-windows = { version = "0.58", features = ["Media_Control", "Foundation", "Foundation_Collections"] }
+windows = { version = "0.58", features = ["Media_Control", "Foundation", "Foundation_Collections", "Win32_System_WinRT"] }
 
 [profile.release]
 codegen-units = 1

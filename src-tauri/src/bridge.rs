@@ -139,6 +139,10 @@ pub fn handle(app: AppHandle, request: Request<Vec<u8>>, responder: UriSchemeRes
         responder.respond(response(&origin, 204, Vec::new()));
         return;
     }
+    if request.method() != "POST" {
+        responder.respond(response(&origin, 405, Vec::new()));
+        return;
+    }
     let op = percent_encoding::percent_decode_str(request.uri().path().trim_start_matches('/'))
         .decode_utf8_lossy()
         .to_string();
