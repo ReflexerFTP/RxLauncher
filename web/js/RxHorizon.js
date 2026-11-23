@@ -90,6 +90,10 @@ class RxHorizon {
             return false;
         }
 
+        // Библиотеки и ассеты версии — заранее, с прогрессом и зеркалом; ядро докачает только jar-файлы
+        await RxGameFiles.prepare({version: {number: starter.versionNumber}, root: GAME_DATA});
+        if (RxStarter.cancelRequested) return false;
+
         const activeAccount = RxAccountsManager.getActiveAccount();
         const authorization = await RxAccountsManager.getAccountMCLCData(activeAccount);
         if (!authorization) return false;
@@ -107,7 +111,8 @@ class RxHorizon {
             gameDirectory: path.join(RxHorizon.dir(), "game"),
             overrides: {gameDirectory: path.join(RxHorizon.dir(), "game")},
             window: {fullscreen: RxConfig.read("gameInFullscreen") === true},
-            server: selectedServerFromList || ""
+            server: selectedServerFromList || "",
+            launcherDiscord: RxConfig.read("discordRpcEnabled", true) === true
         };
     };
 

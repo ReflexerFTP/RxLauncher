@@ -7,6 +7,7 @@
 // Всё лежит в <папка игры>/horizon: builds/<sha256[..16]>/ — сборки (текущая и предыдущая), prepared/ — ресурсы,
 // game/ — миры, настройки и логи, server-<версия>.jar
 use std::collections::HashSet;
+use std::ffi::OsString;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
@@ -446,21 +447,21 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
 
     let options = client_options(&client).await;
     let supports = |name: &str| options.as_ref().map(|set| set.contains(name)).unwrap_or(true);
-    let mut args: Vec<std::ffi::OsString> = vec!["--resources".into(), prepared.clone().into(), "--game-dir".into(), game_dir.clone().into()];
+    let mut args: Vec<OsString> = vec!["--resources".into(), prepared.clone().into(), "--game-dir".into(), game_dir.clone().into()];
     if supports("--home") {
-        args.extend(["--home".into(), game_dir.clone().into()]);
+        args.extend([OsString::from("--home"), game_dir.clone().into()]);
     }
     let window = config.get("window").cloned().unwrap_or(Value::Null);
     if window.get("fullscreen").and_then(Value::as_bool) == Some(true) && supports("--fullscreen") {
         args.push("--fullscreen".into());
     } else if let (Some(w), Some(h)) = (window.get("width").and_then(Value::as_u64), window.get("height").and_then(Value::as_u64)) {
         if supports("--width") && supports("--height") {
-            args.extend(["--width".into(), w.to_string().into(), "--height".into(), h.to_string().into()]);
+            args.extend([OsString::from("--width"), w.to_string().into(), "--height".into(), h.to_string().into()]);
         }
     }
     if let Some(server) = str_of(&config, "server").filter(|s| !s.is_empty() && s.len() <= 255 && !s.starts_with('-')) {
         if supports("--quickPlayMultiplayer") {
-            args.extend(["--quickPlayMultiplayer".into(), server.into()]);
+            args.extend([OsString::from("--quickPlayMultiplayer"), server.into()]);
         }
     }
     args.push("--session-stdin".into());
@@ -469,6 +470,10 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
     events.debug(format!("Launching Horizon {minecraft} from {}", client.display()));
     let mut spawn = command(&client.join("horizon-client.exe"), &game_dir);
     spawn.args(&args).stdin(Stdio::piped()).kill_on_drop(false);
+    // Статус в Discord показывает лаунчер: свой у Horizon перебил бы его
+    if config.get("launcherDiscord").and_then(Value::as_bool) == Some(true) {
+        spawn.env("HORIZON_NO_DISCORD", "1");
+    }
     let mut child = spawn.spawn().map_err(|e| BridgeError::new(format!("Cannot start Horizon: {e}")))?;
     if let Some(mut stdin) = child.stdin.take() {
         let _ = stdin.write_all(session.to_string().as_bytes()).await;
