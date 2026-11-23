@@ -7,6 +7,7 @@ mod discord;
 mod fsops;
 mod game;
 mod gamefiles;
+mod horizon;
 mod http;
 mod ipc;
 mod loaders;

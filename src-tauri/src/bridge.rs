@@ -186,6 +186,9 @@ async fn dispatch(app: &AppHandle, op: &str, args: Value, payload: Vec<u8>) -> B
     match op {
         "ipc" => crate::ipc::dispatch(app, args).await,
         "game.launch" => crate::game::launch(app, args).await,
+        "horizon.install" => crate::horizon::install(app, args).await,
+        "horizon.launch" => crate::horizon::launch(app, args).await,
+        "horizon.cancel" => crate::horizon::cancel(),
         "discord.setActivity" => crate::discord::set_activity(args.get("activity").cloned().unwrap_or(Value::Null)).await,
         "discord.clear" => crate::discord::set_activity(Value::Null).await,
         "system.info" => ok(crate::system::info(app)),

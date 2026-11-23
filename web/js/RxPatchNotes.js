@@ -1,6 +1,34 @@
 class RxPatchNotes {
     static ITEMS = [
         {
+            id: "4.7.0-horizon",
+            version: "4.7.0",
+            date: "2026-11-24T18:00:00+03:00",
+            image: "assets/version-heroes/1.21.webp",
+            tag: {ru: "НОВОЕ", en: "NEW"},
+            title: {ru: "Minecraft на Rust: Horizon в лаунчере", en: "Minecraft in Rust: Horizon in the launcher"},
+            summary: {
+                ru: "В лаунчере можно играть в Horizon — Minecraft 26.3, переписанный на Rust. Включите его в настройках, выберите «Horizon 26.3» в списке версий и нажмите «Играть»: всё нужное скачается и подготовится само.",
+                en: "You can play Horizon in the launcher: Minecraft 26.3 rewritten in Rust. Turn it on in the settings, pick \"Horizon 26.3\" in the version list and press Play: everything it needs is downloaded and prepared for you."
+            },
+            changes: {
+                ru: [
+                    "Настройки → Игровой процесс → «Rust-клиент Horizon»: после включения в списке версий появляется «Horizon 26.3» и вкладка Horizon (Rust).",
+                    "Первый запуск скачивает клиент Horizon (~80 МБ), файлы Minecraft 26.3 (~0,5 ГБ) и Java 25 и за несколько минут готовит ресурсы игры. Следующие запуски — сразу.",
+                    "Сборка Horizon проверяется по подписи проекта и SHA-256, новые сборки скачиваются сами. Без интернета запускается уже скачанная.",
+                    "Работает с любым аккаунтом лаунчера. Миры и настройки Horizon хранятся отдельно, в папке horizon.",
+                    "Это ранняя версия проекта: моды Fabric/Forge не поддерживаются, на серверы 1.20.2–26.3 заходит, но возможны отличия от обычного Minecraft."
+                ],
+                en: [
+                    "Settings → Gameplay → \"Horizon Rust client\": once it is on, the version list shows \"Horizon 26.3\" and a Horizon (Rust) tab.",
+                    "The first launch downloads the Horizon client (~80 MB), the Minecraft 26.3 files (~0.5 GB) and Java 25, and prepares the game resources in a few minutes. Later launches start right away.",
+                    "The Horizon build is checked against the project's signature and SHA-256, and new builds download by themselves. Offline, the build you already have starts.",
+                    "Works with any launcher account. Horizon worlds and settings are kept separately in the horizon folder.",
+                    "The project is at an early stage: Fabric/Forge mods are not supported, and it joins 1.20.2–26.3 servers, but it may still differ from regular Minecraft."
+                ]
+            }
+        },
+        {
             id: "4.6.0-fixes",
             version: "4.6.0",
             date: "2026-11-19T18:00:00+03:00",

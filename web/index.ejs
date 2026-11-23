@@ -43,6 +43,7 @@
     <script type="application/x-rx-script" src="./js/RxMicrosoft.js"></script>
     <script type="application/x-rx-script" src="./js/RxFlyout.js"></script>
     <script type="application/x-rx-script" src="./js/RxJavaManager.js"></script>
+    <script type="application/x-rx-script" src="./js/RxHorizon.js"></script>
     <script type="application/x-rx-script" src="./js/RxLaunchConfigurator.js"></script>
     <script type="application/x-rx-script" src="./js/RxModals.js"></script>
     <script type="application/x-rx-script" src="./js/RxModMeta.js"></script>
@@ -195,6 +196,7 @@
         // Инициализация менеджера Java
         RxJavaManager.init();
         RxCollector.writeLog("JavaManager initialized");
+        RxHorizon.init();
 
         // Настраиваем кнопку для сбора debug data
         $(document).keyup((e) => {

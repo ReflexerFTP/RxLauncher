@@ -77,7 +77,7 @@ class RxVersionArtwork {
         const activeId = versionId || RxVersionsManager.getActiveVersion();
         if (!activeId || activeId === "none") return "Java Edition";
         const type = RxVersionsManager.parseVersionID(activeId).type;
-        return ({vanilla: "Vanilla", forge: "Forge", forgeOptiFine: "Forge + OptiFine", neoforge: "NeoForge", fabric: "Fabric", quilt: "Quilt", pack: "Modpack"})[type] || "Java Edition";
+        return ({vanilla: "Vanilla", forge: "Forge", forgeOptiFine: "Forge + OptiFine", neoforge: "NeoForge", fabric: "Fabric", quilt: "Quilt", horizon: "Horizon · Rust", pack: "Modpack"})[type] || "Java Edition";
     };
 
     static update = (versionId = null) => {

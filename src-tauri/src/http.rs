@@ -412,6 +412,22 @@ pub async fn get_bytes(url: &str, idle: Duration, max: u64) -> Result<Vec<u8>, B
     Ok(body)
 }
 
+// Размер файла по HEAD (после переходов по ссылкам) — для докачки через fetch_to_file
+pub async fn head_size(url: &str) -> Result<u64, BridgeError> {
+    let response = tokio::time::timeout(Duration::from_secs(60), client(false, false).head(url).header("User-Agent", user_agent()).send())
+        .await
+        .map_err(|_| BridgeError::code("Request timed out", "ETIMEDOUT"))?
+        .map_err(net_error)?;
+    if !response.status().is_success() {
+        return Err(BridgeError { message: format!("HTTP {} for {url}", response.status().as_u16()), status: Some(response.status().as_u16()), ..Default::default() });
+    }
+    response.headers().get(reqwest::header::CONTENT_LENGTH)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.parse::<u64>().ok())
+        .filter(|size| *size > 0)
+        .ok_or_else(|| BridgeError::new(format!("Unknown size of {url}")))
+}
+
 // Докачка в файл (обновление лаунчера на медленном интернете): продолжает с конца уже скачанного через Range
 pub async fn fetch_to_file(url: &str, path: &Path, total: u64, mut progress: impl FnMut(u64)) -> Result<(), BridgeError> {
     use std::io::{Seek, SeekFrom};

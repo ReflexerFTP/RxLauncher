@@ -12,13 +12,14 @@ class RxVersionsUI {
         {id: "neoforge", label: () => "NeoForge"},
         {id: "quilt", label: () => "Quilt"},
         {id: "forgeOptiFine", label: () => "OptiFine"},
+        {id: "horizon", label: () => "Horizon (Rust)"},
         {id: "custom", label: () => MESSAGES.versions.custom},
         {id: "pack", label: () => MESSAGES.versions.pack}
     ];
 
     static TYPE_LABELS = {
         vanilla: "Vanilla", fabric: "Fabric", forge: "Forge", neoforge: "NeoForge",
-        quilt: "Quilt", forgeOptiFine: "Forge + OptiFine"
+        quilt: "Quilt", forgeOptiFine: "Forge + OptiFine", horizon: "Horizon · Rust"
     };
 
     static init = () => {
@@ -222,6 +223,7 @@ class RxVersionsUI {
 
     static iconFor = (ver) => {
         if (ver.type === "custom") return "assets/versions/3rdparty.webp";
+        if (ver.type === "horizon") return "assets/versions/vanilla.webp";
         if (ver.type !== "pack") return `assets/versions/${ver.type}.webp`;
         try {
             const modpackData = RxPacks.getModpackManifest(ver.id.replace("pack-", ""));

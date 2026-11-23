@@ -398,8 +398,17 @@
         "version_name": "The version name has characters Windows does not allow in folder names. Rename the version folder in versions.",
         "version_missing": "This version's files are missing or damaged. Remove it in the version list and install it again, or pick the regular version with the same loader.",
         "loader_offline": "The loader server (Fabric, Forge, Quilt) does not answer and this version is not downloaded yet. Check your connection and try again.",
-        "bad_request": "The launcher could not read the selected version. Pick it again in the version list."
+        "bad_request": "The launcher could not read the selected version. Pick it again in the version list.",
+        "horizon_offline": "Horizon is not downloaded yet and GitHub does not answer. Check your connection and try again.",
+        "horizon_download": "Could not download or verify the Horizon build. Try again a bit later.",
+        "horizon_prepare": "Horizon could not prepare the game files. The console shows why; launching again usually helps."
       }
+    },
+    "horizon": {
+      "checking": "Checking Horizon",
+      "unpacking": "Unpacking Horizon",
+      "preparing": "Preparing Horizon (a few minutes the first time)",
+      "updated": "Horizon updated"
     },
     "updater": {
       "available": "New update available",
@@ -487,6 +496,11 @@
           "title": "RxLauncher capes in game",
           "description": "Show your cape and other RxLauncher players' capes. Create or draw your own cape (Player+) on rxlauncher.xyz",
           "site": "My cape on the site"
+        },
+        "horizon": {
+          "title": "Horizon Rust client (experimental)",
+          "description": "Adds \"Horizon 26.3\" to the version list: Minecraft rewritten in Rust, faster world loading, no Java in game. The first launch downloads ~80 MB of client and ~0.5 GB of game files and prepares them in a few minutes. Fabric/Forge mods don't work in it; it joins 1.20.2–26.3 servers, but compatibility is not complete.",
+          "project": "Horizon on GitHub"
         }
       },
       "java": {

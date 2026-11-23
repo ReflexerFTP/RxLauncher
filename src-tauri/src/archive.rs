@@ -121,7 +121,7 @@ pub(crate) fn write_entry(reader: impl Read, target: &Path, size: u64) -> Result
     Ok(())
 }
 
-fn unpack_zip(archive_path: &str, destination: &Path) -> Result<usize, BridgeError> {
+pub(crate) fn unpack_zip(archive_path: &str, destination: &Path) -> Result<usize, BridgeError> {
     let file = File::open(archive_path).map_err(|e| crate::fsops::io_error(e, "open", archive_path, None))?;
     let mut archive = zip::ZipArchive::new(file).map_err(|e| BridgeError::code(format!("Invalid zip archive: {e}"), "EBADZIP"))?;
     if archive.len() > MAX_ENTRIES {

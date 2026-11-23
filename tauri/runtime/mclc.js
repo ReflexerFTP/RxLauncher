@@ -24,7 +24,9 @@ class Client extends EventEmitter {
         const launchId = nextLaunch++;
         clients.set(launchId, this);
         try {
-            const {pid} = await bridge.value("game.launch", {launchId, config: options});
+            // Horizon (Minecraft на Rust) запускает своё ядро, события те же
+            const op = options && options.horizon ? "horizon.launch" : "game.launch";
+            const {pid} = await bridge.value(op, {launchId, config: options});
             const child = new EventEmitter();
             child.pid = pid;
             child.kill = () => bridge.value("process.killTree", {pid}).then(() => true, () => false);

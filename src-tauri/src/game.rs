@@ -22,10 +22,13 @@ pub struct Events {
 }
 
 impl Events {
-    fn emit(&self, event: &str, data: Value) {
+    pub fn new(app: &AppHandle, id: u64) -> Self {
+        Events { app: app.clone(), id }
+    }
+    pub fn emit(&self, event: &str, data: Value) {
         let _ = self.app.emit("rx:game", json!({"id": self.id, "event": event, "data": data}));
     }
-    fn debug(&self, message: impl AsRef<str>) {
+    pub fn debug(&self, message: impl AsRef<str>) {
         self.emit("debug", Value::String(format!("[RxCore]: {}", message.as_ref())));
     }
 }
@@ -144,7 +147,7 @@ fn merge(child: Value, parent: Value) -> Value {
     Value::Object(out)
 }
 
-async fn resolve_version(root: &Path, id: &str, source: &str, events: &Events) -> Result<Value, BridgeError> {
+pub(crate) async fn resolve_version(root: &Path, id: &str, source: &str, events: &Events) -> Result<Value, BridgeError> {
     let mut chain = vec![read_or_fetch_version(root, id, None, source, events).await?];
     while let Some(parent) = chain.last().and_then(|v| str_of(v, "inheritsFrom")).map(str::to_string) {
         if chain.len() > 4 || chain.iter().any(|v| str_of(v, "id") == Some(parent.as_str())) {
@@ -241,6 +244,13 @@ fn libraries(version: &Value, libraries_dir: &Path, features: &HashMap<String, b
         out.push(Library { key, path, download, natives, exclude });
     }
     out
+}
+
+// Что скачать из библиотек версии (для Horizon: ему нужны файлы ванильной версии, сам он их не качает)
+pub(crate) fn library_downloads(version: &Value, libraries_dir: &Path) -> Vec<Download> {
+    let mut features: HashMap<String, bool> = HashMap::new();
+    features.insert("is_demo_user".into(), false);
+    libraries(version, libraries_dir, &features).into_iter().filter_map(|lib| lib.download).collect()
 }
 
 // ---------- аргументы ----------
@@ -510,7 +520,13 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
     command.args(&command_args).current_dir(&cwd).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(windows)]
     command.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
-    let mut child = command.spawn().map_err(|e| BridgeError::new(format!("Cannot start Java: {e}")))?;
+    let child = command.spawn().map_err(|e| BridgeError::new(format!("Cannot start Java: {e}")))?;
+    Ok(supervise(app, events, child, game_dir))
+}
+
+// Запущенная игра: вывод — событиями data, по выходу — close, история команд обратно в хранилище, окно лаунчера
+pub(crate) fn supervise(app: &AppHandle, events: &Events, mut child: tokio::process::Child, game_dir: PathBuf) -> u32 {
+    let state = app.state::<AppState>();
     let pid = child.id().unwrap_or(0);
     state.add_game(pid);
     for stream in [child.stdout.take().map(|s| Box::new(s) as Box<dyn tokio::io::AsyncRead + Unpin + Send>), child.stderr.take().map(|s| Box::new(s) as Box<dyn tokio::io::AsyncRead + Unpin + Send>)].into_iter().flatten() {
@@ -554,7 +570,7 @@ async fn prepare_and_spawn(app: &AppHandle, events: &Events, config: Value) -> R
         tokio::time::sleep(Duration::from_millis(300)).await;
         sink("close", json!(code));
     });
-    Ok(pid)
+    pid
 }
 
 pub type Sink = std::sync::Arc<dyn Fn(&str, Value) + Send + Sync>;
@@ -676,7 +692,7 @@ pub fn events_sink(events: &Events) -> Sink {
     })
 }
 
-async fn prepare_assets(root: &Path, game_dir: &Path, version: &Value, version_id: &str, source: &str, events: &Events) -> Result<(PathBuf, String, PathBuf), BridgeError> {
+pub(crate) async fn prepare_assets(root: &Path, game_dir: &Path, version: &Value, version_id: &str, source: &str, events: &Events) -> Result<(PathBuf, String, PathBuf), BridgeError> {
     let assets_root = root.join("assets");
     let Some(index) = version.get("assetIndex") else {
         return Ok((assets_root.clone(), str_of(version, "assets").unwrap_or("legacy").to_string(), assets_root));

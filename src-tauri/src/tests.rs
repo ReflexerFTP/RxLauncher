@@ -354,3 +354,28 @@ fn pinned_and_any_installed_loader_work_without_network() {
     assert!(crate::loaders::any_installed_fabric("fabric", "1.19.2", None, &root).is_none());
     let _ = std::fs::remove_dir_all(&root);
 }
+
+// Релиз Horizon nightly 2026-11-22: настоящий SHA256SUMS и его подпись
+const HORIZON_SUMS: &str = "55b17afb54469b2075951b6085d99e8410319af52eb7426c141decb8d168cf7b  horizon-linux-x86_64.tar.gz
+479c3b70c2a7f2b83b86489d6686d6ce5a9dad7334ac3349eb383c6d637adfe5  horizon-windows-x64.zip
+2083db3d1c0e7589521e949f0360f9d5a34bf82a5f66bfc69c6fa3f58d880a02  horizon-windows-arm64.zip
+948dcbf83d45fe44970b557f253f90899d8748b27e0cdde77c745249a6b2f6a5  horizon-linux-musl-x86_64.tar.gz
+654784fb2bf234d8c1889fc06fae6ce8792b6476d726ca5acc36e66023fb12c3  horizon-macos-arm64.zip
+9d18bb5e42b4e563d6b3782217a10b06b05bbfa5e9d914adf26986bcd1ac6668  horizon-macos-x64.zip
+bb09073e56eea47936c796680e7743d804ca64add5355c61721fd9579b4bfa1d  horizon-server-linux-x86_64.tar.gz
+6df3e9ee34c4e651568be7d2cb2df193122b19b4083fcda391fe5ab7d5f0b719  horizon-source.tar.gz
+b3ba960024ca0961a1b288d8437507957336bc78afc74dbff5c0eb99b468bb09  sdk.json\n";
+const HORIZON_SIG: &str = "3OXJqDR8NjKNrzbDdC1zlpeD8BklokGRdjKaPeEtyti4ajLIlP14JDHrXS1xXezk/FASm54oGyNKRfzm3gf3Dw==";
+
+#[test]
+fn horizon_release_signature() {
+    crate::horizon::verify_sums(HORIZON_SUMS.as_bytes(), HORIZON_SIG).expect("signed by the Horizon release key");
+    // Подмена любого байта списка или подписи — отказ
+    let tampered = HORIZON_SUMS.replacen("479c3b70", "479c3b71", 1);
+    assert!(crate::horizon::verify_sums(tampered.as_bytes(), HORIZON_SIG).is_err());
+    assert!(crate::horizon::verify_sums(HORIZON_SUMS.as_bytes(), &HORIZON_SIG.replacen('3', "4", 1)).is_err());
+    assert!(crate::horizon::verify_sums(HORIZON_SUMS.as_bytes(), "not base64").is_err());
+    assert_eq!(crate::horizon::sum_for(HORIZON_SUMS.as_bytes(), "horizon-windows-x64.zip").as_deref(),
+        Some("479c3b70c2a7f2b83b86489d6686d6ce5a9dad7334ac3349eb383c6d637adfe5"));
+    assert!(crate::horizon::sum_for(HORIZON_SUMS.as_bytes(), "windows-x64.zip").is_none());
+}

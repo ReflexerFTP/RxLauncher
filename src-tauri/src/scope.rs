@@ -337,6 +337,7 @@ pub fn guard(op: &str, args: &Value) -> Result<Option<Value>, BridgeError> {
             }
         }
         "http.download" => need("path", Write)?,
+        "horizon.install" => need("root", Write)?,
         "shell.trash" => need("path", Write)?,
         "shell.openPath" | "shell.showItemInFolder" => need("path", Read)?,
         _ => {}

@@ -39,6 +39,7 @@ class RxStarter {
         RxStarter.cancelRequested = true;
         RxCollector.writeLog("Starter: Launch cancelled by user");
         RxDownloader.abortAll();
+        if (typeof RxHorizon !== "undefined") RxHorizon.abort(); // подготовка ресурсов Horizon идёт в ядре
         $("#cancelLaunchButton").hide();
         RxFlyout.setUIStartMode(false);
         await RxFlyout.changeMode("idle");
@@ -117,6 +118,8 @@ class RxStarter {
                 return "Fabric";
             case "quilt":
                 return "Quilt";
+            case "horizon":
+                return "Horizon (Rust)";
             case "vanilla":
             default:
                 return "Vanilla";
@@ -147,6 +150,17 @@ class RxStarter {
             this.versionId = modpackData.baseVersion.full;
             this.versionType = modpackData.baseVersion.type;
             this.loaderVersion = modpackData.baseVersion.loaderVersion || "";
+        }
+
+        // Horizon (Minecraft на Rust): своя подготовка, Java нужна только для сборки ресурсов
+        if (this.versionType === "horizon") {
+            RxFlyout.setUIStartMode(true);
+            this.displayName = RxVersionsManager.versionToDisplayName();
+            await RxFlyout.changeMode("progress");
+            const horizonConfig = await RxHorizon.createConfig(this);
+            if (!horizonConfig) return false;
+            this.config = horizonConfig;
+            return horizonConfig;
         }
 
         // Своя версия: Java и Discord берут номер базовой версии Minecraft
@@ -327,6 +341,8 @@ class RxStarter {
                 }
                 $("#cancelLaunchButton").hide();
                 this.gamePid = Number(childProcess.pid);
+                // У Horizon нет строк загрузки как у Java-клиента: игра уже открывает окно
+                if (this.config?.horizon) setTimeout(() => { if (!launchInProgress) RxStarter.showIdle(); }, 1500);
                 RxStarter.running.set(this.gamePid, this);
                 RxGameLogs.setPid(this.logSession, this.gamePid);
                 if (RxStarter.running.size === 1) this.becomePrimary();
@@ -433,6 +449,10 @@ class RxStarter {
             RxFlyout.changeMode("spinner");
             RxFlyout.setText(MESSAGES.starter.starting, versionDisplayName);
         });
+        launcher.on('horizon', (e) => {
+            if (RxStarter.cancelRequested) return;
+            RxHorizon.onPrepare(e);
+        });
         launcher.on('progress', (e) => {
             if (RxStarter.cancelRequested) return;
             if (e.type === "assets") {
@@ -483,6 +503,8 @@ class RxStarter {
             return RxStarter.finishCancel();
         }
         RxCollector.writeLog(`Starter: Launch failed [error=${errorText}]`);
+        // Причина от ядра Horizon (подготовка ресурсов не удалась и т. п.)
+        if (/^horizon_/.test(String(error?.code || ""))) RxLaunchConfigurator.lastError = {code: error.code};
         gameStarting = false;
         launchInProgress = false;
         assetsVerifyOffset = 0;

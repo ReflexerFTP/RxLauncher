@@ -61,7 +61,7 @@ const rpcServer = value => {
     const server = rpcClean(value, 80);
     return server && /^[a-z0-9._:\[\]-]+$/i.test(server) ? server : "";
 };
-const LOADER_NAMES = {forge: "Forge", forgeOptiFine: "Forge + OptiFine", neoforge: "NeoForge", fabric: "Fabric", quilt: "Quilt", custom: "Custom", vanilla: "Vanilla"};
+const LOADER_NAMES = {forge: "Forge", forgeOptiFine: "Forge + OptiFine", neoforge: "NeoForge", fabric: "Fabric", quilt: "Quilt", horizon: "Horizon (Rust)", custom: "Custom", vanilla: "Vanilla"};
 // Картинка статуса с сайта: только https и только rxlauncher.xyz; последняя удачная запоминается до следующего запуска
 const RPC_IMAGE_KEY = "rxRpcLargeImage";
 const rpcImageAllowed = value => {

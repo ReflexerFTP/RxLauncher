@@ -519,6 +519,9 @@ class RxVersionsManager {
             });
         })
 
+        // Horizon (Minecraft на Rust) — если включён в настройках
+        if (typeof RxHorizon !== "undefined" && RxHorizon.isEnabled()) resultList.push(RxHorizon.entry());
+
         // Установленные версии показываем всегда, даже если сервер их не вернул
         const listedIds = new Set(resultList.map(item => item.id));
         RxVersionsManager.getInstalledVersionEntries().forEach(entry => {
@@ -562,6 +565,8 @@ class RxVersionsManager {
                 return `${MESSAGES.versions.pack} ${packData.displayName}`;
             case "custom":
                 return parsed.name;
+            case "horizon":
+                return `Horizon ${parsed.name}`;
             default:
                 displayType = MESSAGES.commons.version;
                 break;
